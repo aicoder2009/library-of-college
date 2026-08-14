@@ -1291,7 +1291,8 @@ function render(){
   document.body.classList.toggle("selecting", selected.size > 0);
 
   if(query){
-    const hits = state.entries.filter(e => (e.title + " " + e.body).toLowerCase().includes(query));
+    const hits = state.entries.filter(e =>
+      (e.title + " " + e.body + " " + (e.tags || []).join(" ")).toLowerCase().includes(query));
     viewIds = hits.map(e => e.id);
     $("viewhead").innerHTML = `<h2>Search</h2>
       <p class="sub2">${hits.length} match${hits.length === 1 ? "" : "es"} for “${esc(qraw.trim())}” across all categories</p>`;
