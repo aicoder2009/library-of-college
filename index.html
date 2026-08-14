@@ -299,6 +299,19 @@
   .dumplast button{border:none;background:none;padding:0;font:inherit;font-size:12.5px;
     color:var(--ink);text-decoration:underline;cursor:pointer}
 
+  /* ---- match-a-prompt modal ---- */
+  #matchModal{align-items:flex-start;justify-content:center;padding:14vh 18px 18px}
+  .matchbox{max-width:640px;max-height:80vh;overflow-y:auto}
+  #matchQ{width:100%;border:none;background:transparent;resize:vertical;font:inherit;
+    font-size:15.5px;line-height:1.6;color:var(--ink);outline:none;min-height:64px}
+  #matchQ::placeholder{color:var(--faint)}
+  .matchhead{font-size:12.5px;color:var(--muted);margin:12px 2px 4px}
+  .matchitem{display:flex;flex-direction:column;gap:4px;padding:9px 10px;border-radius:8px;cursor:pointer}
+  .matchitem:hover{background:var(--wash)}
+  .matchtop{display:flex;align-items:center;gap:9px}
+  .matchwhy{font-size:12.5px;color:var(--muted);font-style:italic}
+  .matchempty{color:var(--muted);font-size:13.5px;padding:10px 2px}
+
   /* bulk bar + toast */
   .bulk{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--panel);
     border:1px solid var(--line);border-radius:999px;padding:7px 8px 7px 16px;display:none;
@@ -431,6 +444,17 @@
     <button class="primary" id="dumpSave">File it</button>
   </div>
   <div class="dumplast" id="dumpLast"></div>
+</div></div>
+
+<div class="scrim" id="matchModal"><div class="dumpbox matchbox">
+  <textarea id="matchQ" rows="3"
+    placeholder="Paste the essay prompt — e.g. “Describe a community you belong to…”"></textarea>
+  <div class="dumprow">
+    <span class="hint">AI picks your best-fitting stories</span>
+    <span class="spacer"></span>
+    <button class="primary" id="matchGo">Find evidence</button>
+  </div>
+  <div id="matchList"></div>
 </div></div>
 
 <div class="toast" id="toast"></div>
@@ -820,6 +844,9 @@ function palBuild(qr){
   if(!q || "quick dump".includes(q))
     acts.push({ icon:`<span class="cdot dump">✦</span>`,
       title:"Quick dump", hint:"action", run:() => openDump() });
+  if(!q || "match a prompt".includes(q))
+    acts.push({ icon:`<span class="cdot dump">⌕</span>`,
+      title:"Match a prompt", hint:"action", run:() => openMatch() });
   CATEGORIES.forEach((c,i) => {
     if(!q || c.toLowerCase().includes(q))
       acts.push({ icon:`<span class="cdot" style="background:var(--c${i})"></span>`,
@@ -902,6 +929,7 @@ document.addEventListener("keydown", e => {
   }
   if(e.key === "Escape"){
     if(palOpen()) return closePalette();
+    if(matchOpen()) return closeMatch();
     if(dumpOpen()) return closeDump();
     if(composerOpen()) return closeComposer();
     if(expanded){ expanded = null; return render(); }
@@ -917,6 +945,7 @@ document.addEventListener("keydown", e => {
   if(e.key === "/"){ e.preventDefault(); $("search").focus(); }
   else if(e.key === "n" || e.key === "N"){ e.preventDefault(); openComposer(); }
   else if(e.key === "d" || e.key === "D"){ e.preventDefault(); openDump(); }
+  else if(e.key === "m" || e.key === "M"){ e.preventDefault(); openMatch(); }
   else if(expanded && !e.metaKey && !e.ctrlKey && !e.altKey && "ecus".includes(e.key.toLowerCase())){
     const en = byId(expanded); if(!en) return;
     e.preventDefault();
@@ -945,6 +974,7 @@ document.addEventListener("keydown", e => {
 // ---- nav + search ----
 $("nav").onclick = e => {
   if(e.target.closest("[data-dump]")) return openDump();
+  if(e.target.closest("[data-match]")) return openMatch();
   const tg = e.target.closest("[data-tagnav]");
   if(tg) return setTagFilter(tg.dataset.tagnav);
   const b = e.target.closest("[data-nav]"); if(!b) return;
@@ -1030,6 +1060,63 @@ $("dumpLast").onclick = e => {
   nav = en.cats[0] ?? 0; saveUI();
   qraw = query = ""; $("search").value = ""; tagFilter = null;
   expanded = en.id; closeDump(); render();
+  $("view").querySelector(`[data-id="${en.id}"]`)?.scrollIntoView({block:"center"});
+};
+
+// ---- match-a-prompt modal ----
+const matchOpen = () => $("matchModal").classList.contains("on");
+function openMatch(){
+  $("matchModal").classList.add("on");
+  $("matchQ").focus(); $("matchQ").select();
+}
+function closeMatch(){ $("matchModal").classList.remove("on"); }
+$("matchModal").onclick = e => { if(e.target === $("matchModal")) closeMatch(); };
+$("matchQ").onkeydown = e => {
+  if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); matchRun(); }
+  else if(e.key === "Escape"){ e.stopPropagation(); closeMatch(); }
+};
+$("matchGo").onclick = matchRun;
+let matchPicks = [];
+async function matchRun(){
+  const prompt = $("matchQ").value.trim();
+  if(prompt.length < 4) return toast("Paste a bit more of the prompt");
+  $("matchGo").disabled = true;
+  $("matchList").innerHTML = `<div class="matchempty">✦ Mining your bank…</div>`;
+  try{
+    const r = await api("POST", "/match", { prompt });
+    const hits = (r.matches || [])
+      .map(m => ({ en: byId(m.id), why: m.why }))
+      .filter(x => x.en);
+    matchPicks = hits.map(x => x.en);
+    if(!hits.length){
+      $("matchList").innerHTML = `<div class="matchempty">Nothing in the bank fits this prompt yet — try a quick dump first.</div>`;
+      return;
+    }
+    $("matchList").innerHTML =
+      `<div class="matchhead">${hits.length} match${hits.length === 1 ? "" : "es"} · <button class="linkbtn" id="matchCopy">Copy all</button></div>`
+      + hits.map(({en, why}) => `<div class="matchitem" data-id="${en.id}">
+          <div class="matchtop">
+            <span class="dots">${en.cats.slice(0, 3).map(c =>
+              `<span class="dot" style="background:var(--c${c})"></span>`).join("")}</span>
+            <span class="paltitle">${esc(en.title || "Untitled")}</span>
+          </div>
+          <span class="palsnip">${esc(en.body.slice(0, 70))}</span>
+          <span class="matchwhy">${esc(why || "")}</span>
+        </div>`).join("");
+    $("matchCopy").onclick = () =>
+      copy(matchPicks.map(asText).join("\n\n———\n\n"), `Copied ${matchPicks.length} entries`);
+  }catch(e){
+    if(e.message === "auth") return;
+    $("matchList").innerHTML = `<div class="matchempty">Couldn’t match — try again.</div>`;
+  }finally{
+    $("matchGo").disabled = false;
+  }
+}
+$("matchList").onclick = e => {
+  const en = byId(e.target.closest("[data-id]")?.dataset.id); if(!en) return;
+  if(!en.cats.includes(nav)) nav = en.cats.length ? en.cats[0] : 0;
+  saveUI(); qraw = query = ""; $("search").value = ""; tagFilter = null;
+  expanded = en.id; closeMatch(); render();
   $("view").querySelector(`[data-id="${en.id}"]`)?.scrollIntoView({block:"center"});
 };
 
@@ -1204,6 +1291,9 @@ $("importFile").onchange = e => {
 function navHTML(){
   return `<button class="navitem dumpnav" data-dump title="Write anything — AI titles it and files it (press d)">
       <span class="cdot dump">✦</span><span class="navlab">Quick dump</span><span class="navn"><span class="kbd">d</span></span>
+    </button>
+    <button class="navitem dumpnav" data-match title="Paste an essay prompt — AI finds your best-fitting stories (press m)">
+      <span class="cdot dump">⌕</span><span class="navlab">Match a prompt</span><span class="navn"><span class="kbd">m</span></span>
     </button>`
   + GROUPS.map((g, gi) =>
     (gi ? `<span class="navsep"></span>` : "")
