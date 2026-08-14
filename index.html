@@ -73,6 +73,7 @@
   .navitem:hover{background:var(--wash);border:none}
   .navitem.on{background:var(--washon);font-weight:600}
   .cdot{flex:none;width:9px;height:9px;border-radius:50%}
+  .cdot.tagdot{background:var(--tagbg);border:1.5px solid var(--tagink);width:8px;height:8px}
   .cdot.dump{background:none;width:9px;height:auto;border-radius:0;font-size:11px;
     line-height:1;color:var(--muted);text-align:center}
   .dumpnav{margin-bottom:6px}
@@ -943,6 +944,8 @@ document.addEventListener("keydown", e => {
 // ---- nav + search ----
 $("nav").onclick = e => {
   if(e.target.closest("[data-dump]")) return openDump();
+  const tg = e.target.closest("[data-tagnav]");
+  if(tg) return setTagFilter(tg.dataset.tagnav);
   const b = e.target.closest("[data-nav]"); if(!b) return;
   nav = +b.dataset.nav;
   saveUI();
@@ -1209,7 +1212,23 @@ function navHTML(){
           <span class="navlab">${CATEGORIES[i]}</span><span class="navn">${n || ""}</span>
         </button>`;
       }).join("")
-  ).join("");
+  ).join("")
+  + tagNavHTML();
+}
+
+function tagNavHTML(){
+  const tags = allTags();
+  if(!tags.length) return "";
+  return `<span class="navsep"></span><div class="navgroup">Used in</div>`
+    + tags.map(t => {
+        const n = state.entries.filter(e =>
+          (e.tags || []).some(x => x.toLowerCase() === t.toLowerCase())).length;
+        return `<button class="navitem ${tagFilter && tagFilter.toLowerCase() === t.toLowerCase() ? "on" : ""}"
+            data-tagnav="${esc(t)}" title="Everything used in ${esc(t)}">
+          <span class="cdot tagdot"></span>
+          <span class="navlab">${esc(t)}</span><span class="navn">${n}</span>
+        </button>`;
+      }).join("");
 }
 
 function rowHTML(e, col, showNames){
