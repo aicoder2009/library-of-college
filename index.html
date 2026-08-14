@@ -109,6 +109,7 @@
     .hl{background:linear-gradient(transparent calc(100% - 3px),var(--hc) 0)}
   }
   .sub2{color:var(--muted);font-size:13.5px;line-height:1.5;margin:0;max-width:52ch}
+  .nowrap{white-space:nowrap}
 
   /* ---- entry rows ---- */
   #view{margin-top:14px}
@@ -1264,7 +1265,7 @@ function render(){
     viewIds = list.map(e => e.id);
     $("viewhead").innerHTML = `<h2><span class="rtag htag">${esc(tagFilter)}</span></h2>
       <p class="sub2">${list.length} entr${list.length === 1 ? "y" : "ies"} already used here, across every category.
-        ${list.length ? `<button class="linkbtn" data-copyall>Copy all</button> · ` : ""}<button class="linkbtn" data-cleartag>← Back to ${CATEGORIES[nav]}</button></p>`;
+        ${list.length ? `<span class="nowrap"><button class="linkbtn" data-copyall>Copy all</button> ·</span> ` : ""}<button class="linkbtn" data-cleartag>← Back to ${CATEGORIES[nav]}</button></p>`;
     $("view").innerHTML = list.length
       ? list.map(e => rowHTML(e, -1, true)).join("")
       : `<p class="empty">No entries carry this tag anymore.
@@ -1277,7 +1278,7 @@ function render(){
     .sort((a,b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.createdAt - a.createdAt);
   viewIds = list.map(e => e.id);
   $("viewhead").innerHTML = `<h2><span class="hl" style="--hc:var(--c${i})">${CATEGORIES[i]}</span></h2>
-    <p class="sub2">${PROMPTS[i]}${list.length > 1 ? ` · <button class="linkbtn" data-copyall>Copy all ${list.length}</button>` : ""}</p>`;
+    <p class="sub2">${PROMPTS[i]}${list.length > 1 ? ` <span class="nowrap">· <button class="linkbtn" data-copyall>Copy all ${list.length}</button></span>` : ""}</p>`;
   $("view").innerHTML = list.length
     ? list.map(e => rowHTML(e, i, false)).join("")
     : (n === 0
