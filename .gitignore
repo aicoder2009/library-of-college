@@ -1,0 +1,5 @@
+.env.clerk
+.env*
+backend/fn.zip
+.vercel/
+.DS_Store
