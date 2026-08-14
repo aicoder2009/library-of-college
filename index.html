@@ -128,6 +128,8 @@
   .dot{flex:none;width:7px;height:7px;border-radius:50%}
   .ecats{display:flex;gap:12px;flex-wrap:wrap;margin-top:7px;font-size:11.5px;color:var(--muted)}
   .ecat{display:inline-flex;align-items:center;gap:5px}
+  .ecat[data-cat]{cursor:pointer}
+  .ecat[data-cat]:hover{color:var(--ink)}
   .ecat .dot{width:6px;height:6px}
 
   .eside{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px;margin-top:2px}
@@ -1061,6 +1063,13 @@ $("view").onclick = e => {
   }
   const chip = t.closest("[data-tag]");
   if(chip) return setTagFilter(chip.dataset.tag);
+  const ec = t.closest(".ecat[data-cat]");
+  if(ec){
+    goToCategory(+ec.dataset.cat);
+    expanded = id; render();
+    $("view").querySelector(`[data-id="${id}"]`)?.scrollIntoView({block:"center"});
+    return;
+  }
   if(t.closest(".tagadd")) return showTagInput();
   if(t.closest(".star")){
     if(en){ en.pinned = !en.pinned; persist(); }
@@ -1177,13 +1186,13 @@ function navHTML(){
 function rowHTML(e, col, showNames){
   const isOpen = expanded === e.id;
   const others = col >= 0 ? e.cats.filter(c => c !== col) : e.cats;
-  const dots = !showNames && others.length
+  const dots = !showNames && !isOpen && others.length
     ? `<span class="dots">${others.map(c =>
         `<span class="dot" style="background:var(--c${c})" title="${CATEGORIES[c]}"></span>`).join("")}</span>`
     : "";
-  const names = showNames
+  const names = (showNames || isOpen)
     ? `<div class="ecats">${e.cats.length ? e.cats.map(c =>
-        `<span class="ecat"><span class="dot" style="background:var(--c${c})"></span>${CATEGORIES[c]}</span>`).join("")
+        `<span class="ecat" data-cat="${c}" title="Go to ${CATEGORIES[c]}"><span class="dot" style="background:var(--c${c})"></span>${CATEGORIES[c]}</span>`).join("")
         : `<span class="ecat">✦ sorting…</span>`}</div>`
     : "";
   const words = wc(e.body);
