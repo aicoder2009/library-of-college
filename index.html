@@ -457,6 +457,7 @@ const KEY_DRAFT = "evidence-bank-draft";
 let state = load();
 let nav = 0, query = "", qraw = "", tagFilter = null;
 let picked = new Set(), selected = new Set(), editing = null, expanded = null, curSugs = [];
+let pending = new Set(); // entry ids waiting on an AI title/classification
 let viewIds = [];
 try{ const u = JSON.parse(localStorage.getItem(KEY_UI)); if(u && u.nav >= 0 && u.nav <= 6) nav = +u.nav; }catch(e){}
 
@@ -948,6 +949,7 @@ $("search").oninput = e => {
   render();
 };
 async function genTitle(en){
+  pending.add(en.id); render();
   try{
     const r = await api("POST", "/title", { body: en.body });
     // fill in only if the entry still exists and wasn't titled by hand meanwhile
@@ -955,8 +957,10 @@ async function genTitle(en){
       en.title = r.title; en.updatedAt = Date.now(); persist();
     }
   }catch(e){ /* stays Untitled; user can Edit */ }
+  finally{ pending.delete(en.id); render(); }
 }
 async function genClassify(en){
+  pending.add(en.id); render();
   try{
     const r = await api("POST", "/classify", { body: en.body });
     if(!state.entries.includes(en)) return;
@@ -979,6 +983,7 @@ async function genClassify(en){
     toast("Auto-sort failed — filed under Community/Perspective; Edit to fix");
     if(dumpOpen()) dumpReceipt("Auto-sort failed — filed under Community/Perspective. Edit the entry to fix.");
   }
+  finally{ pending.delete(en.id); render(); }
 }
 
 // ---- universal quick-dump modal ----
@@ -1247,7 +1252,7 @@ function rowHTML(e, col, showNames){
   return `<article class="entry ${isOpen ? "open" : ""} ${selected.has(e.id) ? "sel" : ""}" data-id="${e.id}">
     <div class="ehead">
       <div class="etext">
-        <h3>${esc(e.title) || `<span class="untitled">Untitled</span>`}${dots}</h3>
+        <h3>${esc(e.title) || `<span class="untitled">${pending.has(e.id) ? "✦ titling…" : "Untitled"}</span>`}${dots}</h3>
         ${isOpen ? names : collapsedBits}
       </div>
       <div class="eside">
