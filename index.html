@@ -381,7 +381,7 @@
       </div>
       <div class="backup" id="backup"></div>
       <div class="hint" id="kbhint"
-        title="Shortcuts — d: quick dump · n: new entry · ⌘K: jump anywhere · /: search · ↑↓ or j/k: walk entries · Esc: back out"><span
+        title="Shortcuts — d: quick dump · n: new entry · ⌘K: jump anywhere · /: search · ↑↓ or j/k: walk entries · on an open entry — e: edit, c: copy, u: used-in, s: star · Esc: back out"><span
         class="kbd">d</span> dump &nbsp;<span class="kbd">n</span> new &nbsp;<span
         class="kbd">↑↓</span> review</div>
     </div>
@@ -915,6 +915,15 @@ document.addEventListener("keydown", e => {
   if(e.key === "/"){ e.preventDefault(); $("search").focus(); }
   else if(e.key === "n" || e.key === "N"){ e.preventDefault(); openComposer(); }
   else if(e.key === "d" || e.key === "D"){ e.preventDefault(); openDump(); }
+  else if(expanded && !e.metaKey && !e.ctrlKey && !e.altKey && "ecus".includes(e.key.toLowerCase())){
+    const en = byId(expanded); if(!en) return;
+    e.preventDefault();
+    const k = e.key.toLowerCase();
+    if(k === "e") openComposer(en);
+    else if(k === "c") copy(asText(en), "Copied");
+    else if(k === "u") showTagInput();
+    else if(k === "s"){ en.pinned = !en.pinned; persist(); toast(en.pinned ? "Pinned" : "Unpinned"); }
+  }
   else if(["ArrowDown","ArrowUp","j","k"].includes(e.key)){
     const rows = [...$("view").querySelectorAll(".entry")];
     if(!rows.length) return;
