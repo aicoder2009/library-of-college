@@ -253,6 +253,9 @@
   }
   .crow{display:flex;gap:8px;align-items:center;margin-top:14px;
     border-top:1px solid var(--line);padding-top:13px}
+  .refile{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:16px}
+  .refile .chiplab{margin:0 4px 0 0}
+  .chip.mini{font-size:11.5px;padding:3px 9px;font-weight:600}
 
   /* ---- command palette ---- */
   .palscrim{position:fixed;inset:0;background:rgba(24,20,14,.35);display:none;z-index:25;
@@ -1079,6 +1082,18 @@ $("view").onclick = e => {
     selected.has(id) ? selected.delete(id) : selected.add(id);
     return render();
   }
+  const rf = t.closest("[data-refile]");
+  if(rf){
+    if(!en) return;
+    const ci = +rf.dataset.refile;
+    if(en.cats.includes(ci)){
+      if(en.cats.length === 1) return toast("An entry needs at least one category");
+      en.cats = en.cats.filter(x => x !== ci);
+    } else en.cats = [...en.cats, ci].sort((a,b) => a - b);
+    en.updatedAt = Date.now();
+    persist();
+    return;
+  }
   const act = t.closest("[data-act]")?.dataset.act;
   if(act){
     if(!en) return;
@@ -1216,6 +1231,10 @@ function rowHTML(e, col, showNames){
         <button class="tagadd" title="Track which essay or school this story has been used in">+ used in</button>
       </div>
       <div class="full">${esc(e.body)}</div>
+      <div class="refile"><span class="chiplab">Filed under</span>${CATEGORIES.map((c,ci) =>
+        `<button class="chip mini ${e.cats.includes(ci) ? "on" : ""}" data-refile="${ci}" data-c="${ci}"
+          type="button" title="${e.cats.includes(ci) ? "Remove from" : "Also file under"} ${c}">${c}</button>`).join("")}
+      </div>
       <div class="eacts">
         <button class="primary" data-act="copy">Copy text</button>
         <button data-act="edit">Edit</button>
@@ -1287,7 +1306,7 @@ function render(){
     .sort((a,b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.createdAt - a.createdAt);
   viewIds = list.map(e => e.id);
   $("viewhead").innerHTML = `<h2><span class="hl" style="--hc:var(--c${i})">${CATEGORIES[i]}</span></h2>
-    <p class="sub2">${PROMPTS[i]}${list.length > 1 ? ` <span class="nowrap">· <button class="linkbtn" data-copyall>Copy all ${list.length}</button></span>` : ""}</p>`;
+    <p class="sub2">${PROMPTS[i]}${list.length > 1 ? ` <button class="linkbtn nowrap" data-copyall>Copy all ${list.length}</button>` : ""}</p>`;
   $("view").innerHTML = list.length
     ? list.map(e => rowHTML(e, i, false)).join("")
     : (n === 0
