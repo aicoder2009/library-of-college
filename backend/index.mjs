@@ -96,6 +96,54 @@ Note:
       return resp(200, { title, cats });
     }catch(e){ return resp(502, { error: "Classification failed" }); }
   }
+  if(method === "POST" && path === "/match"){
+    if(!body || typeof body.prompt !== "string" || body.prompt.trim().length < 4)
+      return resp(400, { error: "Bad request" });
+    const prompt = body.prompt.slice(0, 2000);
+    const d = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: "data" } } }));
+    const state = d.Item ? JSON.parse(d.Item.state.S) : { entries: [] };
+    const entries = state.entries || [];
+    if(!entries.length) return resp(200, { matches: [] });
+    const notes = entries.map((e, i) => `${i}. ${e.title || "Untitled"} — ${
+      String(e.body || "").slice(0, 200).replace(/\s+/g, " ")}`).join("\n");
+    try{
+      const r = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "content-type": "application/json",
+          authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+        body: JSON.stringify({
+          model: "gpt-4.1-nano",
+          max_tokens: 300,
+          temperature: 0.2,
+          response_format: { type: "json_object" },
+          messages: [{ role: "user", content:
+`These are a student's evidence notes for college essays. Given the essay prompt, pick the 5-8 notes that genuinely fit BEST as material for answering it, best first. Fewer if few genuinely fit.
+
+Reply ONLY with JSON: {"matches": [{"i": <note number>, "why": "<one concrete reason, max 15 words>"}]}
+
+Essay prompt:
+${prompt}
+
+Notes:
+${notes}` }]
+        })
+      });
+      const d2 = await r.json();
+      const out = JSON.parse(d2.choices?.[0]?.message?.content || "{}");
+      const seen = new Set();
+      const matches = [];
+      for(const m of (out.matches || [])){
+        const i = Number(m.i);
+        if(!Number.isInteger(i) || i < 0 || i >= entries.length) continue;
+        const id = entries[i].id;
+        if(seen.has(id)) continue;
+        seen.add(id);
+        matches.push({ id, why: String(m.why || "").slice(0, 140) });
+        if(matches.length >= 8) break;
+      }
+      return resp(200, { matches });
+    }catch(e){ return resp(502, { error: "Match failed" }); }
+  }
   if(method === "POST" && path === "/title"){
     if(!body || !body.body) return resp(400, { error: "Bad request" });
     try{
