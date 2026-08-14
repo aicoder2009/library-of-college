@@ -456,18 +456,18 @@ const KEY_UI = "evidence-bank-ui";
 const KEY_DRAFT = "evidence-bank-draft";
 
 let state = load();
-let nav = 0, query = "", qraw = "", tagFilter = null;
+let nav = 0, query = "", qraw = "", tagFilter = null, unusedOnly = false;
 let picked = new Set(), selected = new Set(), editing = null, expanded = null, curSugs = [];
 let pending = new Set(); // entry ids waiting on an AI title/classification
 let viewIds = [];
-try{ const u = JSON.parse(localStorage.getItem(KEY_UI)); if(u && u.nav >= 0 && u.nav <= 6) nav = +u.nav; }catch(e){}
+try{ const u = JSON.parse(localStorage.getItem(KEY_UI)); if(u && u.nav >= 0 && u.nav <= 6) nav = +u.nav; if(u) unusedOnly = !!u.unusedOnly; }catch(e){}
 
 function load(){
   try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s && s.entries) return s; }catch(e){}
   return { entries:[], rev:0, backupRev:0 };
 }
 function persist(){ state.rev++; localStorage.setItem(KEY, JSON.stringify(state)); render(); push(); }
-function saveUI(){ try{ localStorage.setItem(KEY_UI, JSON.stringify({nav})); }catch(e){} }
+function saveUI(){ try{ localStorage.setItem(KEY_UI, JSON.stringify({nav, unusedOnly})); }catch(e){} }
 
 const newId = () => (crypto.randomUUID ? crypto.randomUUID()
   : Date.now().toString(36) + Math.random().toString(36).slice(2));
@@ -906,6 +906,7 @@ document.addEventListener("keydown", e => {
     if(composerOpen()) return closeComposer();
     if(expanded){ expanded = null; return render(); }
     if(tagFilter){ tagFilter = null; return render(); }
+    if(unusedOnly){ unusedOnly = false; saveUI(); return render(); }
     if(e.target === $("search") && $("search").value){
       $("search").value = ""; qraw = query = ""; render(); $("search").blur();
     }
@@ -1061,12 +1062,14 @@ $("viewhead").onclick = e => {
     const picks = viewIds.map(byId).filter(Boolean);
     copy(picks.map(asText).join("\n\n———\n\n"), `Copied ${picks.length} entries`);
   }
+  else if(e.target.closest("[data-unused]")){ unusedOnly = !unusedOnly; saveUI(); render(); }
 };
 
 // ---- list interactions ----
 $("view").onclick = e => {
   const t = e.target;
   if(t.closest("[data-newhere]")) return openComposer();
+  if(t.closest("[data-unused]")){ unusedOnly = !unusedOnly; saveUI(); return render(); }
   const sugBtn = t.closest(".tagsug");
   if(sugBtn){
     if("create" in sugBtn.dataset) addTag($("view").querySelector(".taginput")?.value);
@@ -1336,19 +1339,26 @@ function render(){
   }
 
   const i = nav;
-  const list = state.entries.filter(e => e.cats.includes(i))
+  const full = state.entries.filter(e => e.cats.includes(i))
     .sort((a,b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.createdAt - a.createdAt);
+  const list = unusedOnly ? full.filter(e => !(e.tags || []).length) : full;
   viewIds = list.map(e => e.id);
+  const unusedBtn = unusedOnly
+    ? `<button class="linkbtn nowrap" data-unused>showing ${list.length} of ${full.length} unused — show all</button>`
+    : (full.some(e => (e.tags || []).length) ? `<button class="linkbtn nowrap" data-unused>unused only</button>` : "");
   $("viewhead").innerHTML = `<h2><span class="hl" style="--hc:var(--c${i})">${CATEGORIES[i]}</span></h2>
-    <p class="sub2">${PROMPTS[i]}${list.length > 1 ? ` <button class="linkbtn nowrap" data-copyall>Copy all ${list.length}</button>` : ""}</p>`;
+    <p class="sub2">${PROMPTS[i]}${list.length > 1 ? ` <button class="linkbtn nowrap" data-copyall>Copy all ${list.length}</button>` : ""}${unusedBtn ? ` ${unusedBtn}` : ""}</p>`;
   $("view").innerHTML = list.length
     ? list.map(e => rowHTML(e, i, false)).join("")
     : (n === 0
       ? `<div class="empty">Your bank is empty. Hit <strong>✦ Quick dump</strong> and write any story,
          detail, or moment you might use — AI titles it and files it into the right categories.
          An entry can live in more than one category, and sorting can always change later.</div>`
-      : `<div class="empty">Nothing filed here yet.
-         <button class="linkbtn" data-newhere>Add the first one</button>.</div>`);
+      : unusedOnly && full.length
+        ? `<div class="empty">All ${full.length} entries here are already used somewhere.
+           <button class="linkbtn" data-unused>Show all</button>.</div>`
+        : `<div class="empty">Nothing filed here yet.
+           <button class="linkbtn" data-newhere>Add the first one</button>.</div>`);
 }
 render(); // boot() runs from clerkInit once auth is ready
 </script>
