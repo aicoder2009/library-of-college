@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f3efe6">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#141310">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Evidence">
 <title>Evidence Bank</title>
 <style>
   :root{
@@ -1586,6 +1590,7 @@ function render(){
            <button class="linkbtn" data-newhere>Add the first one</button>.</div>`);
 }
 render(); // boot() runs from clerkInit once auth is ready
+if("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
 </script>
 </body>
 </html>
