@@ -105,14 +105,14 @@ Note:
     const entries = state.entries || [];
     if(!entries.length) return resp(200, { matches: [] });
     const notes = entries.map((e, i) => `${i}. ${e.title || "Untitled"} — ${
-      String(e.body || "").slice(0, 200).replace(/\s+/g, " ")}`).join("\n");
+      String(e.body || "").slice(0, 600).replace(/\s+/g, " ")}`).join("\n");
     try{
       const r = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: { "content-type": "application/json",
           authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
         body: JSON.stringify({
-          model: "gpt-4.1-nano",
+          model: "gpt-4.1-mini",
           max_tokens: 300,
           temperature: 0.2,
           response_format: { type: "json_object" },
