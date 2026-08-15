@@ -527,7 +527,12 @@ const API = "https://3abskrlijk.execute-api.us-east-1.amazonaws.com";
 const CLERK_PK = "pk_test_bGFzdGluZy1mYWxjb24tOTEuY2xlcmsuYWNjb3VudHMuZGV2JA";
 const isLocked = () => $("lock").style.display !== "none";
 function lockShow(msg){ if(msg) $("lockErr").textContent = msg; $("lock").style.display = "flex"; }
-function lockHide(){ $("lock").style.display = "none"; $("lockErr").textContent = ""; }
+function lockHide(){
+  $("lock").style.display = "none"; $("lockErr").textContent = "";
+  // Clerk's sign-in UI can keep focus; release it so shortcuts work immediately.
+  document.activeElement?.blur?.();
+}
+let pendingKey = null; // one shortcut pressed while the lock screen was still up
 
 (() => { // load ClerkJS from the frontend API encoded in the publishable key
   const fapi = atob(CLERK_PK.split("_")[2]).replace(/\$$/, "");
@@ -688,6 +693,13 @@ async function boot(){
     render();
   }catch(e){
     if(e.message !== "auth"){ syncState = "offline"; render(); toast("Offline — using local copy"); }
+  }
+  if(pendingKey){
+    const k = pendingKey; pendingKey = null;
+    if(k === "d") openDump();
+    else if(k === "n") openComposer();
+    else if(k === "m") openMatch();
+    else if(k === "/") $("search").focus();
   }
 }
 
@@ -955,7 +967,11 @@ $("palette").onclick = e => {
 
 // ---- keyboard ----
 document.addEventListener("keydown", e => {
-  if(isLocked()) return;
+  if(isLocked()){
+    if(!e.target.closest?.("input,textarea") && ["d","n","m","/"].includes(e.key.toLowerCase()))
+      pendingKey = e.key.toLowerCase();
+    return;
+  }
   if((e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K")){
     e.preventDefault();
     if(composerOpen()) return;
