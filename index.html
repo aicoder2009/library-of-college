@@ -774,10 +774,13 @@ function saveEntry(){
   if(!title && !body) return;
   if(!picked.size){ toast("Pick at least one category"); return; }
   const cats = [...picked].sort((a,b)=>a-b);
+  let undo = null;
   if(editing){
     const e = byId(editing);
     if(!e){ closeComposer(); toast("That entry no longer exists"); return; }
+    const prev = { title: e.title, body: e.body, cats: [...e.cats], updatedAt: e.updatedAt };
     Object.assign(e, { title, body, cats, updatedAt: Date.now() });
+    undo = () => { Object.assign(e, prev); persist(); };
   } else {
     state.entries.unshift({ id: newId(), title, body, cats,
       pinned: false, tags: [], createdAt: Date.now(), updatedAt: Date.now() });
@@ -785,6 +788,7 @@ function saveEntry(){
   closeComposer();
   draft = null; stashDraft(); // saved — nothing left to restore
   persist();
+  if(undo) toastAction("Saved changes", "Undo", undo);
 }
 $("newBtn").onclick = () => openComposer();
 $("save").onclick = saveEntry;
