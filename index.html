@@ -80,6 +80,8 @@
   .dumpnav.on .cdot.dump{color:var(--ink)}
   .navlab{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .navn{margin-left:auto;color:var(--muted);font-size:12px;font-weight:400;padding-left:8px}
+  .navn.thin{color:var(--warn);opacity:.85;font-weight:600}
+  .thinnote{display:block;color:var(--warn);opacity:.8;font-size:12.5px;margin-top:3px}
 
   .side-foot{margin-top:auto;border-top:1px solid var(--line);padding-top:14px;
     display:flex;flex-direction:column;gap:10px}
@@ -1412,7 +1414,8 @@ function navHTML(){
         const n = state.entries.filter(e => e.cats.includes(i)).length;
         return `<button class="navitem ${nav === i && !query && !tagFilter ? "on" : ""}" data-nav="${i}">
           <span class="cdot" style="background:var(--c${i})"></span>
-          <span class="navlab">${CATEGORIES[i]}</span><span class="navn">${n || ""}</span>
+          <span class="navlab">${CATEGORIES[i]}</span><span class="navn ${n && n < 3 ? "thin" : ""}"${
+            n && n < 3 ? ` title="Only ${n} entr${n === 1 ? "y" : "ies"} — thin for essay season"` : ""}>${n || ""}</span>
         </button>`;
       }).join("")
   ).join("")
@@ -1547,7 +1550,9 @@ function render(){
     ? `<button class="linkbtn nowrap" data-unused>showing ${list.length} of ${full.length} unused — show all</button>`
     : (full.some(e => (e.tags || []).length) ? `<button class="linkbtn nowrap" data-unused>unused only</button>` : "");
   $("viewhead").innerHTML = `<h2><span class="hl" style="--hc:var(--c${i})">${CATEGORIES[i]}</span></h2>
-    <p class="sub2">${PROMPTS[i]}${list.length > 1 ? ` <button class="linkbtn nowrap" data-copyall>Copy all ${list.length}</button>` : ""}${unusedBtn ? ` ${unusedBtn}` : ""}</p>`;
+    <p class="sub2">${PROMPTS[i]}${list.length > 1 ? ` <button class="linkbtn nowrap" data-copyall>Copy all ${list.length}</button>` : ""}${unusedBtn ? ` ${unusedBtn}` : ""}${
+      full.length > 0 && full.length < 3 && !unusedOnly
+        ? `<span class="thinnote">Only ${full.length} stor${full.length === 1 ? "y" : "ies"} banked here — worth a quick dump session.</span>` : ""}</p>`;
   $("view").innerHTML = list.length
     ? list.map(e => rowHTML(e, i, false)).join("")
     : (n === 0
