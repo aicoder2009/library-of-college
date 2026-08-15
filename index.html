@@ -7,9 +7,22 @@
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#141310">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Evidence">
-<title>Evidence Bank</title>
+<meta name="apple-mobile-web-app-title" content="Archive">
+<title>Archive</title>
+<meta name="description" content="Where the stories live until the essay needs them.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Archive">
+<meta property="og:description" content="Where the stories live until the essay needs them.">
+<meta property="og:image" content="https://liboc.vercel.app/og-image.png">
+<meta property="og:url" content="https://liboc.vercel.app">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Archive">
+<meta name="twitter:description" content="Where the stories live until the essay needs them.">
+<meta name="twitter:image" content="https://liboc.vercel.app/og-image.png">
 <style>
   :root{
     --bg:#faf8f3; --panel:#fffdf8; --ink:#221f1a; --muted:#756e64; --faint:#aca397;
@@ -396,7 +409,7 @@
 <body>
 <div class="lockscrim" id="lock"><div class="lockcard">
   <div class="lockicon">🔒</div>
-  <h1>Evidence Bank</h1>
+  <h1>Archive</h1>
   <p id="lockText">Loading…</p>
   <div id="clerkMount"></div>
   <div class="lockerr" id="lockErr"></div>
@@ -404,7 +417,7 @@
 <div class="app">
   <aside class="side">
     <div class="side-top">
-      <div class="brand">Evidence Bank</div>
+      <div class="brand">Archive</div>
       <button class="new" id="newBtn">+ New entry</button>
     </div>
     <nav id="nav"></nav>
@@ -1548,7 +1561,7 @@ $("export").onclick = () => {
   const blob = new Blob([JSON.stringify(state.entries, null, 2)], {type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `evidence-bank-${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `archive-${new Date().toISOString().slice(0,10)}.json`;
   a.click(); URL.revokeObjectURL(a.href);
   state.backupRev = state.rev;
   localStorage.setItem(KEY, JSON.stringify(state));

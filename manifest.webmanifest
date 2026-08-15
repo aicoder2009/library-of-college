@@ -1,7 +1,7 @@
 {
-  "name": "Evidence Bank",
-  "short_name": "Evidence",
-  "description": "Collect stories and mine them while drafting college essays.",
+  "name": "Archive",
+  "short_name": "Archive",
+  "description": "Where the stories live until the essay needs them.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f3efe6",
