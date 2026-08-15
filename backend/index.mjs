@@ -144,6 +144,30 @@ ${notes}` }]
       return resp(200, { matches });
     }catch(e){ return resp(502, { error: "Match failed" }); }
   }
+  if(method === "POST" && path === "/polish"){
+    if(!body || !body.body) return resp(400, { error: "Bad request" });
+    try{
+      const r = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "content-type": "application/json",
+          authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+        body: JSON.stringify({
+          model: "gpt-4.1-mini",
+          max_tokens: 700,
+          temperature: 0.4,
+          messages: [{ role: "user", content:
+`Lightly polish this college-essay evidence note. Fix grammar and awkward phrasing, tighten wordiness, and keep the writer's natural voice. Keep ALL facts exactly as given — never invent details, names, or embellishment. Plain first person, roughly the same length or shorter. Reply with the polished text only — no preamble, no quotes.
+
+Note:
+` + String(body.body).slice(0, 6000) }]
+        })
+      });
+      const d = await r.json();
+      const text = (d.choices?.[0]?.message?.content || "").trim();
+      if(!text) return resp(502, { error: "Polish failed" });
+      return resp(200, { text });
+    }catch(e){ return resp(502, { error: "Polish failed" }); }
+  }
   if(method === "POST" && path === "/title"){
     if(!body || !body.body) return resp(400, { error: "Bad request" });
     try{

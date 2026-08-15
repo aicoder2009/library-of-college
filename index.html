@@ -94,6 +94,7 @@
   .piqguide .rules{display:block;font-size:11px;font-weight:700;letter-spacing:.07em;
     text-transform:uppercase;color:var(--faint);margin-bottom:2px}
   .piqrow{border-top:1px solid var(--line);margin-top:9px;padding-top:8px}
+  .piqrow .sch{display:block;font-size:12px;color:var(--faint);margin-top:1px}
   .piqrow:first-of-type{border-top:none;margin-top:4px;padding-top:0}
   .piqacts{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:5px;font-size:12.5px}
   .piqtip{margin-top:11px;border-top:1px solid var(--line);padding-top:9px}
@@ -182,6 +183,12 @@
   .eacts{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);
     margin-top:18px;padding-top:13px}
   .eacts button{font-size:13.5px;padding:6px 11px}
+  .polished{margin-top:16px;border:1px dashed var(--line);border-radius:10px;
+    padding:11px 14px 13px;background:var(--bg)}
+  .pollab{display:flex;align-items:center;gap:10px;font-size:10.5px;font-weight:700;
+    letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+  .pollab .linkbtn{font-size:12px;font-weight:400;letter-spacing:0;text-transform:none}
+  .polished .full{font-size:15px;line-height:1.7}
 
   /* ---- real-life tags ---- */
   .rtag{position:relative;display:inline-flex;align-items:center;gap:5px;
@@ -534,14 +541,54 @@ function piqGuideHTML(i){
   return `<span class="rules">UC PIQs · answer any 4 of 8 · 350 words each · ${status}</span>${rows}
     <div class="piqtip">${PIQ_TIPS[i]}</div>`;
 }
+const SUPP_MAP = [
+  { t:"Community that shaped you", sch:"Columbia · Cornell · Duke · Michigan · UPenn · Yale",
+    q:"A community you are part of and how it has shaped who you are.", tag:"Supp community" },
+  { t:"A time you improved your community", sch:"UC · MIT · Dartmouth",
+    q:"A specific time your participation helped shape or change a community for the better.", tag:"Supp service" },
+  { t:"How you’ll contribute on campus", sch:"Northwestern · UPenn · Columbia · Stanford",
+    q:"How you will contribute to a community on a college campus.", tag:"Supp contribute" },
+  { t:"Identity & perspective", sch:"Dartmouth · Duke · Vanderbilt · CalTech · Northwestern",
+    q:"An identity or background that has shaped you and the perspective it gives you.", tag:"Supp identity" },
+  { t:"Hometown & upbringing", sch:"Brown · Villanova · Tufts · Notre Dame · Chapman",
+    q:"How your hometown and upbringing shaped who you are today.", tag:"Supp hometown" },
+  { t:"Three words / defining attribute", sch:"Brown · USC · Cornell · Amherst · MIT · Dartmouth",
+    q:"Words or attributes that describe you, with proof from daily life.", tag:"Supp words" },
+  { t:"Role model / thank-you note", sch:"Yale · UPenn",
+    q:"A person outside your family who shaped you, and what they mean to you.", tag:"Supp mentor" },
+  { t:"Disagreement & differing views", sch:"Boston College · Dartmouth · Duke · Harvard · Yale · MIT",
+    q:"A time a differing perspective challenged you and how you bridged the gap.", tag:"Supp disagree" },
+  { t:"When plans fell apart", sch:"MIT",
+    q:"A time something did not go as planned and how you adapted.", tag:"Supp setback" },
+  { t:"Joy & varied interests", sch:"Brown · CalTech · Dartmouth · Duke · Princeton · Hollis · UC · Yale · MIT",
+    q:"An activity outside academics that brings you joy or a sense of accomplishment.", tag:"Supp joy" }
+];
+function tagCount(tag){
+  return state.entries.filter(e => (e.tags || []).some(t => t.toLowerCase() === tag.toLowerCase())).length;
+}
+function mapGuideHTML(){
+  const rows = SUPP_MAP.map((a,idx) => {
+    const k = tagCount(a.tag);
+    return `<div class="piqrow"><span class="q">${a.t}</span>
+      <span class="sch">${a.sch}</span>
+      <div class="piqacts">
+        <button class="linkbtn" data-mapmatch="${idx}">⌕ find evidence</button>
+        ${k ? `<span class="rtag mini" data-tag="${a.tag}" title="See everything picked for this prompt">${a.tag} · ${k} picked</span>`
+            : `<span class="hint">none picked yet</span>`}
+      </div></div>`;
+  }).join("");
+  return `<span class="rules">Common App supplementals · who asks what · from your Essay Launch notes</span>${rows}
+    <div class="piqtip">File per-school research below (classes, professors, programs) and tag entries with the school once used — tags are your used-in tracker.</div>`;
+}
 const KEY = "evidence-bank-v1";
 const KEY_UI = "evidence-bank-ui";
 const KEY_DRAFT = "evidence-bank-draft";
 
 let state = load();
-let nav = 0, query = "", qraw = "", tagFilter = null, unusedOnly = false, piqOpen = false;
+let nav = 0, query = "", qraw = "", tagFilter = null, unusedOnly = false, piqOpen = false, mapOpen = true;
 let picked = new Set(), selected = new Set(), editing = null, expanded = null, curSugs = [];
 let pending = new Set(); // entry ids waiting on an AI title/classification
+let polished = new Map(); // entry id -> AI-polished body (session-only, never saved)
 let viewIds = [];
 try{ const u = JSON.parse(localStorage.getItem(KEY_UI)); if(u && u.nav >= 0 && u.nav <= 6) nav = +u.nav; if(u) unusedOnly = !!u.unusedOnly; }catch(e){}
 
@@ -862,6 +909,7 @@ function saveEntry(){
     if(!e){ closeComposer(); toast("That entry no longer exists"); return; }
     const prev = { title: e.title, body: e.body, cats: [...e.cats], updatedAt: e.updatedAt };
     Object.assign(e, { title, body, cats, updatedAt: Date.now() });
+    polished.delete(e.id); // body changed — any polish is stale
     undo = () => { Object.assign(e, prev); persist(); };
   } else {
     state.entries.unshift({ id: newId(), title, body, cats,
@@ -1072,7 +1120,7 @@ document.addEventListener("keydown", e => {
     e.preventDefault();
     const k = e.key.toLowerCase();
     if(k === "e") openComposer(en);
-    else if(k === "c") copyFlip(asText(en), $("view").querySelector('.entry.open [data-act="copy"]'));
+    else if(k === "c") copyFlip(en.body, $("view").querySelector('.entry.open [data-act="copy"]'));
     else if(k === "u") showTagInput();
     else if(k === "s"){ en.pinned = !en.pinned; persist(); toast(en.pinned ? "Pinned" : "Unpinned"); }
   }
@@ -1319,6 +1367,14 @@ $("viewhead").onclick = e => {
     matchRun();
   }
   else if(e.target.closest("[data-piq]")){ piqOpen = !piqOpen; render(); }
+  else if(e.target.closest("[data-mapmatch]")){
+    const a = SUPP_MAP[+e.target.closest("[data-mapmatch]").dataset.mapmatch];
+    openMatch();
+    matchSuggestTag = a.tag;
+    $("matchQ").value = a.q;
+    matchRun();
+  }
+  else if(e.target.closest("[data-map]")){ mapOpen = !mapOpen; render(); }
   else if(e.target.closest("[data-tag]")) setTagFilter(e.target.closest("[data-tag]").dataset.tag);
   else if(e.target.closest("[data-renametag]") && tagFilter){
     if($("renameTagInput")) return $("renameTagInput").focus();
@@ -1418,7 +1474,22 @@ $("view").onclick = e => {
   const act = t.closest("[data-act]")?.dataset.act;
   if(act){
     if(!en) return;
-    if(act === "copy") return copyFlip(asText(en), t.closest("[data-act]"));
+    if(act === "copy") return copyFlip(en.body, t.closest("[data-act]")); // verbatim — body only, no AI title
+    if(act === "polish"){
+      const btn = t.closest("[data-act]");
+      btn.disabled = true; btn.textContent = "✦ Polishing…";
+      api("POST", "/polish", { body: en.body }).then(r => {
+        if(r.text) polished.set(en.id, r.text);
+        else toast("Polish failed — try again");
+        render();
+      }).catch(err => {
+        if(err.message !== "auth") toast("Polish failed — try again");
+        render();
+      });
+      return;
+    }
+    if(act === "copypolish") return copyFlip(polished.get(id) || "", t.closest("[data-act]"));
+    if(act === "hidepolish"){ polished.delete(id); return render(); }
     if(act === "edit") return openComposer(en);
     if(act === "collapse"){ expanded = null; return render(); }
     if(act === "del"){
@@ -1572,13 +1643,22 @@ function rowHTML(e, col, showNames){
         <button class="tagadd" title="Track which essay or school this story has been used in">+ used in</button>
       </div>
       <div class="full">${esc(e.body)}</div>
+      ${polished.has(e.id) ? `<div class="polished">
+        <div class="pollab">✦ AI-polished — your original above is untouched
+          <span class="spacer"></span>
+          <button class="linkbtn" data-act="copypolish">Copy polished</button>
+          <button class="linkbtn" data-act="hidepolish">Hide</button>
+        </div>
+        <div class="full">${esc(polished.get(e.id))}</div>
+      </div>` : ""}
       <div class="refile"><span class="chiplab">Filed under</span>${CATEGORIES.map((c,ci) =>
         `<button class="chip mini ${e.cats.includes(ci) ? "on" : ""}" data-refile="${ci}" data-c="${ci}"
           type="button" title="${e.cats.includes(ci) ? "Remove from" : "Also file under"} ${c}">${c}</button>`).join("")}
       </div>
       <div class="eacts">
-        <button class="primary" data-act="copy">Copy text</button>
+        <button class="primary" data-act="copy" title="Copies your writing verbatim — the AI title is never included">Copy text</button>
         <button data-act="edit">Edit</button>
+        <button class="ghost" data-act="polish" title="AI tidies grammar and wordiness in a separate box — never touches your original">${polished.has(e.id) ? "✦ Re-polish" : "✦ Polish"}</button>
         <span class="spacer"></span>
         <button class="ghost danger" data-act="del">Delete</button>
         <button class="ghost" data-act="collapse">Collapse</button>
@@ -1654,8 +1734,11 @@ function render(){
   $("viewhead").innerHTML = `<h2><span class="hl" style="--hc:var(--c${i})">${CATEGORIES[i]}</span></h2>
     <p class="sub2">${PROMPTS[i]}${list.length > 1 ? ` <button class="linkbtn nowrap" data-copyall>Copy all ${list.length}</button>` : ""}${unusedBtn ? ` ${unusedBtn}` : ""}${
       full.length > 0 && full.length < 3 && !unusedOnly
-        ? `<span class="thinnote">Only ${full.length} stor${full.length === 1 ? "y" : "ies"} banked here — worth a quick dump session.</span>` : ""} <button class="linkbtn nowrap" data-piq>${piqOpen ? "hide PIQ guide" : "UC PIQ guide"}</button></p>${
-      piqOpen ? `<div class="piqguide">${piqGuideHTML(i)}</div>` : ""}`;
+        ? `<span class="thinnote">Only ${full.length} stor${full.length === 1 ? "y" : "ies"} banked here — worth a quick dump session.</span>` : ""} ${
+      i === 2 ? `<button class="linkbtn nowrap" data-map>${mapOpen ? "hide prompt map" : "school prompt map"}</button>`
+              : `<button class="linkbtn nowrap" data-piq>${piqOpen ? "hide PIQ guide" : "UC PIQ guide"}</button>`}</p>${
+      i === 2 ? (mapOpen ? `<div class="piqguide">${mapGuideHTML()}</div>` : "")
+              : (piqOpen ? `<div class="piqguide">${piqGuideHTML(i)}</div>` : "")}`;
   $("view").innerHTML = list.length
     ? list.map(e => rowHTML(e, i, false)).join("")
     : (n === 0
