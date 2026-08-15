@@ -1135,7 +1135,7 @@ async function matchRun(){
       return;
     }
     $("matchList").innerHTML =
-      `<div class="matchhead">${hits.length} match${hits.length === 1 ? "" : "es"} · <button class="linkbtn" id="matchCopy" title="Copy the prompt + these notes as a paste-ready drafting brief">Copy for AI</button></div>`
+      `<div class="matchhead">${hits.length} match${hits.length === 1 ? "" : "es"} · <button class="linkbtn" id="matchCopy" title="Copy the prompt + these notes as a paste-ready drafting brief">Copy for AI</button> · <button class="linkbtn" id="matchUse" title="Tag every match with the essay/school you're drafting for">mark all used in…</button></div>`
       + hits.map(({en, why}) => `<div class="matchitem" data-id="${en.id}">
           <div class="matchtop">
             <span class="dots">${en.cats.slice(0, 3).map(c =>
@@ -1146,6 +1146,31 @@ async function matchRun(){
           <span class="matchwhy">${esc(why || "")}</span>
         </div>`).join("");
     $("matchCopy").onclick = () => copy(aiBrief(), "Copied drafting brief — paste into a chat");
+    $("matchUse").onclick = () => {
+      if($("matchUseInput")) return $("matchUseInput").focus();
+      $("matchUse").insertAdjacentHTML("afterend",
+        ` <input id="matchUseInput" class="taginput" placeholder="Essay or school… (Enter)">`);
+      const inp = $("matchUseInput");
+      inp.onkeydown = ev => {
+        if(ev.key === "Enter"){
+          const raw = inp.value.trim(); if(!raw) return;
+          const existing = allTags().find(x => x.toLowerCase() === raw.toLowerCase());
+          const val = existing || raw;
+          let added = 0;
+          matchPicks.forEach(en => {
+            if(!state.entries.includes(en)) return;
+            en.tags = en.tags || [];
+            if(!en.tags.some(x => x.toLowerCase() === val.toLowerCase())){
+              en.tags.push(val); en.updatedAt = Date.now(); added++;
+            }
+          });
+          inp.remove();
+          if(added){ persist(); toast(`Tagged ${added} entr${added === 1 ? "y" : "ies"} “${val}”`); }
+          else toast("Already tagged");
+        } else if(ev.key === "Escape"){ ev.stopPropagation(); inp.remove(); }
+      };
+      inp.focus();
+    };
   }catch(e){
     if(e.message === "auth") return;
     $("matchList").innerHTML = `<div class="matchempty">Couldn’t match — try again.</div>`;
