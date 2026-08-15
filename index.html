@@ -93,6 +93,10 @@
     margin:7px 0 2px}
   .piqguide .rules{display:block;font-size:11px;font-weight:700;letter-spacing:.07em;
     text-transform:uppercase;color:var(--faint);margin-bottom:2px}
+  .piqrow{border-top:1px solid var(--line);margin-top:9px;padding-top:8px}
+  .piqrow:first-of-type{border-top:none;margin-top:4px;padding-top:0}
+  .piqacts{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:5px;font-size:12.5px}
+  .piqtip{margin-top:11px;border-top:1px solid var(--line);padding-top:9px}
 
   .side-foot{margin-top:auto;border-top:1px solid var(--line);padding-top:14px;
     display:flex;flex-direction:column;gap:10px}
@@ -488,42 +492,48 @@ const GROUPS = [
   { label:"Supplementals", cats:[0,1,2,3] },
   { label:"About me · UC PIQs", cats:[4,5,6] }
 ];
-const PIQ_RULES = `<span class="rules">UC PIQs · answer any 4 of 8 · 350 words each · every answer is read</span>`;
-const PIQ_GUIDES = [
-  // 0 Community/Perspective → PIQ 7 & 8
-  `${PIQ_RULES}<span class="q">PIQ 7 — “What have you done to make your school or your community a better place?”</span>
-   <span class="q">PIQ 8 — “Beyond what has already been shared in your application, what do you believe makes you a strong candidate for admissions to the University of California?”</span>
-   Define the community concretely — family, the Tamil community, a club — and your place in it.
-   PIQ 7 wants impact you can point at: what changed because you were there.
-   PIQ 8 is the wildcard: identity and perspective stories that fit nowhere else fit here.`,
-  // 1 Leadership → PIQ 1
-  `${PIQ_RULES}<span class="q">PIQ 1 — “Describe an example of your leadership experience in which you have positively influenced others, helped resolve disputes, or contributed to group efforts over time.”</span>
-   Titles are optional — organizing anything counts, including responsibilities at home.
-   Spend the words on what <b>you</b> did and what changed, with numbers where you have them.
-   “Over time” matters: sustained effort beats one big afternoon.`,
-  // 2 Why School — not a PIQ
-  `${PIQ_RULES}No PIQ asks “why this school” — UC never asks it.
-   Bank these entries for Common App and other supplementals; don’t spend PIQ words here.`,
-  // 3 Why Major — closest is PIQ 6
-  `${PIQ_RULES}UC has no “why major” PIQ, but PIQ 6 (an academic subject that inspires you) is the closest cousin — entries here often convert.
-   UC does weigh preparation for selective majors (CS, engineering, business), so keep banking the evidence.`,
-  // 4 Creative → PIQ 2 (and PIQ 3)
-  `${PIQ_RULES}<span class="q">PIQ 2 — “Every person has a creative side… problem solving, original and innovative thinking, and artistically, to name a few. Describe how you express your creative side.”</span>
-   UC defines creative broadly: building an app, designing a club curriculum, inventing a fix all count.
-   Show one thing you made and your thinking while making it.
-   If the skill is your strongest card, it may belong in PIQ 3 (“your greatest talent or skill”) instead.`,
-  // 5 Problem-solver → PIQ 5 (and PIQ 4)
-  `${PIQ_RULES}<span class="q">PIQ 5 — “Describe the most significant challenge you have faced and the steps you have taken to overcome this challenge. How has this challenge affected your academic achievement?”</span>
-   <span class="q">PIQ 4 — “Describe how you have taken advantage of a significant educational opportunity or worked to overcome an educational barrier you have faced.”</span>
-   Readers want the steps — the mechanism of how you untangled it, not the drama.
-   PIQ 5 literally asks how it affected academics; answer that in a sentence.
-   No hardship required: a hard-won educational opportunity (a certification at 9…) fits PIQ 4’s other half.`,
-  // 6 My favorite topic → PIQ 6
-  `${PIQ_RULES}<span class="q">PIQ 6 — “Think about an academic subject that inspires you. Describe how you have furthered this interest inside and/or outside of the classroom.”</span>
-   Name the concrete feeding actions: projects, certifications, clubs, the late-night rabbit holes.
-   Inside <b>and</b> outside the classroom both count.
-   Passion is shown by time spent, not adjectives.`
+const PIQS = {
+  1:"Describe an example of your leadership experience in which you have positively influenced others, helped resolve disputes, or contributed to group efforts over time.",
+  2:"Every person has a creative side, and it can be expressed in many ways: problem solving, original and innovative thinking, and artistically, to name a few. Describe how you express your creative side.",
+  3:"What would you say is your greatest talent or skill? How have you developed and demonstrated that talent over time?",
+  4:"Describe how you have taken advantage of a significant educational opportunity or worked to overcome an educational barrier you have faced.",
+  5:"Describe the most significant challenge you have faced and the steps you have taken to overcome this challenge. How has this challenge affected your academic achievement?",
+  6:"Think about an academic subject that inspires you. Describe how you have furthered this interest inside and/or outside of the classroom.",
+  7:"What have you done to make your school or your community a better place?",
+  8:"Beyond what has already been shared in your application, what do you believe makes you a strong candidate for admissions to the University of California?"
+};
+const PIQ_MAP = [[7,8],[1],[],[6],[2,3],[5,4],[6]]; // PIQs each category feeds
+const PIQ_TIPS = [
+  "PIQ 7 wants impact you can point at; PIQ 8 is the wildcard for identity and perspective stories that fit nowhere else.",
+  "Titles optional — sustained effort and visible change count more than the org chart.",
+  "UC never asks “why this school” — bank these entries for Common App supplementals instead.",
+  "No “why major” PIQ exists — PIQ 6 is the closest cousin, and UC weighs major preparation for selective majors.",
+  "UC defines creative broadly — an app or a club curriculum counts. If it’s your strongest card, PIQ 3 may be its home.",
+  "Show the steps, not the drama — and answer PIQ 5’s academic-impact question in a sentence.",
+  "Feed-the-interest actions are the whole answer: projects, certifications, rabbit holes — inside and outside class."
 ];
+function piqTagCount(n){
+  return state.entries.filter(e => (e.tags || []).some(t => t.toLowerCase() === "piq " + n)).length;
+}
+function piqGuideHTML(i){
+  const planned = new Set();
+  state.entries.forEach(e => (e.tags || []).forEach(t => {
+    const m = t.match(/^piq ([1-8])$/i); if(m) planned.add(+m[1]);
+  }));
+  const status = !planned.size ? "none planned yet"
+    : planned.size <= 4 ? `${planned.size} of 4 planned` : `${planned.size} planned — UC takes only 4`;
+  const rows = PIQ_MAP[i].map(n => {
+    const k = piqTagCount(n);
+    return `<div class="piqrow"><span class="q">PIQ ${n} — “${PIQS[n]}”</span>
+      <div class="piqacts">
+        <button class="linkbtn" data-piqmatch="${n}">⌕ find evidence</button>
+        ${k ? `<span class="rtag mini" data-tag="PIQ ${n}" title="See everything picked for PIQ ${n}">PIQ ${n} · ${k} picked</span>`
+            : `<span class="hint">none picked yet</span>`}
+      </div></div>`;
+  }).join("");
+  return `<span class="rules">UC PIQs · answer any 4 of 8 · 350 words each · ${status}</span>${rows}
+    <div class="piqtip">${PIQ_TIPS[i]}</div>`;
+}
 const KEY = "evidence-bank-v1";
 const KEY_UI = "evidence-bank-ui";
 const KEY_DRAFT = "evidence-bank-draft";
@@ -1176,7 +1186,9 @@ $("dumpLast").onclick = e => {
 
 // ---- match-a-prompt modal ----
 const matchOpen = () => $("matchModal").classList.contains("on");
+let matchSuggestTag = null; // prefills "mark all used in…" (set by the PIQ guide)
 function openMatch(){
+  matchSuggestTag = null;
   $("matchModal").classList.add("on");
   $("matchQ").focus(); $("matchQ").select();
 }
@@ -1233,6 +1245,7 @@ async function matchRun(){
       $("matchUse").insertAdjacentHTML("afterend",
         ` <input id="matchUseInput" class="taginput" placeholder="Essay or school… (Enter)">`);
       const inp = $("matchUseInput");
+      if(matchSuggestTag) inp.value = matchSuggestTag;
       inp.onkeydown = ev => {
         if(ev.key === "Enter"){
           const raw = inp.value.trim(); if(!raw) return;
@@ -1298,7 +1311,15 @@ $("viewhead").onclick = e => {
     copy(picks.map(asText).join("\n\n———\n\n"), `Copied ${picks.length} entries`);
   }
   else if(e.target.closest("[data-unused]")){ unusedOnly = !unusedOnly; saveUI(); render(); }
+  else if(e.target.closest("[data-piqmatch]")){
+    const n = +e.target.closest("[data-piqmatch]").dataset.piqmatch;
+    openMatch();
+    matchSuggestTag = "PIQ " + n;
+    $("matchQ").value = PIQS[n];
+    matchRun();
+  }
   else if(e.target.closest("[data-piq]")){ piqOpen = !piqOpen; render(); }
+  else if(e.target.closest("[data-tag]")) setTagFilter(e.target.closest("[data-tag]").dataset.tag);
   else if(e.target.closest("[data-renametag]") && tagFilter){
     if($("renameTagInput")) return $("renameTagInput").focus();
     e.target.closest("[data-renametag]").insertAdjacentHTML("afterend",
@@ -1634,7 +1655,7 @@ function render(){
     <p class="sub2">${PROMPTS[i]}${list.length > 1 ? ` <button class="linkbtn nowrap" data-copyall>Copy all ${list.length}</button>` : ""}${unusedBtn ? ` ${unusedBtn}` : ""}${
       full.length > 0 && full.length < 3 && !unusedOnly
         ? `<span class="thinnote">Only ${full.length} stor${full.length === 1 ? "y" : "ies"} banked here — worth a quick dump session.</span>` : ""} <button class="linkbtn nowrap" data-piq>${piqOpen ? "hide PIQ guide" : "UC PIQ guide"}</button></p>${
-      piqOpen ? `<div class="piqguide">${PIQ_GUIDES[i]}</div>` : ""}`;
+      piqOpen ? `<div class="piqguide">${piqGuideHTML(i)}</div>` : ""}`;
   $("view").innerHTML = list.length
     ? list.map(e => rowHTML(e, i, false)).join("")
     : (n === 0
