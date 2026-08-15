@@ -86,6 +86,13 @@
   .navn{margin-left:auto;color:var(--muted);font-size:12px;font-weight:400;padding-left:8px}
   .navn.thin{color:var(--warn);opacity:.85;font-weight:600}
   .thinnote{display:block;color:var(--warn);opacity:.8;font-size:12.5px;margin-top:3px}
+  .piqguide{margin-top:12px;padding:12px 15px;border:1px solid var(--line);border-radius:10px;
+    background:var(--panel);font-size:13px;line-height:1.65;color:var(--muted);max-width:60ch}
+  .piqguide b{color:var(--ink)}
+  .piqguide .q{display:block;font-family:var(--serif);font-style:italic;color:var(--ink);
+    margin:7px 0 2px}
+  .piqguide .rules{display:block;font-size:11px;font-weight:700;letter-spacing:.07em;
+    text-transform:uppercase;color:var(--faint);margin-bottom:2px}
 
   .side-foot{margin-top:auto;border-top:1px solid var(--line);padding-top:14px;
     display:flex;flex-direction:column;gap:10px}
@@ -481,12 +488,48 @@ const GROUPS = [
   { label:"Supplementals", cats:[0,1,2,3] },
   { label:"About me · UC PIQs", cats:[4,5,6] }
 ];
+const PIQ_RULES = `<span class="rules">UC PIQs · answer any 4 of 8 · 350 words each · every answer is read</span>`;
+const PIQ_GUIDES = [
+  // 0 Community/Perspective → PIQ 7 & 8
+  `${PIQ_RULES}<span class="q">PIQ 7 — “What have you done to make your school or your community a better place?”</span>
+   <span class="q">PIQ 8 — “Beyond what has already been shared in your application, what do you believe makes you a strong candidate for admissions to the University of California?”</span>
+   Define the community concretely — family, the Tamil community, a club — and your place in it.
+   PIQ 7 wants impact you can point at: what changed because you were there.
+   PIQ 8 is the wildcard: identity and perspective stories that fit nowhere else fit here.`,
+  // 1 Leadership → PIQ 1
+  `${PIQ_RULES}<span class="q">PIQ 1 — “Describe an example of your leadership experience in which you have positively influenced others, helped resolve disputes, or contributed to group efforts over time.”</span>
+   Titles are optional — organizing anything counts, including responsibilities at home.
+   Spend the words on what <b>you</b> did and what changed, with numbers where you have them.
+   “Over time” matters: sustained effort beats one big afternoon.`,
+  // 2 Why School — not a PIQ
+  `${PIQ_RULES}No PIQ asks “why this school” — UC never asks it.
+   Bank these entries for Common App and other supplementals; don’t spend PIQ words here.`,
+  // 3 Why Major — closest is PIQ 6
+  `${PIQ_RULES}UC has no “why major” PIQ, but PIQ 6 (an academic subject that inspires you) is the closest cousin — entries here often convert.
+   UC does weigh preparation for selective majors (CS, engineering, business), so keep banking the evidence.`,
+  // 4 Creative → PIQ 2 (and PIQ 3)
+  `${PIQ_RULES}<span class="q">PIQ 2 — “Every person has a creative side… problem solving, original and innovative thinking, and artistically, to name a few. Describe how you express your creative side.”</span>
+   UC defines creative broadly: building an app, designing a club curriculum, inventing a fix all count.
+   Show one thing you made and your thinking while making it.
+   If the skill is your strongest card, it may belong in PIQ 3 (“your greatest talent or skill”) instead.`,
+  // 5 Problem-solver → PIQ 5 (and PIQ 4)
+  `${PIQ_RULES}<span class="q">PIQ 5 — “Describe the most significant challenge you have faced and the steps you have taken to overcome this challenge. How has this challenge affected your academic achievement?”</span>
+   <span class="q">PIQ 4 — “Describe how you have taken advantage of a significant educational opportunity or worked to overcome an educational barrier you have faced.”</span>
+   Readers want the steps — the mechanism of how you untangled it, not the drama.
+   PIQ 5 literally asks how it affected academics; answer that in a sentence.
+   No hardship required: a hard-won educational opportunity (a certification at 9…) fits PIQ 4’s other half.`,
+  // 6 My favorite topic → PIQ 6
+  `${PIQ_RULES}<span class="q">PIQ 6 — “Think about an academic subject that inspires you. Describe how you have furthered this interest inside and/or outside of the classroom.”</span>
+   Name the concrete feeding actions: projects, certifications, clubs, the late-night rabbit holes.
+   Inside <b>and</b> outside the classroom both count.
+   Passion is shown by time spent, not adjectives.`
+];
 const KEY = "evidence-bank-v1";
 const KEY_UI = "evidence-bank-ui";
 const KEY_DRAFT = "evidence-bank-draft";
 
 let state = load();
-let nav = 0, query = "", qraw = "", tagFilter = null, unusedOnly = false;
+let nav = 0, query = "", qraw = "", tagFilter = null, unusedOnly = false, piqOpen = false;
 let picked = new Set(), selected = new Set(), editing = null, expanded = null, curSugs = [];
 let pending = new Set(); // entry ids waiting on an AI title/classification
 let viewIds = [];
@@ -1242,6 +1285,7 @@ $("viewhead").onclick = e => {
     copy(picks.map(asText).join("\n\n———\n\n"), `Copied ${picks.length} entries`);
   }
   else if(e.target.closest("[data-unused]")){ unusedOnly = !unusedOnly; saveUI(); render(); }
+  else if(e.target.closest("[data-piq]")){ piqOpen = !piqOpen; render(); }
   else if(e.target.closest("[data-renametag]") && tagFilter){
     if($("renameTagInput")) return $("renameTagInput").focus();
     e.target.closest("[data-renametag]").insertAdjacentHTML("afterend",
@@ -1576,7 +1620,8 @@ function render(){
   $("viewhead").innerHTML = `<h2><span class="hl" style="--hc:var(--c${i})">${CATEGORIES[i]}</span></h2>
     <p class="sub2">${PROMPTS[i]}${list.length > 1 ? ` <button class="linkbtn nowrap" data-copyall>Copy all ${list.length}</button>` : ""}${unusedBtn ? ` ${unusedBtn}` : ""}${
       full.length > 0 && full.length < 3 && !unusedOnly
-        ? `<span class="thinnote">Only ${full.length} stor${full.length === 1 ? "y" : "ies"} banked here — worth a quick dump session.</span>` : ""}</p>`;
+        ? `<span class="thinnote">Only ${full.length} stor${full.length === 1 ? "y" : "ies"} banked here — worth a quick dump session.</span>` : ""} <button class="linkbtn nowrap" data-piq>${piqOpen ? "hide PIQ guide" : "UC PIQ guide"}</button></p>${
+      piqOpen ? `<div class="piqguide">${PIQ_GUIDES[i]}</div>` : ""}`;
   $("view").innerHTML = list.length
     ? list.map(e => rowHTML(e, i, false)).join("")
     : (n === 0
