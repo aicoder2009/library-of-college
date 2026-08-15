@@ -561,6 +561,19 @@ function toastAction(msg, label, fn){
 }
 function asText(e){ return e.title + "\n\n" + e.body; }
 function copy(text,msg){ navigator.clipboard.writeText(text).then(()=>toast(msg)).catch(()=>toast("Copy failed")); }
+// Confirm in the button itself (flips to "✓ Copied"), not via toast.
+function copyFlip(text, btn){
+  if(!btn || !btn.isConnected) return copy(text, "Copied");
+  navigator.clipboard.writeText(text).then(() => {
+    const old = btn.textContent;
+    btn.style.minWidth = btn.offsetWidth + "px"; // keep width while the label swaps
+    btn.textContent = "✓ Copied";
+    clearTimeout(btn._t);
+    btn._t = setTimeout(() => {
+      if(btn.isConnected){ btn.textContent = old; btn.style.minWidth = ""; }
+    }, 1500);
+  }).catch(() => toast("Copy failed"));
+}
 function allTags(){
   const seen = new Map();
   state.entries.forEach(e => (e.tags || []).forEach(t => {
@@ -1049,7 +1062,7 @@ document.addEventListener("keydown", e => {
     e.preventDefault();
     const k = e.key.toLowerCase();
     if(k === "e") openComposer(en);
-    else if(k === "c") copy(asText(en), "Copied");
+    else if(k === "c") copyFlip(asText(en), $("view").querySelector('.entry.open [data-act="copy"]'));
     else if(k === "u") showTagInput();
     else if(k === "s"){ en.pinned = !en.pinned; persist(); toast(en.pinned ? "Pinned" : "Unpinned"); }
   }
@@ -1384,7 +1397,7 @@ $("view").onclick = e => {
   const act = t.closest("[data-act]")?.dataset.act;
   if(act){
     if(!en) return;
-    if(act === "copy") return copy(asText(en), "Copied");
+    if(act === "copy") return copyFlip(asText(en), t.closest("[data-act]"));
     if(act === "edit") return openComposer(en);
     if(act === "collapse"){ expanded = null; return render(); }
     if(act === "del"){
