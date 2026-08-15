@@ -1216,6 +1216,50 @@ $("viewhead").onclick = e => {
     copy(picks.map(asText).join("\n\n———\n\n"), `Copied ${picks.length} entries`);
   }
   else if(e.target.closest("[data-unused]")){ unusedOnly = !unusedOnly; saveUI(); render(); }
+  else if(e.target.closest("[data-renametag]") && tagFilter){
+    if($("renameTagInput")) return $("renameTagInput").focus();
+    e.target.closest("[data-renametag]").insertAdjacentHTML("afterend",
+      ` <input id="renameTagInput" class="taginput" value="${esc(tagFilter)}">`);
+    const inp = $("renameTagInput");
+    inp.onkeydown = ev => {
+      if(ev.key === "Enter"){
+        const val = inp.value.trim();
+        if(!val || val === tagFilter) return render();
+        let n = 0;
+        state.entries.forEach(en => {
+          const tags = en.tags || [];
+          const i = tags.findIndex(t => t.toLowerCase() === tagFilter.toLowerCase());
+          if(i < 0) return;
+          tags.splice(i, 1);
+          if(!tags.some(t => t.toLowerCase() === val.toLowerCase())) tags.push(val);
+          en.updatedAt = Date.now(); n++;
+        });
+        tagFilter = val;
+        persist();
+        toast(`Renamed to “${val}” on ${n} entr${n === 1 ? "y" : "ies"}`);
+      } else if(ev.key === "Escape"){ ev.stopPropagation(); render(); }
+    };
+    inp.focus(); inp.select();
+  }
+  else if(e.target.closest("[data-removetag]") && tagFilter){
+    const name = tagFilter;
+    const affected = [];
+    state.entries.forEach(en => {
+      const i = (en.tags || []).findIndex(t => t.toLowerCase() === name.toLowerCase());
+      if(i >= 0){ affected.push({ en, tag: en.tags[i], i }); en.tags.splice(i, 1); en.updatedAt = Date.now(); }
+    });
+    tagFilter = null;
+    persist();
+    toastAction(`Removed “${name}” from ${affected.length} entr${affected.length === 1 ? "y" : "ies"}`, "Undo", () => {
+      affected.forEach(({ en, tag, i }) => {
+        en.tags = en.tags || [];
+        if(!en.tags.some(t => t.toLowerCase() === tag.toLowerCase()))
+          en.tags.splice(Math.min(i, en.tags.length), 0, tag);
+        en.updatedAt = Date.now();
+      });
+      tagFilter = name; persist();
+    });
+  }
 };
 
 // ---- list interactions ----
@@ -1486,7 +1530,7 @@ function render(){
     viewIds = list.map(e => e.id);
     $("viewhead").innerHTML = `<h2><span class="rtag htag">${esc(tagFilter)}</span></h2>
       <p class="sub2">${list.length} entr${list.length === 1 ? "y" : "ies"} already used here, across every category.
-        ${list.length ? `<span class="nowrap"><button class="linkbtn" data-copyall>Copy all</button> ·</span> ` : ""}<button class="linkbtn" data-cleartag>← Back to ${CATEGORIES[nav]}</button></p>`;
+        ${list.length ? `<span class="nowrap"><button class="linkbtn" data-copyall>Copy all</button> ·</span> ` : ""}<span class="nowrap"><button class="linkbtn" data-renametag>rename</button> ·</span> <span class="nowrap"><button class="linkbtn" data-removetag title="Remove this tag from every entry">remove tag</button> ·</span> <button class="linkbtn" data-cleartag>← Back to ${CATEGORIES[nav]}</button></p>`;
     $("view").innerHTML = list.length
       ? list.map(e => rowHTML(e, -1, true)).join("")
       : `<p class="empty">No entries carry this tag anymore.
