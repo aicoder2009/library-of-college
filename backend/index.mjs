@@ -171,6 +171,12 @@ ${notes}` }]
     if(!body || !Array.isArray(body.entries)) return resp(400, { error: "Bad state" });
     const s = JSON.stringify(body);
     if(s.length > 350000) return resp(413, { error: "Bank too large to sync" });
+    // Optimistic concurrency: a PUT whose rev isn't ahead of the stored rev is
+    // from a device that hasn't seen the latest state — reject so it can merge.
+    const cur = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: "data" } } }));
+    const curRev = cur.Item ? (JSON.parse(cur.Item.state.S).rev || 0) : 0;
+    if(typeof body.rev !== "number" || body.rev <= curRev)
+      return resp(409, { error: "stale", rev: curRev });
     await db.send(new PutItemCommand({ TableName: TABLE,
       Item: { pk: { S: "data" }, state: { S: s } } }));
     return resp(200, { ok: true });

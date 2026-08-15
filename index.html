@@ -615,7 +615,11 @@ async function api(method, path, body){
     throw new Error("auth");
   }
   const data = await r.json().catch(() => ({}));
-  if(!r.ok) throw new Error(data.error || "Request failed");
+  if(!r.ok){
+    const err = new Error(data.error || "Request failed");
+    err.status = r.status;
+    throw err;
+  }
   return data;
 }
 
@@ -626,12 +630,37 @@ function push(){
     api("PUT", "/entries", state).then(() => {
       if(syncState !== "synced"){ syncState = "synced"; renderStatus(); }
     }).catch(e => {
-      if(e.message !== "auth"){
-        syncState = "offline"; renderStatus();
-        toast("Couldn’t sync — changes are safe on this device");
-      }
+      if(e.message === "auth") return;
+      if(e.status === 409) return mergeSync();
+      syncState = "offline"; renderStatus();
+      toast("Couldn’t sync — changes are safe on this device");
     });
   }, 600);
+}
+
+// Another device wrote first: pull its state, merge by id (newer edit wins,
+// nothing is dropped), then push the union with a rev ahead of the server's.
+async function mergeSync(depth = 0){
+  if(depth >= 3){ syncState = "offline"; renderStatus(); return; }
+  try{
+    const server = await api("GET", "/entries");
+    const m = new Map((server.entries || []).map(e => [e.id, e]));
+    state.entries.forEach(l => {
+      const s = m.get(l.id);
+      if(!s || (l.updatedAt || 0) >= (s.updatedAt || 0)) m.set(l.id, l);
+    });
+    state.entries = [...m.values()].sort((a,b) => b.createdAt - a.createdAt);
+    state.rev = Math.max(state.rev, server.rev || 0) + 1;
+    state.backupRev = Math.max(state.backupRev || 0, server.backupRev || 0);
+    localStorage.setItem(KEY, JSON.stringify(state));
+    render();
+    await api("PUT", "/entries", state);
+    syncState = "synced"; renderStatus();
+    toast("Merged changes from another device");
+  }catch(e){
+    if(e.status === 409) return mergeSync(depth + 1);
+    if(e.message !== "auth"){ syncState = "offline"; renderStatus(); }
+  }
 }
 function renderStatus(){
   const b = $("backup");
