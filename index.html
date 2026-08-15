@@ -1105,7 +1105,19 @@ $("matchQ").onkeydown = e => {
   else if(e.key === "Escape"){ e.stopPropagation(); closeMatch(); }
 };
 $("matchGo").onclick = matchRun;
-let matchPicks = [];
+let matchPicks = [], matchHits = [], matchPrompt = "";
+function aiBrief(){
+  return `I'm drafting a college supplemental essay. Below are the prompt and my evidence notes — help me pick the strongest angle and draft from them.
+
+ESSAY PROMPT:
+${matchPrompt}
+
+MY EVIDENCE NOTES (${matchHits.length}):
+
+` + matchHits.map(({en, why}, i) =>
+    `${i + 1}. ${en.title || "Untitled"} (${wc(en.body)} words)${
+      why ? `\n   Why it fits: ${why}` : ""}\n${en.body}`).join("\n\n");
+}
 async function matchRun(){
   const prompt = $("matchQ").value.trim();
   if(prompt.length < 4) return toast("Paste a bit more of the prompt");
@@ -1117,12 +1129,13 @@ async function matchRun(){
       .map(m => ({ en: byId(m.id), why: m.why }))
       .filter(x => x.en);
     matchPicks = hits.map(x => x.en);
+    matchHits = hits; matchPrompt = prompt;
     if(!hits.length){
       $("matchList").innerHTML = `<div class="matchempty">Nothing in the bank fits this prompt yet — try a quick dump first.</div>`;
       return;
     }
     $("matchList").innerHTML =
-      `<div class="matchhead">${hits.length} match${hits.length === 1 ? "" : "es"} · <button class="linkbtn" id="matchCopy">Copy all</button></div>`
+      `<div class="matchhead">${hits.length} match${hits.length === 1 ? "" : "es"} · <button class="linkbtn" id="matchCopy" title="Copy the prompt + these notes as a paste-ready drafting brief">Copy for AI</button></div>`
       + hits.map(({en, why}) => `<div class="matchitem" data-id="${en.id}">
           <div class="matchtop">
             <span class="dots">${en.cats.slice(0, 3).map(c =>
@@ -1132,8 +1145,7 @@ async function matchRun(){
           <span class="palsnip">${esc(en.body.slice(0, 70))}</span>
           <span class="matchwhy">${esc(why || "")}</span>
         </div>`).join("");
-    $("matchCopy").onclick = () =>
-      copy(matchPicks.map(asText).join("\n\n———\n\n"), `Copied ${matchPicks.length} entries`);
+    $("matchCopy").onclick = () => copy(aiBrief(), "Copied drafting brief — paste into a chat");
   }catch(e){
     if(e.message === "auth") return;
     $("matchList").innerHTML = `<div class="matchempty">Couldn’t match — try again.</div>`;
