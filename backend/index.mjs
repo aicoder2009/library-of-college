@@ -113,13 +113,16 @@ Note:
           authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
         body: JSON.stringify({
           model: "gpt-4.1-mini",
-          max_tokens: 300,
+          max_tokens: 700,
           temperature: 0.2,
           response_format: { type: "json_object" },
           messages: [{ role: "user", content:
-`These are a student's evidence notes for college essays. Given the essay prompt, pick the 5-8 notes that genuinely fit BEST as material for answering it, best first. Fewer if few genuinely fit.
+`These are a student's evidence notes for college essays. Given the essay prompt, pick the notes that genuinely fit BEST as material for answering it, best first — usually 3-8, fewer if few genuinely fit.
 
-Reply ONLY with JSON: {"matches": [{"i": <note number>, "why": "<one concrete reason, max 15 words>"}]}
+For each pick, explain the connection concretely: name the specific detail, moment, or theme in the note and the part of the prompt it answers. Never a generic reason that could apply to any note.
+
+Reply ONLY with JSON: {"matches": [{"i": <note number>, "fit": "strong" or "possible", "why": "<the concrete link, one sentence, max 25 words>"}]}
+"strong" = answers the prompt as-is. "possible" = works with reframing, or covers only part of the prompt.
 
 Essay prompt:
 ${prompt}
@@ -138,7 +141,8 @@ ${notes}` }]
         const id = entries[i].id;
         if(seen.has(id)) continue;
         seen.add(id);
-        matches.push({ id, why: String(m.why || "").slice(0, 140) });
+        matches.push({ id, fit: m.fit === "strong" ? "strong" : "possible",
+          why: String(m.why || "").slice(0, 200) });
         if(matches.length >= 8) break;
       }
       return resp(200, { matches });

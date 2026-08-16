@@ -346,7 +346,9 @@
   .matchitem{display:flex;flex-direction:column;gap:4px;padding:9px 10px;border-radius:8px;cursor:pointer}
   .matchitem:hover{background:var(--wash)}
   .matchtop{display:flex;align-items:center;gap:9px}
-  .matchwhy{font-size:12.5px;color:var(--muted);font-style:italic}
+  .matchtop .palhint{margin-left:auto}
+  .matchwhy{font-size:13px;color:var(--muted);font-style:italic}
+  .matchtags{display:flex;gap:6px;flex-wrap:wrap;margin-top:1px}
   .matchempty{color:var(--muted);font-size:13.5px;padding:10px 2px}
 
   /* bulk bar + toast */
@@ -1285,8 +1287,8 @@ ${matchPrompt}
 
 MY EVIDENCE NOTES (${matchHits.length}):
 
-` + matchHits.map(({en, why}, i) =>
-    `${i + 1}. ${en.title || "Untitled"} (${wc(en.body)} words)${
+` + matchHits.map(({en, why, fit}, i) =>
+    `${i + 1}. ${en.title || "Untitled"} (${wc(en.body)} words${fit === "strong" ? " · strong fit" : ""})${
       why ? `\n   Why it fits: ${why}` : ""}\n${en.body}`).join("\n\n");
 }
 async function matchRun(){
@@ -1297,7 +1299,7 @@ async function matchRun(){
   try{
     const r = await api("POST", "/match", { prompt });
     const hits = (r.matches || [])
-      .map(m => ({ en: byId(m.id), why: m.why }))
+      .map(m => ({ en: byId(m.id), why: m.why, fit: m.fit }))
       .filter(x => x.en);
     matchPicks = hits.map(x => x.en);
     matchHits = hits; matchPrompt = prompt;
@@ -1305,17 +1307,24 @@ async function matchRun(){
       $("matchList").innerHTML = `<div class="matchempty">Nothing in the stacks fits this prompt yet — try a quick dump first.</div>`;
       return;
     }
+    const row = ({en, why}) => `<div class="matchitem" data-id="${en.id}">
+        <div class="matchtop">
+          <span class="dots">${en.cats.slice(0, 3).map(c =>
+            `<span class="dot" style="background:var(--c${c})"></span>`).join("")}</span>
+          <span class="paltitle">${esc(en.title || "Untitled")}</span>
+          <span class="palhint">${wc(en.body)} w</span>
+        </div>
+        <span class="palsnip">${esc(en.body.slice(0, 90))}</span>
+        ${why ? `<span class="matchwhy">✦ ${esc(why)}</span>` : ""}
+        ${(en.tags || []).length ? `<div class="matchtags">${en.tags.map(t =>
+          `<span class="rtag mini" title="Already used in ${esc(t)}">${esc(t)}</span>`).join("")}</div>` : ""}
+      </div>`;
+    const strong = hits.filter(h => h.fit === "strong"), maybe = hits.filter(h => h.fit !== "strong");
+    const sec = (label, arr) => arr.length
+      ? `<div class="palsec">${label}</div>` + arr.map(row).join("") : "";
     $("matchList").innerHTML =
       `<div class="matchhead">${hits.length} match${hits.length === 1 ? "" : "es"} · <button class="linkbtn" id="matchCopy" title="Copy the prompt + these notes as a paste-ready drafting brief">Copy for AI</button> · <button class="linkbtn" id="matchUse" title="Tag every match with the essay/school you're drafting for">mark all used in…</button></div>`
-      + hits.map(({en, why}) => `<div class="matchitem" data-id="${en.id}">
-          <div class="matchtop">
-            <span class="dots">${en.cats.slice(0, 3).map(c =>
-              `<span class="dot" style="background:var(--c${c})"></span>`).join("")}</span>
-            <span class="paltitle">${esc(en.title || "Untitled")}</span>
-          </div>
-          <span class="palsnip">${esc(en.body.slice(0, 70))}</span>
-          <span class="matchwhy">${esc(why || "")}</span>
-        </div>`).join("");
+      + sec("Strong fits", strong) + sec("Worth a look", maybe);
     $("matchCopy").onclick = () => copy(aiBrief(), "Copied drafting brief — paste into a chat");
     $("matchUse").onclick = () => {
       if($("matchUseInput")) return $("matchUseInput").focus();
