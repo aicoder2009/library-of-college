@@ -148,6 +148,54 @@ ${notes}` }]
       return resp(200, { matches });
     }catch(e){ return resp(502, { error: "Match failed" }); }
   }
+  if(method === "POST" && path === "/search"){
+    if(!body || typeof body.q !== "string" || !body.q.trim())
+      return resp(400, { error: "Bad request" });
+    const q = body.q.slice(0, 300);
+    const d = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: "data" } } }));
+    const state = d.Item ? JSON.parse(d.Item.state.S) : { entries: [] };
+    const entries = state.entries || [];
+    if(!entries.length) return resp(200, { matches: [] });
+    const notes = entries.map((e, i) => `${i}. ${e.title || "Untitled"} — ${
+      String(e.body || "").slice(0, 400).replace(/\s+/g, " ")}`).join("\n");
+    try{
+      const r = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "content-type": "application/json",
+          authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+        body: JSON.stringify({
+          model: "gpt-4.1-mini",
+          max_tokens: 300,
+          temperature: 0.2,
+          response_format: { type: "json_object" },
+          messages: [{ role: "user", content:
+`These are a student's evidence notes for college essays. The student is searching their library by IDEA, not exact words. Pick the notes genuinely related to the search — by theme, topic, person, place, event, or concept — best first, up to 8. Fewer if few relate; an empty list is a valid answer.
+
+Reply ONLY with JSON: {"matches": [{"i": <note number>, "why": "<the connection, max 12 words>"}]}
+
+Search:
+${q}
+
+Notes:
+${notes}` }]
+        })
+      });
+      const d2 = await r.json();
+      const out = JSON.parse(d2.choices?.[0]?.message?.content || "{}");
+      const seen = new Set();
+      const matches = [];
+      for(const m of (out.matches || [])){
+        const i = Number(m.i);
+        if(!Number.isInteger(i) || i < 0 || i >= entries.length) continue;
+        const id = entries[i].id;
+        if(seen.has(id)) continue;
+        seen.add(id);
+        matches.push({ id, why: String(m.why || "").slice(0, 120) });
+        if(matches.length >= 8) break;
+      }
+      return resp(200, { matches });
+    }catch(e){ return resp(502, { error: "Search failed" }); }
+  }
   if(method === "POST" && path === "/polish"){
     if(!body || !body.body) return resp(400, { error: "Bad request" });
     try{

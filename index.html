@@ -306,8 +306,15 @@
   .palscrim.on .pal{animation:palin .16s ease}
   @keyframes palin{from{transform:translateY(-8px) scale(.985);opacity:.5}}
   #palq{border:none;background:transparent;font:inherit;font-size:16px;color:var(--ink);
-    padding:15px 18px;outline:none;border-bottom:1px solid var(--line);width:100%}
+    padding:15px 18px 10px;outline:none;width:100%}
   #palq::placeholder{color:var(--faint)}
+  .paltabs{display:flex;gap:4px;align-items:center;padding:0 12px 8px;
+    border-bottom:1px solid var(--line)}
+  .paltab{border:none;background:none;padding:3px 9px;border-radius:6px;font-size:11px;
+    font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .paltab:hover{color:var(--ink);border:none}
+  .paltab.on{color:var(--ink);background:var(--washon)}
+  .palkbd{margin-left:auto}
   #palList{overflow-y:auto;padding:6px}
   .palsec{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
     color:var(--faint);padding:8px 10px 3px}
@@ -470,6 +477,11 @@
 
 <div class="palscrim" id="palette"><div class="pal">
   <input id="palq" placeholder="Search entries, categories, tags…">
+  <div class="paltabs">
+    <button class="paltab on" id="palTabText" type="button" title="Literal text search — every word must appear">Verbatim</button>
+    <button class="paltab" id="palTabIdea" type="button" title="AI finds entries related to an idea, even with different words">✦ Ideas</button>
+    <span class="hint kbonly palkbd"><span class="kbd">Tab</span> switch</span>
+  </div>
   <div id="palList"></div>
 </div></div>
 
@@ -1004,15 +1016,51 @@ function setTagFilter(name){
 }
 
 // ---- command palette (⌘/Ctrl+K) ----
-let palSel = 0, palItems = [];
+let palSel = 0, palItems = [], palMode = "text";
+let palIdeaQ = "", palIdeaHits = [], palIdeaState = "idle", palIdeaN = 0;
 const palOpen = () => $("palette").classList.contains("on");
 function openPalette(){
   $("palette").classList.add("on");
   $("palq").value = ""; palSel = 0;
+  palIdeaQ = ""; palIdeaHits = []; palIdeaState = "idle";
   palRefresh();
   $("palq").focus();
 }
 function closePalette(){ $("palette").classList.remove("on"); }
+function setPalMode(m){
+  if(palMode === m) return;
+  palMode = m; palSel = 0;
+  $("palTabText").classList.toggle("on", m === "text");
+  $("palTabIdea").classList.toggle("on", m === "idea");
+  $("palq").placeholder = m === "idea"
+    ? "Describe an idea — a theme, person, place…"
+    : "Search entries, categories, tags…";
+  palRefresh();
+  const q = $("palq").value.trim();
+  if(m === "idea" && q && q !== palIdeaQ) palIdeaRun();
+  $("palq").focus();
+}
+$("palTabText").onclick = () => setPalMode("text");
+$("palTabIdea").onclick = () => setPalMode("idea");
+// AI idea search: runs on Enter (each run reads the whole library), not per keystroke
+async function palIdeaRun(){
+  const q = $("palq").value.trim();
+  if(!q) return;
+  const n = ++palIdeaN;
+  palIdeaQ = q; palIdeaState = "loading"; palIdeaHits = []; palSel = 0;
+  palRefresh();
+  try{
+    const r = await api("POST", "/search", { q });
+    if(n !== palIdeaN) return; // a newer search superseded this one
+    palIdeaHits = (r.matches || [])
+      .map(m => ({ en: byId(m.id), why: m.why })).filter(x => x.en);
+    palIdeaState = "done";
+  }catch(e){
+    if(n !== palIdeaN || e.message === "auth") return;
+    palIdeaState = "error";
+  }
+  palRefresh();
+}
 
 function goToCategory(i){
   nav = i; saveUI();
@@ -1054,11 +1102,19 @@ function palBuild(qr){
         title:t, hint:"tag", run:() => setTagFilter(t) });
   });
   if(acts.length) items.push({sec:"Go to"}, ...acts);
+  // Every query word must appear somewhere; words can be in any order or field.
+  const words = q.split(/\s+/).filter(Boolean);
   const hits = q
     ? state.entries.map(e => {
-        const score = e.title.toLowerCase().includes(q) ? 3
-          : (e.tags || []).some(t => t.toLowerCase().includes(q)) ? 2
-          : e.body.toLowerCase().includes(q) ? 1 : 0;
+        const title = e.title.toLowerCase(), bodyL = e.body.toLowerCase(),
+          tags = (e.tags || []).join(" ").toLowerCase();
+        let score = 0;
+        for(const w of words){
+          if(title.includes(w)) score += 3;
+          else if(tags.includes(w)) score += 2;
+          else if(bodyL.includes(w)) score += 1;
+          else { score = 0; break; }
+        }
         return {e, score};
       }).filter(x => x.score).sort((a,b) => b.score - a.score).map(x => x.e)
     : state.entries.slice(0, 6);
@@ -1066,20 +1122,46 @@ function palBuild(qr){
     icon:`<span class="dots">${e.cats.slice(0, 3).map(c =>
       `<span class="dot" style="background:var(--c${c})"></span>`).join("")}</span>`,
     title: e.title || "Untitled",
-    snip: palSnip(e, q),
+    snip: palSnip(e, words.find(w => e.body.toLowerCase().includes(w)) || q),
     hint: `${wc(e.body)} w`,
-    run: () => {
-      if(!e.cats.includes(nav)) nav = e.cats.length ? e.cats[0] : 0;
-      saveUI(); qraw = query = ""; $("search").value = ""; tagFilter = null;
-      expanded = e.id; render();
-      const row = $("view").querySelector(`[data-id="${e.id}"]`);
-      if(row) row.scrollIntoView({block:"center"});
-    }
+    run: () => palGoEntry(e)
   })));
   return items;
 }
+function palGoEntry(e){
+  if(!e.cats.includes(nav)) nav = e.cats.length ? e.cats[0] : 0;
+  saveUI(); qraw = query = ""; $("search").value = ""; tagFilter = null;
+  expanded = e.id; render();
+  const row = $("view").querySelector(`[data-id="${e.id}"]`);
+  if(row) row.scrollIntoView({block:"center"});
+}
+function palIdeaItems(){
+  const q = $("palq").value.trim();
+  if(palIdeaState === "loading") return { items: [], msg: "✦ Searching the stacks…" };
+  if(palIdeaState === "error") return { items: [], msg: "Search failed — press Enter to retry." };
+  if(palIdeaHits.length){
+    const label = palIdeaQ.length > 34 ? palIdeaQ.slice(0, 34) + "…" : palIdeaQ;
+    return { items: [{sec:`Related to “${esc(label)}”`}, ...palIdeaHits.map(({en, why}) => ({
+      icon:`<span class="dots">${en.cats.slice(0, 3).map(c =>
+        `<span class="dot" style="background:var(--c${c})"></span>`).join("")}</span>`,
+      title: en.title || "Untitled",
+      snip: why ? "✦ " + esc(why) : esc(en.body.slice(0, 90)),
+      hint: `${wc(en.body)} w`,
+      run: () => palGoEntry(en)
+    }))] };
+  }
+  if(!q) return { items: [], msg: "Type an idea — a theme, person, place — and press Enter." };
+  if(q === palIdeaQ) return { items: [], msg: "Nothing in the stacks relates to that yet." };
+  return { items: [], msg: "Press Enter to search related entries." };
+}
 function palRefresh(){
-  palItems = palBuild($("palq").value);
+  let msg = "No matches.";
+  if(palMode === "idea"){
+    const r = palIdeaItems();
+    palItems = r.items; msg = r.msg || msg;
+  } else {
+    palItems = palBuild($("palq").value);
+  }
   const count = palItems.filter(x => !x.sec).length;
   if(palSel >= count) palSel = Math.max(0, count - 1);
   let idx = -1;
@@ -1092,7 +1174,7 @@ function palRefresh(){
               x.snip ? `<span class="palsnip">${x.snip}</span>` : ""}</span>
             <span class="palhint">${x.hint || ""}</span>
           </div>`)).join("")
-    : `<div class="palempty">No matches.</div>`;
+    : `<div class="palempty">${msg}</div>`;
   const on = $("palList").querySelector(".palitem.on");
   if(on) on.scrollIntoView({block:"nearest"});
 }
@@ -1106,7 +1188,15 @@ $("palq").onkeydown = e => {
   const count = palItems.filter(x => !x.sec).length;
   if(e.key === "ArrowDown"){ e.preventDefault(); if(count){ palSel = (palSel + 1) % count; palRefresh(); } }
   else if(e.key === "ArrowUp"){ e.preventDefault(); if(count){ palSel = (palSel - 1 + count) % count; palRefresh(); } }
-  else if(e.key === "Enter"){ e.preventDefault(); palRun(palSel); }
+  else if(e.key === "Tab"){ e.preventDefault(); setPalMode(palMode === "text" ? "idea" : "text"); }
+  else if(e.key === "Enter"){
+    e.preventDefault();
+    if(palMode === "idea"){
+      const q = $("palq").value.trim();
+      if(q && (q !== palIdeaQ || palIdeaState === "error")) return palIdeaRun();
+    }
+    palRun(palSel);
+  }
 };
 $("palette").onclick = e => {
   if(e.target === $("palette")) return closePalette();
