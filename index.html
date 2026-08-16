@@ -526,7 +526,7 @@ const PIQ_MAP = [[7,8],[1],[],[6],[2,3],[5,4],[6]]; // PIQs each category feeds
 const PIQ_TIPS = [
   "PIQ 7 wants impact you can point at; PIQ 8 is the wildcard for identity and perspective stories that fit nowhere else.",
   "Titles optional — sustained effort and visible change count more than the org chart.",
-  "UC never asks “why this school” — bank these entries for Common App supplementals instead.",
+  "UC never asks “why this school” — shelve these entries for Common App supplementals instead.",
   "No “why major” PIQ exists — PIQ 6 is the closest cousin, and UC weighs major preparation for selective majors.",
   "UC defines creative broadly — an app or a club curriculum counts. If it’s your strongest card, PIQ 3 may be its home.",
   "Show the steps, not the drama — and answer PIQ 5’s academic-impact question in a sentence.",
@@ -697,7 +697,7 @@ async function clerkInit(){
   }
   clearTimeout(watchdog);
   if(window.Clerk.user){
-    $("lockText").textContent = "Opening your bank…";
+    $("lockText").textContent = "Opening the library…";
     lockHide(); boot();
     return;
   }
@@ -1279,7 +1279,7 @@ async function matchRun(){
   const prompt = $("matchQ").value.trim();
   if(prompt.length < 4) return toast("Paste a bit more of the prompt");
   $("matchGo").disabled = true;
-  $("matchList").innerHTML = `<div class="matchempty">✦ Mining your bank…</div>`;
+  $("matchList").innerHTML = `<div class="matchempty">✦ Searching the stacks…</div>`;
   try{
     const r = await api("POST", "/match", { prompt });
     const hits = (r.matches || [])
@@ -1288,7 +1288,7 @@ async function matchRun(){
     matchPicks = hits.map(x => x.en);
     matchHits = hits; matchPrompt = prompt;
     if(!hits.length){
-      $("matchList").innerHTML = `<div class="matchempty">Nothing in the bank fits this prompt yet — try a quick dump first.</div>`;
+      $("matchList").innerHTML = `<div class="matchempty">Nothing in the stacks fits this prompt yet — try a quick dump first.</div>`;
       return;
     }
     $("matchList").innerHTML =
@@ -1749,7 +1749,7 @@ function render(){
   $("viewhead").innerHTML = `<h2><span class="hl" style="--hc:var(--c${i})">${CATEGORIES[i]}</span></h2>
     <p class="sub2">${PROMPTS[i]}${list.length > 1 ? ` <button class="linkbtn nowrap" data-copyall>Copy all ${list.length}</button>` : ""}${unusedBtn ? ` ${unusedBtn}` : ""}${
       full.length > 0 && full.length < 3 && !unusedOnly
-        ? `<span class="thinnote">Only ${full.length} stor${full.length === 1 ? "y" : "ies"} banked here — worth a quick dump session.</span>` : ""} ${
+        ? `<span class="thinnote">Only ${full.length} stor${full.length === 1 ? "y" : "ies"} shelved here — worth a quick dump session.</span>` : ""} ${
       i === 2 ? `<button class="linkbtn nowrap" data-map>${mapOpen ? "hide prompt map" : "school prompt map"}</button>`
               : `<button class="linkbtn nowrap" data-piq>${piqOpen ? "hide PIQ guide" : "UC PIQ guide"}</button>`}</p>${
       i === 2 ? (mapOpen ? `<div class="piqguide">${mapGuideHTML()}</div>` : "")
@@ -1757,7 +1757,7 @@ function render(){
   $("view").innerHTML = list.length
     ? list.map(e => rowHTML(e, i, false)).join("")
     : (n === 0
-      ? `<div class="empty">Your bank is empty. Hit <strong>✦ Quick dump</strong> and write any story,
+      ? `<div class="empty">The library is empty. Hit <strong>✦ Quick dump</strong> and write any story,
          detail, or moment you might use — AI titles it and files it into the right categories.
          An entry can live in more than one category, and sorting can always change later.</div>`
       : unusedOnly && full.length
