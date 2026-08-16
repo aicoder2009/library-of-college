@@ -725,7 +725,9 @@ async function clerkInit(){
       cardBox: { boxShadow: "none" },
       headerTitle: { fontFamily: v("--serif"), fontWeight: "600", letterSpacing: "-.01em" },
       formButtonPrimary: { fontWeight: "600", fontSize: "14px", textTransform: "none" },
-      formFieldInput: { fontSize: "14px" }
+      formFieldInput: { fontSize: "14px" },
+      socialButtonsBlockButton: { color: v("--ink"), borderColor: v("--line") },
+      socialButtonsBlockButtonText: { color: v("--ink") }
     }
   }});
   window.Clerk.addListener(({ user }) => { if(user && isLocked()) location.reload(); });
