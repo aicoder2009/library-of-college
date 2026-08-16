@@ -11,18 +11,18 @@
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Archive">
-<title>Archive</title>
+<meta name="apple-mobile-web-app-title" content="LoC">
+<title>Library of College</title>
 <meta name="description" content="Where the stories live until the essay needs them.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Archive">
+<meta property="og:title" content="Library of College">
 <meta property="og:description" content="Where the stories live until the essay needs them.">
-<meta property="og:image" content="https://thearchival.vercel.app/og-image.png">
-<meta property="og:url" content="https://thearchival.vercel.app">
+<meta property="og:image" content="https://liboc.vercel.app/og-image.png">
+<meta property="og:url" content="https://liboc.vercel.app">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Archive">
+<meta name="twitter:title" content="Library of College">
 <meta name="twitter:description" content="Where the stories live until the essay needs them.">
-<meta name="twitter:image" content="https://thearchival.vercel.app/og-image.png">
+<meta name="twitter:image" content="https://liboc.vercel.app/og-image.png">
 <style>
   :root{
     --bg:#faf8f3; --panel:#fffdf8; --ink:#221f1a; --muted:#756e64; --faint:#aca397;
@@ -409,7 +409,7 @@
 <body>
 <div class="lockscrim" id="lock"><div class="lockcard">
   <div class="lockicon">🔒</div>
-  <h1>Archive</h1>
+  <h1>Library of College</h1>
   <p id="lockText">Loading…</p>
   <div id="clerkMount"></div>
   <div class="lockerr" id="lockErr"></div>
@@ -417,7 +417,7 @@
 <div class="app">
   <aside class="side">
     <div class="side-top">
-      <div class="brand">Archive</div>
+      <div class="brand">Library of College</div>
       <button class="new" id="newBtn">+ New entry</button>
     </div>
     <nav id="nav"></nav>
@@ -593,9 +593,9 @@ function mapGuideHTML(){
   return `<span class="rules">Common App supplementals · who asks what · from your Essay Launch notes</span>${rows}
     <div class="piqtip">File per-school research below (classes, professors, programs) and tag entries with the school once used — tags are your used-in tracker.</div>`;
 }
-const KEY = "evidence-bank-v1";
-const KEY_UI = "evidence-bank-ui";
-const KEY_DRAFT = "evidence-bank-draft";
+const KEY = "liboc-v1";
+const KEY_UI = "liboc-ui";
+const KEY_DRAFT = "liboc-draft";
 
 let state = load();
 let nav = 0, query = "", qraw = "", tagFilter = null, unusedOnly = false, piqOpen = false, mapOpen = true;
@@ -701,7 +701,7 @@ async function clerkInit(){
     lockHide(); boot();
     return;
   }
-  $("lockText").textContent = "Sign in to open your bank.";
+  $("lockText").textContent = "Sign in to open the library.";
   // Dress the Clerk card in the app's own palette (tracks light/dark automatically)
   const css = getComputedStyle(document.documentElement);
   const v = n => css.getPropertyValue(n).trim();
@@ -1561,7 +1561,7 @@ $("export").onclick = () => {
   const blob = new Blob([JSON.stringify(state.entries, null, 2)], {type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `archive-${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `liboc-${new Date().toISOString().slice(0,10)}.json`;
   a.click(); URL.revokeObjectURL(a.href);
   state.backupRev = state.rev;
   localStorage.setItem(KEY, JSON.stringify(state));

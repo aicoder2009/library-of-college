@@ -1,6 +1,6 @@
 {
-  "name": "Archive",
-  "short_name": "Archive",
+  "name": "Library of College",
+  "short_name": "LoC",
   "description": "Where the stories live until the essay needs them.",
   "start_url": "/",
   "display": "standalone",
