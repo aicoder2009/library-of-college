@@ -762,24 +762,31 @@ async function api(method, path, body){
   return data;
 }
 
-let pushT, syncState = "synced";
+let pushT = null, syncState = "synced";
+function doPush(){
+  pushT = null;
+  api("PUT", "/entries", state).then(() => {
+    if(syncState !== "synced"){ syncState = "synced"; renderStatus(); }
+  }).catch(e => {
+    if(e.message === "auth") return;
+    if(e.status === 409) return mergeSync();
+    syncState = "offline"; renderStatus();
+    toast("Couldn’t sync — changes are safe on this device");
+  });
+}
 function push(){
   clearTimeout(pushT);
-  pushT = setTimeout(() => {
-    api("PUT", "/entries", state).then(() => {
-      if(syncState !== "synced"){ syncState = "synced"; renderStatus(); }
-    }).catch(e => {
-      if(e.message === "auth") return;
-      if(e.status === 409) return mergeSync();
-      syncState = "offline"; renderStatus();
-      toast("Couldn’t sync — changes are safe on this device");
-    });
-  }, 600);
+  pushT = setTimeout(doPush, 600);
 }
+// Leaving the tab (switching apps on mobile, closing the window) shouldn't
+// strand an edit inside the debounce window — flush it right away.
+document.addEventListener("visibilitychange", () => {
+  if(document.visibilityState === "hidden" && pushT){ clearTimeout(pushT); doPush(); }
+});
 
 // Another device wrote first: pull its state, merge by id (newer edit wins,
 // nothing is dropped), then push the union with a rev ahead of the server's.
-async function mergeSync(depth = 0){
+async function mergeSync(depth = 0, msg = "Merged changes from another device"){
   if(depth >= 3){ syncState = "offline"; renderStatus(); return; }
   try{
     const server = await api("GET", "/entries");
@@ -795,9 +802,9 @@ async function mergeSync(depth = 0){
     render();
     await api("PUT", "/entries", state);
     syncState = "synced"; renderStatus();
-    toast("Merged changes from another device");
+    toast(msg);
   }catch(e){
-    if(e.status === 409) return mergeSync(depth + 1);
+    if(e.status === 409) return mergeSync(depth + 1, msg);
     if(e.message !== "auth"){ syncState = "offline"; renderStatus(); }
   }
 }
@@ -817,12 +824,19 @@ function renderStatus(){
 async function boot(){
   try{
     const s = await api("GET", "/entries");
-    if(s && Array.isArray(s.entries)){
-      state = s;
-      localStorage.setItem(KEY, JSON.stringify(state));
+    if(s && Array.isArray(s.entries)
+        && state.entries.length && (state.rev || 0) > (s.rev || 0)){
+      // Local changes never reached the server (e.g. the tab closed before the
+      // debounced sync fired) — merge them back in instead of dropping them.
+      await mergeSync(0, "Recovered unsynced changes from this device");
+    } else {
+      if(s && Array.isArray(s.entries)){
+        state = s;
+        localStorage.setItem(KEY, JSON.stringify(state));
+      }
+      syncState = "synced";
+      render();
     }
-    syncState = "synced";
-    render();
   }catch(e){
     if(e.message !== "auth"){ syncState = "offline"; render(); toast("Offline — using local copy"); }
   }
