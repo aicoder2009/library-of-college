@@ -112,14 +112,14 @@ Note:
         headers: { "content-type": "application/json",
           authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
         body: JSON.stringify({
-          model: "gpt-4.1-mini",
-          max_tokens: 700,
-          temperature: 0.2,
+          model: "gpt-5.6-sol",
+          reasoning_effort: "low",
+          max_completion_tokens: 1500,
           response_format: { type: "json_object" },
           messages: [{ role: "user", content:
 `These are a student's evidence notes for college essays. Given the essay prompt, pick the notes that genuinely fit BEST as material for answering it, best first — usually 3-8, fewer if few genuinely fit.
 
-For each pick, explain the connection concretely: name the specific detail, moment, or theme in the note and the part of the prompt it answers. Never a generic reason that could apply to any note.
+For each pick, explain the connection concretely: name the specific detail, moment, or theme in the note and the part of the prompt it answers. Never a generic reason that could apply to any note. Address the student as "you" (or use subjectless fragments) — never third person.
 
 Reply ONLY with JSON: {"matches": [{"i": <note number>, "fit": "strong" or "possible", "why": "<the concrete link, one sentence, max 25 words>"}]}
 "strong" = answers the prompt as-is. "possible" = works with reframing, or covers only part of the prompt.
@@ -164,14 +164,14 @@ ${notes}` }]
         headers: { "content-type": "application/json",
           authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
         body: JSON.stringify({
-          model: "gpt-4.1-mini",
-          max_tokens: 300,
-          temperature: 0.2,
+          model: "gpt-5.6-sol",
+          reasoning_effort: "none", // interactive palette search — speed over deliberation
+          max_completion_tokens: 700,
           response_format: { type: "json_object" },
           messages: [{ role: "user", content:
 `These are a student's evidence notes for college essays. The student is searching their library by IDEA, not exact words. Pick the notes genuinely related to the search — by theme, topic, person, place, event, or concept — best first, up to 8. Fewer if few relate; an empty list is a valid answer.
 
-Reply ONLY with JSON: {"matches": [{"i": <note number>, "why": "<the connection, max 12 words>"}]}
+Reply ONLY with JSON: {"matches": [{"i": <note number>, "why": "<the connection, max 12 words, addressing the student as "you" or subjectless — never third person>"}]}
 
 Search:
 ${q}
