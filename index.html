@@ -111,6 +111,10 @@
   .piqrow:first-of-type{border-top:none;margin-top:4px;padding-top:0}
   .piqacts{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:5px;font-size:12.5px}
   .piqtip{margin-top:11px;border-top:1px solid var(--line);padding-top:9px}
+  .mapform{display:flex;flex-direction:column;gap:6px}
+  .mapform .taginput{width:100%;box-sizing:border-box;font-size:13px;padding:6px 9px}
+  .mapform textarea.taginput{resize:vertical;line-height:1.5;min-height:44px}
+  .mapform .primary{font-size:13px;padding:5px 12px}
 
   .side-foot{margin-top:auto;border-top:1px solid var(--line);padding-top:14px;
     display:flex;flex-direction:column;gap:10px}
@@ -358,6 +362,24 @@
   .matchwhy{font-size:13px;color:var(--muted);font-style:italic}
   .matchtags{display:flex;gap:6px;flex-wrap:wrap;margin-top:1px}
   .matchempty{color:var(--muted);font-size:13.5px;padding:10px 2px}
+  .switch{display:inline-flex;align-items:center;gap:7px;border:none;background:none;
+    padding:2px 0;color:var(--muted);font-size:12.5px;font-weight:600;white-space:nowrap}
+  .switch:hover{border:none;color:var(--ink)}
+  .swtrack{width:26px;height:15px;border-radius:999px;border:1px solid var(--line);
+    background:var(--wash);display:inline-flex;align-items:center;padding:1px;
+    box-sizing:content-box;transition:background .15s,border-color .15s}
+  .swknob{width:11px;height:11px;border-radius:50%;background:var(--muted);
+    transition:transform .15s,background .15s}
+  .switch[aria-checked="true"]{color:var(--ink)}
+  .switch[aria-checked="true"] .swtrack{background:var(--ink);border-color:var(--ink)}
+  .switch[aria-checked="true"] .swknob{transform:translateX(11px);background:var(--bg)}
+  .mbrief{margin:12px 2px 16px;padding:14px 16px;background:var(--wash);
+    border-radius:12px;font-size:13.5px}
+  .mbrief h4{margin:0 0 6px;font-size:13.5px;font-weight:600;color:var(--ink)}
+  .mbrief p{margin:0 0 14px;color:var(--muted);line-height:1.55}
+  .mbrief ul{margin:0 0 14px;padding-left:22px;color:var(--muted);line-height:1.55}
+  .mbrief li{padding-left:4px}
+  .mbrief>:last-child{margin-bottom:0}
 
   /* bulk bar + toast */
   .bulk{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--panel);
@@ -503,8 +525,11 @@
   <textarea id="matchQ" rows="3"
     placeholder="Paste the essay prompt — e.g. “Describe a community you belong to…”"></textarea>
   <div class="dumprow">
-    <span class="hint">GPT-5.6 Sol picks your best-fitting stories</span>
+    <span class="hint" id="matchHint">GPT-5.6 Sol picks your best-fitting stories</span>
     <span class="spacer"></span>
+    <button class="switch" id="matchDeep" type="button" role="switch" aria-checked="true">
+      <span>✦ Breakdown</span><span class="swtrack"><span class="swknob"></span></span>
+    </button>
     <button class="primary" id="matchGo">Find evidence</button>
   </div>
   <div id="matchList"></div>
@@ -570,44 +595,57 @@ function piqGuideHTML(i){
   return `<span class="rules">UC PIQs · answer any 4 of 8 · 350 words each · ${status}</span>${rows}
     <div class="piqtip">${PIQ_TIPS[i]}</div>`;
 }
-const SUPP_MAP = [
-  { t:"Community that shaped you", sch:"Columbia · Cornell · Duke · Michigan · UPenn · Yale",
-    q:"A community you are part of and how it has shaped who you are.", tag:"Supp community" },
-  { t:"A time you improved your community", sch:"UC · MIT · Dartmouth",
-    q:"A specific time your participation helped shape or change a community for the better.", tag:"Supp service" },
-  { t:"How you’ll contribute on campus", sch:"Northwestern · UPenn · Columbia · Stanford",
-    q:"How you will contribute to a community on a college campus.", tag:"Supp contribute" },
-  { t:"Identity & perspective", sch:"Dartmouth · Duke · Vanderbilt · CalTech · Northwestern",
-    q:"An identity or background that has shaped you and the perspective it gives you.", tag:"Supp identity" },
-  { t:"Hometown & upbringing", sch:"Brown · Villanova · Tufts · Notre Dame · Chapman",
-    q:"How your hometown and upbringing shaped who you are today.", tag:"Supp hometown" },
-  { t:"Three words / defining attribute", sch:"Brown · USC · Cornell · Amherst · MIT · Dartmouth",
-    q:"Words or attributes that describe you, with proof from daily life.", tag:"Supp words" },
-  { t:"Role model / thank-you note", sch:"Yale · UPenn",
-    q:"A person outside your family who shaped you, and what they mean to you.", tag:"Supp mentor" },
-  { t:"Disagreement & differing views", sch:"Boston College · Dartmouth · Duke · Harvard · Yale · MIT",
-    q:"A time a differing perspective challenged you and how you bridged the gap.", tag:"Supp disagree" },
-  { t:"When plans fell apart", sch:"MIT",
-    q:"A time something did not go as planned and how you adapted.", tag:"Supp setback" },
-  { t:"Joy & varied interests", sch:"Brown · CalTech · Dartmouth · Duke · Princeton · Hollis · UC · Yale · MIT",
-    q:"An activity outside academics that brings you joy or a sense of accomplishment.", tag:"Supp joy" }
-];
 function tagCount(tag){
   return state.entries.filter(e => (e.tags || []).some(t => t.toLowerCase() === tag.toLowerCase())).length;
 }
+// Your own supplemental prompts (Common App, UC PIQs, school portals) — synced
+// with the library. Each: {id, q: full prompt, sch: school(s), tag, createdAt}.
+const mapPrompts = () => state.prompts || [];
+// Used-in tag for a prompt: the first school named on it ("UC · MIT" → "UC").
+const schTag = sch => (sch || "").split(/[·,]/)[0].trim();
 function mapGuideHTML(){
-  const rows = SUPP_MAP.map((a,idx) => {
-    const k = tagCount(a.tag);
-    return `<div class="piqrow"><span class="q">${a.t}</span>
-      <span class="sch">${a.sch}</span>
+  const rows = mapPrompts().map(p => {
+    const tag = schTag(p.sch);
+    const k = tag ? tagCount(tag) : 0;
+    return `<div class="piqrow"><span class="q">${esc(p.q)}</span>
+      ${p.sch ? `<span class="sch">${esc(p.sch)}</span>` : ""}
       <div class="piqacts">
-        <button class="linkbtn" data-mapmatch="${idx}">⌕ find evidence</button>
-        ${k ? `<span class="rtag mini" data-tag="${a.tag}" title="See everything picked for this prompt">${a.tag} · ${k} picked</span>`
+        <button class="linkbtn" data-mapmatch="${p.id}">⌕ find evidence</button>
+        ${k ? `<span class="rtag mini" data-tag="${esc(tag)}" title="See everything picked for this prompt">${esc(tag)} · ${k} picked</span>`
             : `<span class="hint">none picked yet</span>`}
+        <button class="linkbtn" data-mapdel="${p.id}" title="Remove this prompt from the map">remove</button>
       </div></div>`;
   }).join("");
-  return `<span class="rules">Common App supplementals · who asks what · from your Essay Launch notes</span>${rows}
+  return `<span class="rules">Your prompt map · Common App, UCs & beyond</span>${
+    rows || `<div class="piqrow"><span class="hint">No prompts yet — add the supplementals you’re actually answering, from any application.</span></div>`}
+    <div class="piqacts" style="margin-top:11px"><button class="linkbtn" data-mapadd>＋ add a prompt</button></div>
     <div class="piqtip">File per-school research below (classes, professors, programs) and tag entries with the school once used — tags are your used-in tracker.</div>`;
+}
+// Inline add form — same pattern as the tag inputs: inserted on demand,
+// wired directly, closed by Esc; a full render (after save) removes it.
+function showMapAdd(btn){
+  if($("mapAddQ")) return $("mapAddQ").focus();
+  btn.closest(".piqacts").insertAdjacentHTML("beforebegin", `<div class="piqrow mapform">
+      <textarea id="mapAddQ" class="taginput" rows="2" placeholder="Paste the essay prompt…"></textarea>
+      <input id="mapAddSch" class="taginput" placeholder="School(s) — e.g. UC, or Yale · UPenn">
+      <div class="piqacts"><button class="primary" id="mapAddGo">Add</button>
+        <span class="hint">Enter to add · Esc to cancel</span></div>
+    </div>`);
+  const q = $("mapAddQ"), sch = $("mapAddSch");
+  const save = () => {
+    const qv = q.value.trim(), sv = sch.value.trim();
+    if(qv.length < 4) return toast("Paste a bit more of the prompt");
+    state.prompts = [{ id: newId(), q: qv.slice(0, 600), sch: sv.slice(0, 120),
+      createdAt: Date.now() }, ...mapPrompts()];
+    persist();
+  };
+  const keys = ev => {
+    if(ev.key === "Enter" && (ev.target === sch || ev.metaKey)){ ev.preventDefault(); save(); }
+    else if(ev.key === "Escape"){ ev.stopPropagation(); q.closest(".mapform").remove(); }
+  };
+  q.onkeydown = keys; sch.onkeydown = keys;
+  $("mapAddGo").onclick = save;
+  q.focus();
 }
 const KEY = "liboc-v1";
 const KEY_UI = "liboc-ui";
@@ -615,18 +653,19 @@ const KEY_DRAFT = "liboc-draft";
 
 let state = load();
 let nav = 0, query = "", qraw = "", tagFilter = null, unusedOnly = false, piqOpen = false, mapOpen = true;
+let matchDeep = true; // run the prompt breakdown alongside the matches (persisted)
 let picked = new Set(), selected = new Set(), editing = null, expanded = null, curSugs = [];
 let pending = new Set(); // entry ids waiting on an AI title/classification
 let polished = new Map(); // entry id -> AI-polished body (session-only, never saved)
 let viewIds = [];
-try{ const u = JSON.parse(localStorage.getItem(KEY_UI)); if(u && u.nav >= 0 && u.nav <= 6) nav = +u.nav; if(u) unusedOnly = !!u.unusedOnly; }catch(e){}
+try{ const u = JSON.parse(localStorage.getItem(KEY_UI)); if(u && u.nav >= 0 && u.nav <= 6) nav = +u.nav; if(u) unusedOnly = !!u.unusedOnly; if(u && "matchDeep" in u) matchDeep = !!u.matchDeep; }catch(e){}
 
 function load(){
   try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s && s.entries) return s; }catch(e){}
   return { entries:[], rev:0, backupRev:0 };
 }
 function persist(){ state.rev++; localStorage.setItem(KEY, JSON.stringify(state)); render(); push(); }
-function saveUI(){ try{ localStorage.setItem(KEY_UI, JSON.stringify({nav, unusedOnly})); }catch(e){} }
+function saveUI(){ try{ localStorage.setItem(KEY_UI, JSON.stringify({nav, unusedOnly, matchDeep})); }catch(e){} }
 
 const newId = () => (crypto.randomUUID ? crypto.randomUUID()
   : Date.now().toString(36) + Math.random().toString(36).slice(2));
@@ -1372,32 +1411,68 @@ $("matchQ").onkeydown = e => {
 };
 $("matchGo").onclick = matchRun;
 let matchPicks = [], matchHits = [], matchPrompt = "";
+let matchDecon = "", matchGap = "", matchOutline = [], matchCollege = "", matchAdvice = "";
+function matchDeepLabel(){
+  const b = $("matchDeep");
+  b.setAttribute("aria-checked", matchDeep);
+  b.title = matchDeep
+    ? "On — also reads the prompt for its real ask, names the school it’s from, outlines an arc, and flags what’s missing. Click for matches only (faster)."
+    : "Off — just matches your notes to the prompt. Click to add the deconstruction, school read, outline, and gap analysis.";
+  // The hint doubles as visible state — tooltips don't exist on touch.
+  $("matchHint").textContent = matchDeep
+    ? "GPT-5.6 Sol picks stories + outline, school read & gaps"
+    : "GPT-5.6 Sol picks your best-fitting stories";
+}
+$("matchDeep").onclick = () => { matchDeep = !matchDeep; saveUI(); matchDeepLabel(); };
+matchDeepLabel();
+// The breakdown panel — empty string when the toggle is off, or when an older
+// backend answered without the extra fields.
+function briefHTML(){
+  if(!matchDeep) return "";
+  const p = (h, b) => b ? `<h4>${esc(h)}</h4><p>${esc(b)}</p>` : "";
+  const parts = p("Prompt deconstruction", matchDecon)
+    + (matchCollege ? p(`Reads like ${matchCollege}`, matchAdvice) : "")
+    + (matchOutline.length ? `<h4>Suggested outline</h4><ul>${
+        matchOutline.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "")
+    + p("Gap analysis", matchGap);
+  return parts ? `<div class="mbrief">${parts}</div>` : "";
+}
 function aiBrief(){
-  return `I'm drafting a college supplemental essay. Below are the prompt and my evidence notes — help me pick the strongest angle and draft from them.
-
-ESSAY PROMPT:
-${matchPrompt}
-
-MY EVIDENCE NOTES (${matchHits.length}):
-
-` + matchHits.map(({en, why, fit}, i) =>
+  const parts = [`ESSAY PROMPT:\n${matchPrompt}`];
+  if(matchDeep){
+    if(matchDecon) parts.push(`PROMPT DECONSTRUCTION:\n${matchDecon}`);
+    if(matchCollege) parts.push(`SCHOOL: ${matchCollege}\n${matchAdvice}`);
+    if(matchOutline.length)
+      parts.push(`SUGGESTED OUTLINE:\n${matchOutline.map(x => "- " + x).join("\n")}`);
+    if(matchGap) parts.push(`GAP ANALYSIS:\n${matchGap}`);
+  }
+  parts.push(`--- MY VERBATIM EVIDENCE NOTES ---\n\n` + matchHits.map(({en, why, fit}, i) =>
     `${i + 1}. ${en.title || "Untitled"} (${wc(en.body)} words${fit === "strong" ? " · strong fit" : ""})${
-      why ? `\n   Why it fits: ${why}` : ""}\n${en.body}`).join("\n\n");
+      why ? `\n   Why it fits: ${why}` : ""}\n${en.body}`).join("\n\n"));
+  return parts.join("\n\n");
 }
 async function matchRun(){
   const prompt = $("matchQ").value.trim();
   if(prompt.length < 4) return toast("Paste a bit more of the prompt");
   $("matchGo").disabled = true;
-  $("matchList").innerHTML = `<div class="matchempty">✦ GPT-5.6 Sol is searching the stacks…</div>`;
+  $("matchList").innerHTML = `<div class="matchempty">✦ GPT-5.6 Sol is searching the stacks${
+    matchDeep ? " and building an outline" : ""}…</div>`;
   try{
-    const r = await api("POST", "/match", { prompt });
+    const r = await api("POST", "/match", { prompt, deep: matchDeep });
     const hits = (r.matches || [])
       .map(m => ({ en: byId(m.id), why: m.why, fit: m.fit }))
       .filter(x => x.en);
     matchPicks = hits.map(x => x.en);
     matchHits = hits; matchPrompt = prompt;
+    matchDecon = r.deconstruction || "";
+    matchGap = r.gap_analysis || "";
+    matchOutline = r.outline || [];
+    matchCollege = r.college || "";
+    matchAdvice = r.college_advice || "";
     if(!hits.length){
-      $("matchList").innerHTML = `<div class="matchempty">Nothing in the stacks fits this prompt yet — try a quick dump first.</div>`;
+      // Keep the breakdown — when nothing fits, the gap analysis is the useful part.
+      $("matchList").innerHTML = briefHTML()
+        + `<div class="matchempty">Nothing in the stacks fits this prompt yet — try a quick dump first.</div>`;
       return;
     }
     const row = ({en, why}) => `<div class="matchitem" data-id="${en.id}">
@@ -1416,7 +1491,8 @@ async function matchRun(){
     const sec = (label, arr) => arr.length
       ? `<div class="palsec">${label}</div>` + arr.map(row).join("") : "";
     $("matchList").innerHTML =
-      `<div class="matchhead">${hits.length} match${hits.length === 1 ? "" : "es"} · <button class="linkbtn" id="matchCopy" title="Copy the prompt + these notes as a paste-ready drafting brief">Copy for AI</button> · <button class="linkbtn" id="matchUse" title="Tag every match with the essay/school you're drafting for">mark all used in…</button></div>`
+      briefHTML()
+      + `<div class="matchhead">${hits.length} match${hits.length === 1 ? "" : "es"} · <button class="linkbtn" id="matchCopy" title="Copy the prompt, the breakdown, and your verbatim notes as a paste-ready drafting brief">Copy Drafting Brief</button> · <button class="linkbtn" id="matchUse" title="Tag every match with the essay/school you're drafting for">mark all used in…</button></div>`
       + sec("Strong fits", strong) + sec("Worth a look", maybe);
     $("matchCopy").onclick = () => copy(aiBrief(), "Copied drafting brief — paste into a chat");
     $("matchUse").onclick = () => {
@@ -1499,11 +1575,24 @@ $("viewhead").onclick = e => {
   }
   else if(e.target.closest("[data-piq]")){ piqOpen = !piqOpen; render(); }
   else if(e.target.closest("[data-mapmatch]")){
-    const a = SUPP_MAP[+e.target.closest("[data-mapmatch]").dataset.mapmatch];
+    const a = mapPrompts().find(p => p.id === e.target.closest("[data-mapmatch]").dataset.mapmatch);
+    if(!a) return;
     openMatch();
-    matchSuggestTag = a.tag;
+    matchSuggestTag = schTag(a.sch) || null;
     $("matchQ").value = a.q;
     matchRun();
+  }
+  else if(e.target.closest("[data-mapadd]")) showMapAdd(e.target.closest("[data-mapadd]"));
+  else if(e.target.closest("[data-mapdel]")){
+    const id = e.target.closest("[data-mapdel]").dataset.mapdel;
+    const idx = mapPrompts().findIndex(p => p.id === id);
+    if(idx < 0) return;
+    const [removed] = state.prompts.splice(idx, 1);
+    persist();
+    toastAction("Removed prompt", "Undo", () => {
+      state.prompts.splice(Math.min(idx, state.prompts.length), 0, removed);
+      persist();
+    });
   }
   else if(e.target.closest("[data-map]")){ mapOpen = !mapOpen; render(); }
   else if(e.target.closest("[data-tag]")) setTagFilter(e.target.closest("[data-tag]").dataset.tag);

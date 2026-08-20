@@ -1,4 +1,4 @@
-import { DynamoDBClient, GetItemCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, GetItemCommand, PutItemCommand, DeleteItemCommand } from "@aws-sdk/client-dynamodb";
 import { createPublicKey, verify as cryptoVerify } from "node:crypto";
 
 const db = new DynamoDBClient({});
@@ -100,12 +100,34 @@ Note:
     if(!body || typeof body.prompt !== "string" || body.prompt.trim().length < 4)
       return resp(400, { error: "Bad request" });
     const prompt = body.prompt.slice(0, 2000);
+    // The breakdown roughly doubles the reasoning budget, so the client can opt out.
+    // Absent flag = on, so an older client keeps its current behaviour.
+    const deep = body.deep !== false;
     const d = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: "data" } } }));
     const state = d.Item ? JSON.parse(d.Item.state.S) : { entries: [] };
     const entries = state.entries || [];
     if(!entries.length) return resp(200, { matches: [] });
     const notes = entries.map((e, i) => `${i}. ${e.title || "Untitled"} — ${
       String(e.body || "").slice(0, 600).replace(/\s+/g, " ")}`).join("\n");
+    const task = deep
+? `First, deconstruct what the prompt is secretly asking for beneath the surface.
+Then, work out which college or university this prompt is from, and what that school in particular rewards in an answer to it.
+Then, select the matching notes and explain the connection concretely.
+Then, write a gap analysis: what is missing from these selected notes to answer the prompt completely.
+Finally, generate a structural outline showing how to arrange these specific notes into a narrative arc.`
+: `Select the notes and explain the connection concretely: name the specific detail, moment, or theme in the note and the part of the prompt it answers. Never a generic reason that could apply to any note.`;
+    const schema = deep
+? `{
+  "deconstruction": "<what the prompt is actually asking for, max 30 words>",
+  "college": "<the school this prompt is from, or an empty string if you can't identify it confidently>",
+  "college_advice": "<advice that names that school and says what it rewards here, max 45 words>",
+  "matches": [{"i": <note number>, "fit": "strong" or "possible", "why": "<the concrete link, one sentence, max 25 words>"}],
+  "gap_analysis": "<what is missing to fully answer the prompt, max 40 words>",
+  "outline": ["<bullet 1>", "<bullet 2>", "<bullet 3>"]
+}
+
+Identify the school only from what the prompt itself gives you — its wording, named programs, traditions, or stated values. Never guess: if you are not confident, set "college" and "college_advice" to empty strings. Naming the wrong school is worse than naming none.`
+: `{"matches": [{"i": <note number>, "fit": "strong" or "possible", "why": "<the concrete link, one sentence, max 25 words>"}]}`;
     try{
       const r = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
@@ -114,14 +136,18 @@ Note:
         body: JSON.stringify({
           model: "gpt-5.6-sol",
           reasoning_effort: "low",
-          max_completion_tokens: 1500,
+          max_completion_tokens: deep ? 2500 : 1500,
           response_format: { type: "json_object" },
           messages: [{ role: "user", content:
 `These are a student's evidence notes for college essays. Given the essay prompt, pick the notes that genuinely fit BEST as material for answering it, best first — usually 3-8, fewer if few genuinely fit.
 
-For each pick, explain the connection concretely: name the specific detail, moment, or theme in the note and the part of the prompt it answers. Never a generic reason that could apply to any note. Address the student as "you" (or use subjectless fragments) — never third person.
+${task}
 
-Reply ONLY with JSON: {"matches": [{"i": <note number>, "fit": "strong" or "possible", "why": "<the concrete link, one sentence, max 25 words>"}]}
+Address the student as "you" (or use subjectless fragments) — never third person.
+
+Reply ONLY with JSON:
+${schema}
+
 "strong" = answers the prompt as-is. "possible" = works with reframing, or covers only part of the prompt.
 
 Essay prompt:
@@ -145,7 +171,18 @@ ${notes}` }]
           why: String(m.why || "").slice(0, 200) });
         if(matches.length >= 8) break;
       }
-      return resp(200, { matches });
+      if(!deep) return resp(200, { matches });
+      // Advice only ships alongside a named school — a confident-sounding line with no
+      // school attached is exactly the hallucination the prompt tells it to suppress.
+      const college = String(out.college || "").slice(0, 80);
+      return resp(200, {
+        deconstruction: String(out.deconstruction || "").slice(0, 300),
+        college,
+        college_advice: college ? String(out.college_advice || "").slice(0, 300) : "",
+        gap_analysis: String(out.gap_analysis || "").slice(0, 400),
+        outline: Array.isArray(out.outline) ? out.outline.map(String).slice(0, 5) : [],
+        matches
+      });
     }catch(e){ return resp(502, { error: "Match failed" }); }
   }
   if(method === "POST" && path === "/search"){
@@ -244,17 +281,46 @@ Note:
     }catch(e){ return resp(502, { error: "Title generation failed" }); }
   }
   if(method === "PUT" && path === "/entries"){
-    if(!body || !Array.isArray(body.entries)) return resp(400, { error: "Bad state" });
+    if(!body || !Array.isArray(body.entries) || !Number.isFinite(body.rev))
+      return resp(400, { error: "Bad state" });
     const s = JSON.stringify(body);
     if(s.length > 350000) return resp(413, { error: "Bank too large to sync" });
     // Optimistic concurrency: a PUT whose rev isn't ahead of the stored rev is
     // from a device that hasn't seen the latest state — reject so it can merge.
     const cur = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: "data" } } }));
-    const curRev = cur.Item ? (JSON.parse(cur.Item.state.S).rev || 0) : 0;
-    if(typeof body.rev !== "number" || body.rev <= curRev)
+    const curState = cur.Item ? JSON.parse(cur.Item.state.S) : null;
+    const curRev = curState ? (curState.rev || 0) : 0;
+    if(body.rev <= curRev) return resp(409, { error: "stale", rev: curRev });
+    // A sync that would wipe half the library is a bug, not an edit. The 409
+    // makes the client merge the server's entries back in and re-push the union.
+    const curN = curState ? (curState.entries || []).length : 0;
+    if(curN >= 10 && body.entries.length < curN / 2)
       return resp(409, { error: "stale", rev: curRev });
-    await db.send(new PutItemCommand({ TableName: TABLE,
-      Item: { pk: { S: "data" }, state: { S: s } } }));
+    // Once per day, snapshot the pre-change state (kept ~14 days) so app-level
+    // corruption is a one-item restore. Best-effort — never blocks the save.
+    if(cur.Item){
+      const day = new Date().toISOString().slice(0, 10);
+      try{
+        await db.send(new PutItemCommand({ TableName: TABLE,
+          Item: { pk: { S: "backup#" + day }, state: cur.Item.state },
+          ConditionExpression: "attribute_not_exists(pk)" }));
+        const old = new Date(Date.now() - 14 * 864e5).toISOString().slice(0, 10);
+        await db.send(new DeleteItemCommand({ TableName: TABLE, Key: { pk: { S: "backup#" + old } } }));
+      }catch(e){ /* today's snapshot already exists */ }
+    }
+    // Atomic guard: the write lands only if this rev is still ahead of the
+    // stored one, so two devices racing the check above can't both win.
+    try{
+      await db.send(new PutItemCommand({ TableName: TABLE,
+        Item: { pk: { S: "data" }, state: { S: s }, rev: { N: String(body.rev) } },
+        ConditionExpression: "attribute_not_exists(pk) OR attribute_not_exists(#r) OR #r < :r",
+        ExpressionAttributeNames: { "#r": "rev" },
+        ExpressionAttributeValues: { ":r": { N: String(body.rev) } } }));
+    }catch(e){
+      if(e.name === "ConditionalCheckFailedException")
+        return resp(409, { error: "stale", rev: curRev });
+      throw e;
+    }
     return resp(200, { ok: true });
   }
   return resp(404, { error: "Not found" });
