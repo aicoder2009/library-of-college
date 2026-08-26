@@ -4,3 +4,5 @@ backend/fn.zip
 .vercel/
 .DS_Store
 scratch/
+CLAUDE.local.md
+.claude/

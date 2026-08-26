@@ -4,3 +4,6 @@ CLAUDE.md
 tools
 *.py
 .claude
+CLAUDE.local.md
+README.md
+LICENSE
