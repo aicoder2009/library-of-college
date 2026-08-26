@@ -56,6 +56,21 @@ export const handler = async (event) => {
     email = email.trim().toLowerCase();
     if(email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email))
       return resp(400, { error: "That doesn't look like an email." });
+    // Mirror into Clerk's waitlist so entries can be approved/invited from the
+    // Clerk dashboard (instance sign-up mode is "waitlist"). Idempotent on
+    // Clerk's side; a failure here must never block the signup itself.
+    const mirrorToClerk = async () => {
+      if(!process.env.CLERK_SECRET_KEY) return;
+      try{
+        await fetch("https://api.clerk.com/v1/waitlist_entries", {
+          method: "POST",
+          headers: { "content-type": "application/json",
+            authorization: `Bearer ${process.env.CLERK_SECRET_KEY}` },
+          body: JSON.stringify({ email_address: email }),
+          signal: AbortSignal.timeout(3000)
+        });
+      }catch{}
+    };
     // One "waitlist" item holding the whole list (the Lambda role only has
     // Get/Put/Delete). Same optimistic-concurrency pattern as the app state:
     // conditional put on rev, retry once on a concurrent write.
@@ -65,7 +80,10 @@ export const handler = async (event) => {
       let list = [];
       try{ list = d.Item ? JSON.parse(d.Item.list.S) : []; }catch{}
       const pos = list.findIndex(x => x.email === email);
-      if(pos >= 0) return resp(200, { ok: true, dup: true, position: pos + 1 });
+      if(pos >= 0){
+        await mirrorToClerk(); // converge Clerk even if the first mirror failed
+        return resp(200, { ok: true, dup: true, position: pos + 1 });
+      }
       // size cap so an unauthenticated script can't run up the item
       if(list.length >= 2000) return resp(503, { error: "The waitlist is full for now." });
       list.push({ email, at: new Date().toISOString() });
@@ -75,6 +93,7 @@ export const handler = async (event) => {
           ConditionExpression: rev ? "#r = :r" : "attribute_not_exists(pk)",
           ...(rev ? { ExpressionAttributeNames: { "#r": "rev" },
                       ExpressionAttributeValues: { ":r": { N: String(rev) } } } : {}) }));
+        await mirrorToClerk();
         return resp(200, { ok: true, position: list.length });
       }catch(e){
         if(e.name !== "ConditionalCheckFailedException")
