@@ -653,7 +653,7 @@ function showMapAdd(btn){
 // merges local state into the server's, so seeding from another account's
 // cache would push their entries into this account's library.
 let KEY = "liboc-v1";
-const KEY_UI = "liboc-ui";
+let KEY_UI = "liboc-ui";
 let KEY_DRAFT = "liboc-draft";
 
 let state = { entries: [], rev: 0, backupRev: 0 };
@@ -663,7 +663,7 @@ let picked = new Set(), selected = new Set(), editing = null, expanded = null, c
 let pending = new Set(); // entry ids waiting on an AI title/classification
 let polished = new Map(); // entry id -> AI-polished body (session-only, never saved)
 let viewIds = [];
-try{ const u = JSON.parse(localStorage.getItem(KEY_UI)); if(u && u.nav >= 0 && u.nav <= 6) nav = +u.nav; if(u) unusedOnly = !!u.unusedOnly; if(u && "matchDeep" in u) matchDeep = !!u.matchDeep; }catch(e){}
+function loadUI(){ try{ const u = JSON.parse(localStorage.getItem(KEY_UI)); if(u && u.nav >= 0 && u.nav <= 6) nav = +u.nav; if(u) unusedOnly = !!u.unusedOnly; if(u && "matchDeep" in u) matchDeep = !!u.matchDeep; }catch(e){} }
 
 function load(){
   try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s && s.entries) return s; }catch(e){}
@@ -759,8 +759,10 @@ async function clerkInit(){
   if(window.Clerk.user){
     $("lockText").textContent = "Opening the library…";
     KEY = "liboc-v1:" + window.Clerk.user.id;
+    KEY_UI = "liboc-ui:" + window.Clerk.user.id;
     KEY_DRAFT = "liboc-draft:" + window.Clerk.user.id;
     state = load(); // this account's own cache (warm start; server still wins)
+    loadUI();       // per-account too — nav position shouldn't follow you across accounts
     lockHide(); boot();
     return;
   }

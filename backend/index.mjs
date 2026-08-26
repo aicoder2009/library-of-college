@@ -37,12 +37,33 @@ async function verifyClerk(token){
     if(c.iss !== ISSUER) return null;
     if(c.exp < now - 5 || (c.nbf && c.nbf > now + 5)) return null;
     if(!c.sub || typeof c.sub !== "string" || c.sub.length > 64) return null;
+    if(c.azp && !AZP.has(c.azp)) return null;
     return c;
   }catch{ return null; }
 }
 
 const resp = (code, body) => ({ statusCode: code,
-  headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  headers: { "content-type": "application/json", "cache-control": "no-store",
+    "x-content-type-options": "nosniff" }, body: JSON.stringify(body) });
+
+// Origins the frontend legitimately runs on (mirrors the API Gateway CORS list).
+// A session token minted on any other origin is rejected even if its signature
+// is valid — stops a token replayed from a page we don't serve.
+const AZP = new Set(["https://liboc.vercel.app", "https://evidence-bank.vercel.app",
+  "http://localhost:8765"]);
+
+// Best-effort per-user budget for the AI routes (cost guard, not a turnstile):
+// counts live in container memory, so it resets on cold start and is per
+// concurrent instance — fine for this traffic, and free.
+const aiCalls = new Map(); // userId -> [timestamps]
+function aiBudgetExceeded(sub){
+  const now = Date.now();
+  const w = (aiCalls.get(sub) || []).filter(t => now - t < 300e3);
+  if(w.length >= 30) return true;
+  w.push(now); aiCalls.set(sub, w);
+  if(aiCalls.size > 500) aiCalls.clear(); // don't let a scan grow memory forever
+  return false;
+}
 
 export const handler = async (event) => {
   const method = event.requestContext.http.method;
@@ -115,11 +136,20 @@ export const handler = async (event) => {
   const DATA_KEY = isOwner ? "data" : "data#" + auth.sub;
   const BACKUP_PREFIX = isOwner ? "backup#" : "backup#" + auth.sub + "#";
 
+  // Hard cap on raw body before parsing anything — the largest legitimate
+  // payload is a 350KB state PUT; nobody needs to send more.
+  if((event.body || "").length > 500000) return resp(413, { error: "Too large" });
+
   let body = null;
   try{
     if(event.body) body = JSON.parse(event.isBase64Encoded
       ? Buffer.from(event.body, "base64").toString() : event.body);
   }catch{ return resp(400, { error: "Bad JSON" }); }
+
+  // AI routes spend real money per call; everything else is microcents.
+  if(method === "POST" && ["/match", "/search", "/title", "/classify", "/polish"].includes(path)
+      && aiBudgetExceeded(auth.sub))
+    return resp(429, { error: "Too many AI requests — give it a few minutes." });
 
   if(method === "GET" && path === "/entries"){
     const d = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: DATA_KEY } } }));
@@ -139,6 +169,7 @@ export const handler = async (event) => {
         method: "POST",
         headers: { "content-type": "application/json",
           authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+        signal: AbortSignal.timeout(55000),
         body: JSON.stringify({
           model: "gpt-4.1-nano",
           max_tokens: 80,
@@ -206,6 +237,7 @@ Identify the school only from what the prompt itself gives you — its wording, 
         method: "POST",
         headers: { "content-type": "application/json",
           authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+        signal: AbortSignal.timeout(55000),
         body: JSON.stringify({
           model: "gpt-5.6-sol",
           reasoning_effort: "low",
@@ -273,6 +305,7 @@ ${notes}` }]
         method: "POST",
         headers: { "content-type": "application/json",
           authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+        signal: AbortSignal.timeout(55000),
         body: JSON.stringify({
           model: "gpt-5.6-sol",
           reasoning_effort: "none", // interactive palette search — speed over deliberation
@@ -313,6 +346,7 @@ ${notes}` }]
         method: "POST",
         headers: { "content-type": "application/json",
           authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+        signal: AbortSignal.timeout(55000),
         body: JSON.stringify({
           model: "gpt-4.1-mini",
           max_tokens: 700,
@@ -337,6 +371,7 @@ Note:
         method: "POST",
         headers: { "content-type": "application/json",
           authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+        signal: AbortSignal.timeout(55000),
         body: JSON.stringify({
           model: "gpt-4.1-nano",
           max_tokens: 30,
