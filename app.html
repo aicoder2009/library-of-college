@@ -757,39 +757,9 @@ async function clerkInit(){
     lockHide(); boot();
     return;
   }
-  $("lockText").textContent = "Sign in to open the library.";
-  // Dress the Clerk card in the app's own palette (tracks light/dark automatically)
-  const css = getComputedStyle(document.documentElement);
-  const v = n => css.getPropertyValue(n).trim();
-  window.Clerk.mountSignIn($("clerkMount"), {
-    // The marketing page now lives at "/" — always land back in the app after auth
-    fallbackRedirectUrl: "/app", forceRedirectUrl: "/app",
-    appearance: {
-    variables: {
-      colorPrimary: v("--ink"),
-      colorTextOnPrimaryBackground: v("--bg"),
-      colorPrimaryForeground: v("--bg"),
-      colorBackground: v("--panel"),
-      colorText: v("--ink"),
-      colorTextSecondary: v("--muted"),
-      colorInputBackground: v("--bg"),
-      colorInputText: v("--ink"),
-      colorDanger: v("--warn"),
-      borderRadius: "10px",
-      fontFamily: 'ui-sans-serif,-apple-system,"Segoe UI",system-ui,sans-serif',
-      fontSize: "15px"
-    },
-    elements: {
-      card: { boxShadow: v("--lift"), border: "1px solid " + v("--line") },
-      cardBox: { boxShadow: "none" },
-      headerTitle: { fontFamily: v("--serif"), fontWeight: "600", letterSpacing: "-.01em" },
-      formButtonPrimary: { fontWeight: "600", fontSize: "14px", textTransform: "none" },
-      formFieldInput: { fontSize: "14px" },
-      socialButtonsBlockButton: { color: v("--ink"), borderColor: v("--line") },
-      socialButtonsBlockButtonText: { color: v("--ink") }
-    }
-  }});
-  window.Clerk.addListener(({ user }) => { if(user && isLocked()) location.reload(); });
+  // Signed out: sign-in lives on its own page now
+  $("lockText").textContent = "Redirecting to sign-in…";
+  location.replace("/login");
 }
 
 async function api(method, path, body){
@@ -808,7 +778,8 @@ async function api(method, path, body){
       $("lockErr").innerHTML = `<button class="linkbtn" id="lockOut">Sign out and use another account</button>`;
       $("lockOut").onclick = async () => { await window.Clerk.signOut(); location.reload(); };
     } else {
-      lockShow("Not signed in — refresh the page");
+      lockShow(""); $("lockText").textContent = "Redirecting to sign-in…";
+      location.replace("/login");
     }
     throw new Error("auth");
   }

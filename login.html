@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#faf8f3">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#191712">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<title>Sign in — Library of College</title>
+<style>
+  :root{
+    --bg:#faf8f3; --panel:#fffdf8; --ink:#221f1a; --muted:#756e64; --faint:#aca397;
+    --faint-text:#8a8276;
+    --line:#e6e0d4;
+    --warn:#c2410c;
+    --tagbg:#eadfc6; --tagink:#6d5f42;
+    --serif:ui-serif,"Iowan Old Style",Georgia,"Times New Roman",serif;
+    --lift:0 8px 28px rgba(30,25,15,.08);
+    --hc:#f3b97a;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#191712; --panel:#211e18; --ink:#ede8dd; --muted:#a29a8b; --faint:#6f695e;
+      --faint-text:#857d6f;
+      --line:#322e26;
+      --warn:#fb923c;
+      --tagbg:#35301f; --tagink:#c9b988;
+      --lift:0 8px 28px rgba(0,0,0,.4);
+    }
+  }
+  *{box-sizing:border-box}
+  ::selection{background:var(--tagbg);color:var(--ink)}
+  body{margin:0;min-height:100svh;display:flex;background:var(--bg);color:var(--ink);
+    font:16px/1.6 ui-sans-serif,-apple-system,"Segoe UI",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:24px}
+  a{color:inherit}
+  :where(a):focus-visible{outline:2px solid var(--muted);outline-offset:2px;border-radius:4px}
+  .hl{background:linear-gradient(transparent 60%,var(--hc) 0);padding:0 2px;margin:0 -2px}
+  @media (prefers-color-scheme: dark){
+    .hl{background:linear-gradient(transparent calc(100% - 3px),var(--hc) 0)}
+  }
+  main{margin:auto;width:100%;max-width:420px;text-align:center}
+  .brand{font-family:var(--serif);font-weight:700;font-size:22px;letter-spacing:-.01em;
+    text-decoration:none;display:inline-block;margin-bottom:6px}
+  #lockText{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+  #clerkMount{display:flex;justify-content:center}
+  .lockerr{color:var(--warn);font-size:12.5px;min-height:18px;margin-top:12px}
+  .alt{color:var(--faint-text);font-size:13px;margin-top:22px;line-height:1.6}
+  .alt a{color:var(--muted);font-weight:600}
+  .alt a:hover{color:var(--ink)}
+</style>
+</head>
+<body>
+<main>
+  <a class="brand" href="/"><span class="hl">L</span>ibrary of College</a>
+  <p id="lockText">Loading sign-in…</p>
+  <div id="clerkMount"></div>
+  <div class="lockerr" id="lockErr"></div>
+  <p class="alt">New here? <a href="/#waitlist">Join the waitlist</a> — accounts are
+    approved by hand while LoC is in beta.</p>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const CLERK_PK = "pk_test_bGFzdGluZy1mYWxjb24tOTEuY2xlcmsuYWNjb3VudHMuZGV2JA";
+
+(() => { // load ClerkJS from the frontend API encoded in the publishable key
+  const fapi = atob(CLERK_PK.split("_")[2]).replace(/\$$/, "");
+  const s = document.createElement("script");
+  s.src = `https://${fapi}/npm/@clerk/clerk-js@5/dist/clerk.browser.js`;
+  s.crossOrigin = "anonymous";
+  s.setAttribute("data-clerk-publishable-key", CLERK_PK);
+  s.onload = clerkInit;
+  s.onerror = () => { $("lockText").textContent = "Couldn’t load sign-in — check your connection and refresh."; };
+  document.head.appendChild(s);
+})();
+
+window.addEventListener("unhandledrejection", e => {
+  $("lockErr").textContent = "Sign-in error: " + (e.reason?.message || e.reason);
+});
+
+async function clerkInit(){
+  const watchdog = setTimeout(() => {
+    if($("lockText").textContent === "Loading sign-in…")
+      $("lockErr").textContent =
+        "Still connecting to sign-in… a content blocker may be blocking clerk.accounts.dev";
+  }, 10000);
+  try{ await window.Clerk.load(); }
+  catch(e){
+    clearTimeout(watchdog);
+    $("lockText").textContent = "Couldn’t load sign-in — refresh to retry.";
+    $("lockErr").textContent = e?.message || "";
+    return;
+  }
+  clearTimeout(watchdog);
+  if(window.Clerk.user){ // already signed in: straight to the app
+    $("lockText").textContent = "Opening the library…";
+    location.replace("/app");
+    return;
+  }
+  $("lockText").textContent = "Sign in to open the library.";
+  // Dress the Clerk card in the app's own palette (tracks light/dark automatically)
+  const css = getComputedStyle(document.documentElement);
+  const v = n => css.getPropertyValue(n).trim();
+  window.Clerk.mountSignIn($("clerkMount"), {
+    fallbackRedirectUrl: "/app", forceRedirectUrl: "/app",
+    waitlistUrl: "/", // our landing page (waitlist form is the hero), not Clerk's hosted page
+    appearance: {
+    variables: {
+      colorPrimary: v("--ink"),
+      colorTextOnPrimaryBackground: v("--bg"),
+      colorPrimaryForeground: v("--bg"),
+      colorBackground: v("--panel"),
+      colorText: v("--ink"),
+      colorTextSecondary: v("--muted"),
+      colorInputBackground: v("--bg"),
+      colorInputText: v("--ink"),
+      colorDanger: v("--warn"),
+      borderRadius: "10px",
+      fontFamily: 'ui-sans-serif,-apple-system,"Segoe UI",system-ui,sans-serif',
+      fontSize: "15px"
+    },
+    elements: {
+      card: { boxShadow: v("--lift"), border: "1px solid " + v("--line") },
+      cardBox: { boxShadow: "none" },
+      headerTitle: { fontFamily: v("--serif"), fontWeight: "600", letterSpacing: "-.01em" },
+      formButtonPrimary: { fontWeight: "600", fontSize: "14px", textTransform: "none" },
+      formFieldInput: { fontSize: "14px" },
+      socialButtonsBlockButton: { color: v("--ink"), borderColor: v("--line") },
+      socialButtonsBlockButtonText: { color: v("--ink") }
+    }
+  }});
+  // Belt and braces: if Clerk signs the user in without navigating, go ourselves
+  window.Clerk.addListener(({ user }) => { if(user) location.replace("/app"); });
+}
+</script>
+</body>
+</html>

@@ -287,7 +287,7 @@
       <a href="#faq">FAQ</a>
     </nav>
     <span class="spacer"></span>
-    <a class="btn ghost" href="/app">Log in</a>
+    <a class="btn ghost" href="/login">Log in</a>
     <a class="btn primary" href="#waitlist">Get early access</a>
   </div>
 </header>
@@ -511,7 +511,7 @@
     <span class="brand"><span class="hl">L</span>ibrary of College</span>
     <span>Where the stories live until the essay needs them.</span>
     <span class="spacer"></span>
-    <a href="/app">Log in</a>
+    <a href="/login">Log in</a>
     <a href="#waitlist">Waitlist</a>
     <a href="#data">Your data</a>
     <a href="https://github.com/aicoder2009/library-of-college" rel="noopener">GitHub</a>
@@ -604,11 +604,12 @@ if("IntersectionObserver" in window){
   mockRows.forEach(r => r.classList.add("in"));
 }
 
-// ---- returning owner nicety: swap "Log in" for "Open library" if the app
-// has been used in this browser before (localStorage cache from /app) ----
+// ---- returning owner nicety: if the app has been used in this browser before
+// (localStorage cache from /app), link straight to the app, skipping /login ----
 try{
   if(localStorage.getItem("liboc-v1"))
-    document.querySelectorAll('a[href="/app"]').forEach(a => {
+    document.querySelectorAll('a[href="/login"]').forEach(a => {
+      a.href = "/app";
       if(a.classList.contains("btn")) a.textContent = "Open library";
     });
 }catch{}
