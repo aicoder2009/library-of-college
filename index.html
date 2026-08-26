@@ -615,7 +615,7 @@ document.querySelectorAll('a[href="#waitlist"]').forEach(a =>
 // ---- returning owner nicety: if the app has been used in this browser before
 // (localStorage cache from /app), link straight to the app, skipping /login ----
 try{
-  if(localStorage.getItem("liboc-v1"))
+  if(Object.keys(localStorage).some(k => k.startsWith("liboc-v1")))
     document.querySelectorAll('a[href="/login"]').forEach(a => {
       a.href = "/app";
       if(a.classList.contains("btn")) a.textContent = "Open library";

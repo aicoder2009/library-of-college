@@ -648,11 +648,15 @@ function showMapAdd(btn){
   $("mapAddGo").onclick = save;
   q.focus();
 }
-const KEY = "liboc-v1";
+// Cache keys are re-pointed to per-account names once Clerk tells us who this
+// is (clerkInit). Starting empty — never from a shared cache — matters: boot()
+// merges local state into the server's, so seeding from another account's
+// cache would push their entries into this account's library.
+let KEY = "liboc-v1";
 const KEY_UI = "liboc-ui";
-const KEY_DRAFT = "liboc-draft";
+let KEY_DRAFT = "liboc-draft";
 
-let state = load();
+let state = { entries: [], rev: 0, backupRev: 0 };
 let nav = 0, query = "", qraw = "", tagFilter = null, unusedOnly = false, piqOpen = false, mapOpen = true;
 let matchDeep = true; // run the prompt breakdown alongside the matches (persisted)
 let picked = new Set(), selected = new Set(), editing = null, expanded = null, curSugs = [];
@@ -754,6 +758,9 @@ async function clerkInit(){
   clearTimeout(watchdog);
   if(window.Clerk.user){
     $("lockText").textContent = "Opening the library…";
+    KEY = "liboc-v1:" + window.Clerk.user.id;
+    KEY_DRAFT = "liboc-draft:" + window.Clerk.user.id;
+    state = load(); // this account's own cache (warm start; server still wins)
     lockHide(); boot();
     return;
   }

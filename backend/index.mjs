@@ -4,8 +4,12 @@ import { createPublicKey, verify as cryptoVerify } from "node:crypto";
 const db = new DynamoDBClient({});
 const TABLE = process.env.TABLE;
 const ISSUER = process.env.CLERK_ISSUER;      // e.g. https://xxxxx.clerk.accounts.dev
-// Comma-separated list of permitted Clerk user IDs (the owner's accounts)
-const ALLOWED = new Set((process.env.ALLOWED_USER_ID || "").split(","));
+// The owner's Clerk user IDs (comma-separated). No longer an access gate — any
+// signed-in Clerk user gets a library (account creation is gated by waitlist
+// approval in Clerk). These IDs are (a) admins for /waitlist, and (b) mapped to
+// the original single-user items (pk="data", "backup#<day>") so the founding
+// library needs no migration.
+const OWNERS = new Set((process.env.ALLOWED_USER_ID || "").split(","));
 
 let jwks = null, jwksAt = 0;
 async function getJwks(){
@@ -32,7 +36,7 @@ async function verifyClerk(token){
     const now = Date.now() / 1000;
     if(c.iss !== ISSUER) return null;
     if(c.exp < now - 5 || (c.nbf && c.nbf > now + 5)) return null;
-    if(!ALLOWED.has(c.sub)) return null;
+    if(!c.sub || typeof c.sub !== "string" || c.sub.length > 64) return null;
     return c;
   }catch{ return null; }
 }
@@ -105,6 +109,11 @@ export const handler = async (event) => {
 
   const auth = await verifyClerk((event.headers.authorization || "").replace(/^Bearer /, ""));
   if(!auth) return resp(401, { error: "Not signed in" });
+  // Per-account library keys. Owner accounts keep the original item names so
+  // the founding data never moves; everyone else is namespaced by user id.
+  const isOwner = OWNERS.has(auth.sub);
+  const DATA_KEY = isOwner ? "data" : "data#" + auth.sub;
+  const BACKUP_PREFIX = isOwner ? "backup#" : "backup#" + auth.sub + "#";
 
   let body = null;
   try{
@@ -113,10 +122,11 @@ export const handler = async (event) => {
   }catch{ return resp(400, { error: "Bad JSON" }); }
 
   if(method === "GET" && path === "/entries"){
-    const d = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: "data" } } }));
+    const d = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: DATA_KEY } } }));
     return resp(200, d.Item ? JSON.parse(d.Item.state.S) : { entries: [], rev: 0, backupRev: 0 });
   }
   if(method === "GET" && path === "/waitlist"){
+    if(!isOwner) return resp(403, { error: "Admins only" });
     const d = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: "waitlist" } } }));
     let list = [];
     try{ list = d.Item ? JSON.parse(d.Item.list.S) : []; }catch{}
@@ -166,7 +176,7 @@ Note:
     // The breakdown roughly doubles the reasoning budget, so the client can opt out.
     // Absent flag = on, so an older client keeps its current behaviour.
     const deep = body.deep !== false;
-    const d = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: "data" } } }));
+    const d = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: DATA_KEY } } }));
     const state = d.Item ? JSON.parse(d.Item.state.S) : { entries: [] };
     const entries = state.entries || [];
     if(!entries.length) return resp(200, { matches: [] });
@@ -252,7 +262,7 @@ ${notes}` }]
     if(!body || typeof body.q !== "string" || !body.q.trim())
       return resp(400, { error: "Bad request" });
     const q = body.q.slice(0, 300);
-    const d = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: "data" } } }));
+    const d = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: DATA_KEY } } }));
     const state = d.Item ? JSON.parse(d.Item.state.S) : { entries: [] };
     const entries = state.entries || [];
     if(!entries.length) return resp(200, { matches: [] });
@@ -350,7 +360,7 @@ Note:
     if(s.length > 350000) return resp(413, { error: "Bank too large to sync" });
     // Optimistic concurrency: a PUT whose rev isn't ahead of the stored rev is
     // from a device that hasn't seen the latest state — reject so it can merge.
-    const cur = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: "data" } } }));
+    const cur = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: DATA_KEY } } }));
     const curState = cur.Item ? JSON.parse(cur.Item.state.S) : null;
     const curRev = curState ? (curState.rev || 0) : 0;
     if(body.rev <= curRev) return resp(409, { error: "stale", rev: curRev });
@@ -365,17 +375,17 @@ Note:
       const day = new Date().toISOString().slice(0, 10);
       try{
         await db.send(new PutItemCommand({ TableName: TABLE,
-          Item: { pk: { S: "backup#" + day }, state: cur.Item.state },
+          Item: { pk: { S: BACKUP_PREFIX + day }, state: cur.Item.state },
           ConditionExpression: "attribute_not_exists(pk)" }));
         const old = new Date(Date.now() - 14 * 864e5).toISOString().slice(0, 10);
-        await db.send(new DeleteItemCommand({ TableName: TABLE, Key: { pk: { S: "backup#" + old } } }));
+        await db.send(new DeleteItemCommand({ TableName: TABLE, Key: { pk: { S: BACKUP_PREFIX + old } } }));
       }catch(e){ /* today's snapshot already exists */ }
     }
     // Atomic guard: the write lands only if this rev is still ahead of the
     // stored one, so two devices racing the check above can't both win.
     try{
       await db.send(new PutItemCommand({ TableName: TABLE,
-        Item: { pk: { S: "data" }, state: { S: s }, rev: { N: String(body.rev) } },
+        Item: { pk: { S: DATA_KEY }, state: { S: s }, rev: { N: String(body.rev) } },
         ConditionExpression: "attribute_not_exists(pk) OR attribute_not_exists(#r) OR #r < :r",
         ExpressionAttributeNames: { "#r": "rev" },
         ExpressionAttributeValues: { ":r": { N: String(body.rev) } } }));
