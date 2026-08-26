@@ -46,6 +46,44 @@ export const handler = async (event) => {
   // $default catches OPTIONS too; answer 204 so browser CORS preflights succeed
   if(method === "OPTIONS") return { statusCode: 204 };
 
+  // Public: landing-page waitlist signup. EVERY other route below requires auth.
+  if(method === "POST" && path === "/waitlist"){
+    if((event.body || "").length > 400) return resp(400, { error: "Bad request" });
+    let email = "";
+    try{ email = String(JSON.parse(event.isBase64Encoded
+      ? Buffer.from(event.body, "base64").toString() : event.body).email || ""); }
+    catch{ return resp(400, { error: "Bad JSON" }); }
+    email = email.trim().toLowerCase();
+    if(email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email))
+      return resp(400, { error: "That doesn't look like an email." });
+    // One "waitlist" item holding the whole list (the Lambda role only has
+    // Get/Put/Delete). Same optimistic-concurrency pattern as the app state:
+    // conditional put on rev, retry once on a concurrent write.
+    for(let attempt = 0; attempt < 2; attempt++){
+      const d = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: "waitlist" } } }));
+      const rev = Number(d.Item?.rev?.N || 0);
+      let list = [];
+      try{ list = d.Item ? JSON.parse(d.Item.list.S) : []; }catch{}
+      const pos = list.findIndex(x => x.email === email);
+      if(pos >= 0) return resp(200, { ok: true, dup: true, position: pos + 1 });
+      // size cap so an unauthenticated script can't run up the item
+      if(list.length >= 2000) return resp(503, { error: "The waitlist is full for now." });
+      list.push({ email, at: new Date().toISOString() });
+      try{
+        await db.send(new PutItemCommand({ TableName: TABLE,
+          Item: { pk: { S: "waitlist" }, rev: { N: String(rev + 1) }, list: { S: JSON.stringify(list) } },
+          ConditionExpression: rev ? "#r = :r" : "attribute_not_exists(pk)",
+          ...(rev ? { ExpressionAttributeNames: { "#r": "rev" },
+                      ExpressionAttributeValues: { ":r": { N: String(rev) } } } : {}) }));
+        return resp(200, { ok: true, position: list.length });
+      }catch(e){
+        if(e.name !== "ConditionalCheckFailedException")
+          return resp(500, { error: "Something hiccuped — try again in a moment." });
+      }
+    }
+    return resp(500, { error: "Something hiccuped — try again in a moment." });
+  }
+
   const auth = await verifyClerk((event.headers.authorization || "").replace(/^Bearer /, ""));
   if(!auth) return resp(401, { error: "Not signed in" });
 
@@ -58,6 +96,12 @@ export const handler = async (event) => {
   if(method === "GET" && path === "/entries"){
     const d = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: "data" } } }));
     return resp(200, d.Item ? JSON.parse(d.Item.state.S) : { entries: [], rev: 0, backupRev: 0 });
+  }
+  if(method === "GET" && path === "/waitlist"){
+    const d = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: "waitlist" } } }));
+    let list = [];
+    try{ list = d.Item ? JSON.parse(d.Item.list.S) : []; }catch{}
+    return resp(200, { waitlist: list });
   }
   if(method === "POST" && path === "/classify"){
     if(!body || !body.body) return resp(400, { error: "Bad request" });

@@ -37,10 +37,12 @@ Supplemental essays ("Why us?", community, leadership…) reward specific, lived
 Deliberately minimal — no framework, no build step, no bundler:
 
 ```
-index.html            the entire frontend: HTML + CSS + vanilla JS in one file,
-                      static-hosted on Vercel; only external resource is ClerkJS
+index.html            the public landing page (waitlist signup), served at /
+app.html              the entire app in one file, served at /app;
+                      only external resource is ClerkJS
 backend/index.mjs     one AWS Lambda (Node 20) behind an API Gateway HTTP API
-DynamoDB              one table, one item: the full app state as a JSON blob
+DynamoDB              one table; the full app state lives in a single JSON item
+                      (waitlist signups in one more)
 ```
 
 - **Sync model**: the client GETs/PUTs the whole state. Every PUT carries a `rev`; the Lambda rejects stale revs (409), the client then re-fetches, merges by entry id (newer `updatedAt` wins, nothing dropped), and retries. Simple, and safe across devices.
@@ -53,9 +55,9 @@ DynamoDB              one table, one item: the full app state as a JSON blob
 There's no one-command installer; it's a personal tool. But the surface area is small:
 
 1. **DynamoDB**: create a table (any name) with partition key `pk` (string). Enable point-in-time recovery.
-2. **Lambda**: deploy `backend/index.mjs` (Node 20) behind an API Gateway HTTP API with routes `GET/PUT /entries`, `POST /title|classify|match|search|polish`, and `OPTIONS` passthrough. Set env vars: `TABLE`, `CLERK_ISSUER`, `ALLOWED_USER_ID`, `OPENAI_API_KEY`.
+2. **Lambda**: deploy `backend/index.mjs` (Node 20) behind an API Gateway HTTP API with routes `GET/PUT /entries`, `POST /title|classify|match|search|polish`, `POST/GET /waitlist`, and `OPTIONS` passthrough. Set env vars: `TABLE`, `CLERK_ISSUER`, `ALLOWED_USER_ID`, `OPENAI_API_KEY`.
 3. **Clerk**: create an app, restrict sign-ups, and put your user id(s) in `ALLOWED_USER_ID`.
-4. **Frontend**: edit the `API` and `CLERK_PK` constants near the top of the `<script>` in `index.html`, then host it anywhere static (`vercel deploy --prod`).
+4. **Frontend**: edit the `API` and `CLERK_PK` constants near the top of the `<script>` in `app.html` (and `API` in `index.html` if you keep the landing page), then host both anywhere static (`vercel deploy --prod`).
 
 Sanity-check the JS before deploying (there's no test suite):
 
@@ -68,7 +70,8 @@ node --check backend/index.mjs
 
 | Path | What |
 |------|------|
-| `index.html` | The entire app |
+| `index.html` | Public landing page (waitlist) |
+| `app.html` | The entire app |
 | `backend/index.mjs` | The entire API |
 | `docs/design-system.md` | Design tokens, components, overlay + responsive rules |
 | `tools/genicons.py` | Generates the favicon/app icons and `og-image.png` (Pillow) |
