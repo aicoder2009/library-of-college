@@ -3,19 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f3efe6">
-<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#141310">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#faf8f3">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#191712">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="canonical" href="https://liboc.vercel.app/">
 <title>Library of College — the evidence bank for college essays</title>
-<meta name="description" content="Where the stories live until the essay needs them. Dump the moments of your life as they happen; when a prompt shows up, LoC finds which ones answer it.">
+<meta name="description" content="Where the stories live until the essay needs them. Dump the moments of your life all year; when a prompt shows up, it finds which ones answer it.">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Library of College">
 <meta property="og:title" content="Library of College">
 <meta property="og:description" content="Where the stories live until the essay needs them.">
 <meta property="og:image" content="https://liboc.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Library of College wordmark — serif L over an orange highlighter stripe">
 <meta property="og:url" content="https://liboc.vercel.app">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Library of College">
@@ -24,6 +29,7 @@
 <style>
   :root{
     --bg:#faf8f3; --panel:#fffdf8; --ink:#221f1a; --muted:#756e64; --faint:#aca397;
+    --faint-text:#8a8276;
     --line:#e6e0d4; --side:#f3efe6;
     --wash:rgba(34,31,26,.045); --washon:rgba(34,31,26,.09);
     --c0:#f3b97a; --c1:#ef9a9a; --c2:#b7d7a8; --c3:#a4c2ce;
@@ -38,6 +44,7 @@
   @media (prefers-color-scheme: dark){
     :root{
       --bg:#191712; --panel:#211e18; --ink:#ede8dd; --muted:#a29a8b; --faint:#6f695e;
+      --faint-text:#857d6f;
       --line:#322e26; --side:#141310;
       --wash:rgba(237,232,221,.05); --washon:rgba(237,232,221,.1);
       --warn:#fb923c; --star:#e0b34c;
@@ -50,7 +57,7 @@
   html{scroll-behavior:smooth}
   @media (prefers-reduced-motion: reduce){
     html{scroll-behavior:auto}
-    .reveal{transition:none !important;opacity:1 !important;transform:none !important}
+    .reveal,.mrow{transition:none !important;opacity:1 !important;transform:none !important}
   }
   ::selection{background:var(--tagbg);color:var(--ink)}
   body{margin:0;background:var(--bg);color:var(--ink);
@@ -58,7 +65,8 @@
     -webkit-font-smoothing:antialiased}
   a{color:inherit}
   button{font:inherit;cursor:pointer}
-  :where(a,button,input,summary):focus-visible{outline:2px solid var(--muted);outline-offset:2px;border-radius:4px}
+  :where(a,button,input):focus-visible{outline:2px solid var(--muted);outline-offset:2px;border-radius:4px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 
   /* ---------- shared bits, borrowed straight from the app ---------- */
   .hl{background:linear-gradient(transparent 60%,var(--hc) 0);padding:0 3px;margin:0 -3px}
@@ -81,26 +89,39 @@
     border:1px solid var(--line);background:var(--panel);color:var(--ink);
     border-radius:9px;padding:9px 16px;font-size:14.5px;font-weight:600;
     text-decoration:none;white-space:nowrap}
+  .btn{transition:border-color .15s ease,color .15s ease,opacity .15s ease,
+    transform .15s ease,box-shadow .15s ease}
   .btn:hover{border-color:var(--ink)}
   .btn:active{transform:translateY(.5px)}
   .btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-  .btn.primary:hover{opacity:.88}
+  .btn.primary:hover{opacity:.9;transform:translateY(-1px);box-shadow:var(--lift)}
+  .btn.primary:active{transform:translateY(.5px);box-shadow:none}
   .btn.ghost{background:none;border-color:transparent;color:var(--muted)}
   .btn.ghost:hover{color:var(--ink);border-color:var(--line)}
 
-  .wrap{max-width:1060px;margin:0 auto;padding:0 24px}
-  section{padding:84px 0}
-  .eyebrow{font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
-    color:var(--muted)}
+  .wrap{max-width:780px;margin:0 auto;padding-inline:24px}
+  .wrap.wide{max-width:1280px}
+  .herogrid{display:grid}
+  section{padding-block:84px}
+  section[id]{scroll-margin-top:72px}
   h2.sect{font-family:var(--serif);font-size:clamp(28px,4vw,38px);font-weight:600;
-    letter-spacing:-.01em;line-height:1.2;margin:10px 0 14px}
+    letter-spacing:-.01em;line-height:1.2;margin:0 0 14px}
   .sub{color:var(--muted);max-width:560px;font-size:17px}
+  .prose{font-family:var(--serif);font-size:18px;line-height:1.7;max-width:660px;margin:0}
 
-  .reveal{opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease}
-  .reveal.in{opacity:1;transform:none}
+  .js .reveal{opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease}
+  .js .reveal.in{opacity:1;transform:none}
+  .js .mrow{opacity:0;transform:translateY(6px);transition:opacity .45s ease,transform .45s ease}
+  .js .mrow.in{opacity:1;transform:none}
+  .mprompt.typing::after{content:"";display:inline-block;width:1.5px;height:1em;
+    background:var(--ink);margin-left:2px;vertical-align:-2px;
+    animation:caret 1s steps(1) infinite}
+  @keyframes caret{50%{opacity:0}}
 
   /* ---------- nav ---------- */
-  header{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 86%,transparent);
+  header{position:sticky;top:0;z-index:20;
+    background:var(--bg);
+    background:color-mix(in srgb,var(--bg) 86%,transparent);
     backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
   .nav{display:flex;align-items:center;gap:26px;height:60px}
   .brand{font-family:var(--serif);font-weight:700;font-size:19px;letter-spacing:-.01em;
@@ -110,165 +131,199 @@
   .nav .links a{font-size:14px;font-weight:600;color:var(--muted);text-decoration:none}
   .nav .links a:hover{color:var(--ink)}
   .nav .spacer{flex:1}
-  @media (max-width:640px){ .nav .links{display:none} }
+  @media (max-width:640px){
+    .nav{gap:10px}
+    .nav .links{display:none}
+    .nav .btn.ghost{display:none}
+  }
 
   /* ---------- hero ---------- */
-  .hero{padding:88px 0 70px;text-align:center}
-  .hero .eyebrow{display:inline-flex;align-items:center;gap:8px}
-  .hero .eyebrow .cdot{width:7px;height:7px;background:var(--c0)}
-  h1{font-family:var(--serif);font-weight:600;letter-spacing:-.015em;line-height:1.13;
-    font-size:clamp(36px,6.4vw,62px);margin:18px auto 20px;max-width:15em}
-  .hero .sub{margin:0 auto 34px;font-size:clamp(16px,2.2vw,19px);max-width:36em}
+  .hero{padding-block:72px 88px}
+  .kicker{color:var(--muted);font-size:14.5px;margin:0}
+  h1{font-family:var(--serif);font-weight:500;letter-spacing:-.015em;line-height:1.13;
+    font-size:clamp(34px,6vw,56px);margin:14px 0 18px;max-width:13.5em}
+  .hero .sub{margin:0 0 30px;font-size:clamp(16px,2.1vw,18.5px);max-width:36em}
 
   /* ---------- waitlist form ---------- */
-  .wl{display:flex;gap:9px;justify-content:center;max-width:460px;margin:0 auto;
-    flex-wrap:wrap}
+  .wl{display:flex;gap:9px;max-width:580px;flex-wrap:wrap}
+  .cta .wl{max-width:460px}
   .wl input{flex:1;min-width:220px;border:1px solid var(--line);background:var(--panel);
     color:var(--ink);border-radius:9px;padding:11px 14px;font-size:15px}
   .wl input::placeholder{color:var(--faint)}
   .wl input:focus{outline:2px solid var(--muted);outline-offset:1px}
   .wl .btn{padding:11px 20px}
-  .wlnote{font-size:13px;color:var(--faint);margin-top:12px}
+  .wlnote{font-size:13px;color:var(--faint-text);margin-top:12px}
   .wlmsg{margin-top:14px;font-size:14.5px;font-weight:600;min-height:1.4em}
+  .wlmsg:focus{outline:none}
   .wlmsg.ok{color:var(--ink)}
   .wlmsg.err{color:var(--warn)}
   .wlmsg .rtag{margin-right:7px;vertical-align:1px}
+  .wlmsg .share{display:block;margin-top:8px;font-weight:400;font-size:13.5px;color:var(--muted)}
+  .wlmsg .share a{color:var(--ink)}
+  .cta .wlmsg{max-width:460px;margin-inline:auto}
+  .builtby{font-size:13.5px;color:var(--faint-text);margin-top:22px}
 
   /* ---------- product mock ---------- */
-  .mockstage{margin:64px auto 0;max-width:880px;text-align:left}
+  .mockstage{margin:44px auto 0;max-width:880px}
   .mock{background:var(--panel);border:1px solid var(--line);border-radius:14px;
     box-shadow:var(--shadow);overflow:hidden;font-size:13px}
-  .mock .bar{display:flex;align-items:center;gap:6px;padding:10px 14px;
+  .mock .bar{display:flex;align-items:center;padding:9px 14px;
     border-bottom:1px solid var(--line);background:var(--side)}
-  .mock .bar i{width:10px;height:10px;border-radius:50%;background:var(--line);display:block}
-  .mock .bar span{margin-left:8px;color:var(--faint);font-size:12px}
+  .mock .bar span{color:var(--faint);font-size:12px}
   .mockbody{display:grid;grid-template-columns:200px 1fr;min-height:340px}
   .mside{background:var(--side);border-right:1px solid var(--line);padding:14px 10px}
+  .mside .mbrand{font-size:10px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;
+    color:var(--faint);padding:2px 8px 10px}
+  .mside .mnew{background:var(--ink);color:var(--bg);border-radius:8px;padding:7px 10px;
+    font-weight:600;font-size:12px;text-align:center;margin:0 4px 12px}
   .mside .t{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
     color:var(--faint);padding:8px 8px 4px}
   .mside .it{display:flex;align-items:center;gap:8px;padding:5.5px 8px;border-radius:7px;
     color:var(--muted);font-weight:600}
   .mside .it.on{background:var(--washon);color:var(--ink)}
   .mside .it b{margin-left:auto;font-weight:600;color:var(--faint);font-size:11px}
-  .mmain{padding:20px 24px}
+  .mmain{padding:18px 22px 20px;min-width:0}
   .mprompt{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--bg);
     color:var(--muted);font-family:var(--serif);font-style:italic;font-size:14px}
   .mlabel{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-    color:var(--faint);margin:18px 0 8px}
-  .mhit{border:1px solid var(--line);border-radius:10px;padding:11px 14px;margin-bottom:9px;
-    background:var(--panel)}
+    color:var(--faint);margin:18px 0 4px}
+  .mlabel:first-child{margin-top:0}
+  .mhit{padding:10px 2px 12px;border-bottom:1px solid var(--line)}
+  .mhit:last-child{border-bottom:none;padding-bottom:4px}
   .mhit .h{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13.5px;flex-wrap:wrap}
-  .mhit .fit{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-    padding:2px 8px;border-radius:20px}
-  .fit.strong{background:var(--c2);color:#2c3a24}
-  .fit.maybe{background:var(--c5);color:#4a3f14}
-  @media (prefers-color-scheme: dark){
-    .fit.strong{background:#3a4a30;color:var(--c2)}
-    .fit.maybe{background:#4a4118;color:var(--c5)}
-  }
-  .mhit .why{color:var(--muted);font-size:12.5px;margin-top:5px}
-  .mhit .why b{color:var(--ink);font-weight:600}
+  .mhit .wc{margin-left:auto;color:var(--faint);font-weight:400;font-size:11px;white-space:nowrap}
+  .mhit .snip{color:var(--muted);font-size:12.5px;margin-top:4px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mhit .why{color:var(--muted);font-size:12.5px;font-style:italic;margin-top:3px}
   @media (max-width:640px){
     .mockbody{grid-template-columns:1fr}
     .mside{display:none}
   }
 
-  /* ---------- how it works ---------- */
-  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px}
-  .step{background:var(--panel);border:1px solid var(--line);border-radius:13px;
-    padding:24px 22px;box-shadow:var(--lift)}
-  .step .n{font-family:var(--serif);font-size:15px;font-weight:700;width:30px;height:30px;
-    display:flex;align-items:center;justify-content:center;border-radius:50%;
-    background:var(--hc);color:#3d2c12;margin-bottom:14px}
-  .step h3{font-family:var(--serif);font-size:19px;font-weight:600;margin:0 0 8px;
-    letter-spacing:-.01em}
-  .step p{margin:0;color:var(--muted);font-size:14.5px}
-  .step p .kbd{margin:0 2px}
-  @media (max-width:760px){ .steps{grid-template-columns:1fr} }
+  /* ---------- thesis / how it works ---------- */
+  .beats{max-width:660px;margin-top:30px}
+  .beat{margin:0;border-top:1px solid var(--line);padding:18px 2px;
+    color:var(--muted);font-size:15.5px;line-height:1.65}
+  .beat b{font-family:var(--serif);color:var(--ink);font-weight:600;font-size:17px;
+    letter-spacing:-.01em;padding-right:4px}
+  .beat .kbd{margin:0 2px}
 
-  /* ---------- features ---------- */
-  .feats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px}
-  .feat{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:22px}
-  .feat .cdot{width:11px;height:11px;margin-bottom:12px}
-  .feat h3{font-family:var(--serif);font-size:18px;font-weight:600;margin:0 0 7px;
+  /* ---------- features as library entries ---------- */
+  .entries{max-width:660px;margin-top:26px}
+  .entry{display:flex;gap:14px;padding:18px 2px;border-top:1px solid var(--line)}
+  .entry .cdot{width:10px;height:10px;margin-top:6px}
+  .entry h3{font-family:var(--serif);font-size:18px;font-weight:600;margin:0 0 5px;
     letter-spacing:-.01em}
-  .feat p{margin:0;color:var(--muted);font-size:14px}
-  @media (max-width:860px){ .feats{grid-template-columns:repeat(2,1fr)} }
-  @media (max-width:560px){ .feats{grid-template-columns:1fr} }
+  .entry p{margin:0;color:var(--muted);font-size:15px;line-height:1.65}
+  .keys{max-width:660px;margin:26px 0 0;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--faint-text);font-size:14px}
+  .keys .kbd{margin:0 2px}
 
-  /* ---------- privacy strip ---------- */
+  /* ---------- your data ---------- */
   .priv{background:var(--side);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-  .priv .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:34px}
-  .priv h3{font-family:var(--serif);font-size:17px;font-weight:600;margin:0 0 6px}
-  .priv p{margin:0;color:var(--muted);font-size:14px}
-  @media (max-width:760px){ .priv .cols{grid-template-columns:1fr} }
+  .split{display:grid;grid-template-columns:1fr 2fr;gap:44px;align-items:start}
+  .split h2.sect{margin:0}
+  .split p{margin:0;color:var(--muted);font-size:16.5px;line-height:1.7;max-width:560px}
+  @media (max-width:760px){ .split{grid-template-columns:1fr;gap:18px} }
+
+  /* ---------- builder's note ---------- */
+  .notewrap{padding-block:72px}
+  .note{background:var(--panel);border:1px solid var(--line);border-radius:13px;
+    box-shadow:var(--lift);padding:28px 32px;max-width:660px;
+    font-family:var(--serif);font-size:17.5px;line-height:1.75}
+  .note p{margin:0}
+  .note .sig{margin-top:14px;font-style:italic}
+  .shipped{max-width:660px;color:var(--faint-text);font-size:13.5px;margin:16px 0 0}
 
   /* ---------- faq ---------- */
-  .faq{max-width:660px;margin:34px auto 0}
-  .faq details{border-bottom:1px solid var(--line);padding:4px 0}
-  .faq summary{list-style:none;display:flex;align-items:center;gap:12px;cursor:pointer;
-    padding:15px 4px;font-family:var(--serif);font-size:17.5px;font-weight:600;
+  .faq{max-width:660px;margin-top:20px}
+  .qa{border-top:1px solid var(--line);padding:20px 2px}
+  .qa h3{font-family:var(--serif);font-size:17.5px;font-weight:600;margin:0 0 7px;
     letter-spacing:-.01em}
-  .faq summary::-webkit-details-marker{display:none}
-  .faq summary::after{content:"+";margin-left:auto;color:var(--faint);font-size:20px;
-    font-family:var(--serif);transition:transform .2s}
-  .faq details[open] summary::after{transform:rotate(45deg)}
-  .faq details p{margin:0 4px 16px;color:var(--muted);font-size:15px}
+  .qa p{margin:0;color:var(--muted);font-size:15px;line-height:1.65}
 
   /* ---------- final cta ---------- */
-  .cta{text-align:center}
+  .cta{text-align:center;padding-block:110px 100px}
   .cta h2{font-family:var(--serif);font-size:clamp(26px,4vw,36px);font-weight:600;
     letter-spacing:-.01em;margin:0 0 26px}
+  .cta .wl{margin:0 auto;justify-content:center}
 
-  footer{border-top:1px solid var(--line);padding:34px 0 44px;color:var(--faint);font-size:13.5px}
+  @media (max-width:640px){
+    section{padding-block:56px}
+    .hero{padding-block:56px 72px}
+    .notewrap{padding-block:56px}
+    .cta{padding-block:72px}
+  }
+
+  /* wide screens: use the width — copy beside the demo, lists in columns */
+  @media (min-width:1100px){
+    .wrap.grow{max-width:1280px}
+    .herogrid{grid-template-columns:minmax(420px,5fr) 6fr;gap:64px;align-items:center}
+    .herogrid .mockstage{margin:0}
+    .mockbody{grid-template-columns:180px 1fr}
+    .beats{max-width:none;display:grid;grid-template-columns:repeat(3,1fr);gap:0 44px}
+    .entries{max-width:none;display:grid;grid-template-columns:1fr 1fr;gap:0 56px}
+    .keys{max-width:none}
+    .faq{max-width:none;display:grid;grid-template-columns:1fr 1fr;gap:0 56px}
+  }
+
+  footer{border-top:1px solid var(--line);padding:34px 0 44px;color:var(--faint-text);font-size:13.5px}
   footer .row{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
   footer .brand{font-size:16px}
   footer a{color:var(--muted);text-decoration:none;font-weight:600}
   footer a:hover{color:var(--ink)}
   footer .spacer{flex:1}
+  footer .fine{margin-top:14px}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="wrap nav">
+  <div class="wrap wide nav">
     <a class="brand" href="/"><span class="hl">L</span>ibrary of College</a>
     <nav class="links" aria-label="Sections">
       <a href="#how">How it works</a>
-      <a href="#features">Features</a>
+      <a href="#wont">What it won't do</a>
       <a href="#faq">FAQ</a>
     </nav>
     <span class="spacer"></span>
     <a class="btn ghost" href="/app">Log in</a>
-    <a class="btn primary" href="#waitlist">Join the waitlist</a>
+    <a class="btn primary" href="#waitlist">Get early access</a>
   </div>
 </header>
 
 <main>
-  <section class="hero wrap" id="waitlist">
-    <span class="eyebrow"><span class="cdot"></span>Private beta · waitlist open</span>
+  <section class="hero" id="waitlist">
+    <div class="wrap wide herogrid">
+    <div class="herocopy">
+    <p class="kicker">An evidence bank for college essays · private beta</p>
     <h1>Where the <span class="hl">stories live</span> until the essay needs them.</h1>
-    <p class="sub">Library of College is an evidence bank for application season. Dump the
-      moments of your life as they happen — then, when a supplemental prompt shows up,
-      it finds which of your stories actually answer it, and tells you why.</p>
+    <p class="sub">Library of College is where you dump the moments of your life all year.
+      When a supplemental prompt shows up, it finds which of your stories answer it,
+      and tells you why.</p>
     <form class="wl" data-wl>
-      <label class="sr" for="wl-email" style="position:absolute;left:-9999px">Email address</label>
+      <label class="sr" for="wl-email">Email address</label>
       <input id="wl-email" type="email" name="email" required autocomplete="email"
         placeholder="you@school.edu" inputmode="email">
-      <button class="btn primary" type="submit">Join the waitlist</button>
+      <button class="btn primary" type="submit">Get early access</button>
+      <a class="btn ghost" href="#how">See how it works</a>
     </form>
     <div class="wlmsg" data-wlmsg aria-live="polite"></div>
-    <div class="wlnote">Free while in beta. No spam — we'll reach out as spots open.</div>
+    <div class="wlnote">Free while in beta. I'll email you myself when a spot opens. Nothing else.</div>
+    <div class="builtby">Built by one high-school senior, in the middle of application season.</div>
+    </div>
 
     <div class="mockstage reveal" aria-hidden="true">
       <div class="mock">
-        <div class="bar"><i></i><i></i><i></i><span>liboc.vercel.app/app</span></div>
+        <div class="bar"><span>liboc.vercel.app/app</span></div>
         <div class="mockbody">
           <div class="mside">
+            <div class="mbrand">Library of College</div>
+            <div class="mnew">+ New entry</div>
             <div class="t">Supplementals</div>
-            <div class="it"><span class="cdot" style="background:var(--c0)"></span>Community <b>12</b></div>
+            <div class="it on"><span class="cdot" style="background:var(--c0)"></span>Community <b>12</b></div>
             <div class="it"><span class="cdot" style="background:var(--c1)"></span>Leadership <b>7</b></div>
-            <div class="it on"><span class="cdot" style="background:var(--c2)"></span>Why School <b>9</b></div>
+            <div class="it"><span class="cdot" style="background:var(--c2)"></span>Why School <b>9</b></div>
             <div class="it"><span class="cdot" style="background:var(--c3)"></span>Why Major <b>11</b></div>
             <div class="t">About me · UC PIQs</div>
             <div class="it"><span class="cdot" style="background:var(--c4)"></span>Creative <b>5</b></div>
@@ -276,223 +331,278 @@
             <div class="it"><span class="cdot" style="background:var(--c6)"></span>Favorite topic <b>4</b></div>
           </div>
           <div class="mmain">
-            <div class="mlabel">Paste a prompt · ✦ match</div>
-            <div class="mprompt">"Tell us about a community you belong to and your place
-              within it." — 250 words</div>
-            <div class="mlabel">Your best evidence</div>
-            <div class="mhit">
-              <div class="h">Saturday
+            <div class="mlabel">Paste a prompt · ✦ Match</div>
+            <div class="mprompt">&ldquo;Tell us about a community you belong to and your place
+              within it.&rdquo; · 250 words</div>
+            <div class="mlabel mrow">Strong fits</div>
+            <div class="mhit mrow">
+              <div class="h"><span class="cdot" style="background:var(--c0)"></span>Saturday
                 mornings at the community garden
-                <span class="fit strong">Strong</span>
-                <span class="rtag">used-in · none yet</span></div>
-              <div class="why"><b>Why:</b> a community you were born into but earned your
-                place in — the regulars, the kitchen hierarchy, your role at the register.</div>
+                <span class="rtag">used-in · none yet</span>
+                <span class="wc">412 words</span></div>
+              <div class="snip">The regulars claim their plots before the gate is unlocked. Saturdays I run the
+                tool shed; the retirees run everything else. There's a hierarchy, and I have a rung.</div>
+              <div class="why">✦ a community you joined as the youngest member and earned your place in — the
+                regulars, the plot hierarchy, your job at the shed.</div>
             </div>
-            <div class="mhit">
-              <div class="h">Teaching a
+            <div class="mhit mrow">
+              <div class="h"><span class="cdot" style="background:var(--c0)"></span>Running
+                the building's notice board
+                <span class="wc">231 words</span></div>
+              <div class="snip">Our building has three languages and one printer. I post every notice twice
+                and walk the paper copies up to the fourth floor.</div>
+              <div class="why">✦ the bridge role: you connect neighbors who'd otherwise miss each other,
+                and all of them lean on it.</div>
+            </div>
+            <div class="mlabel mrow">Worth a look</div>
+            <div class="mhit mrow">
+              <div class="h"><span class="cdot" style="background:var(--c5)"></span>Teaching a
                 neighbor's kid to code over winter break
-                <span class="fit maybe">Possible</span></div>
-              <div class="why"><b>Why:</b> works if you frame the family group chat as the
-                community — weaker on "your place within it."</div>
+                <span class="wc">158 words</span></div>
+              <div class="snip">She kept slamming the laptop shut when the for-loop broke.
+                By day three the rule was: read the error out loud first.</div>
+              <div class="why">✦ works if you frame the weekly lessons as the community —
+                weaker on &ldquo;your place within it.&rdquo;</div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </section>
-
-  <section id="how" class="wrap">
-    <div class="reveal">
-      <span class="eyebrow">How it works</span>
-      <h2 class="sect">Collect now. <span class="hl">Retrieve</span> at 11:58pm.</h2>
-      <p class="sub">The best essay material never shows up while you're staring at the
-        prompt. LoC splits the job in two so nothing gets lost in between.</p>
-    </div>
-    <div class="steps">
-      <div class="step reveal">
-        <div class="n">1</div>
-        <h3>Dump the story</h3>
-        <p>Press <span class="kbd">d</span> anywhere and brain-dump the moment — messy is
-          fine. AI titles it and files it into the right categories for you.</p>
-      </div>
-      <div class="step reveal">
-        <div class="n">2</div>
-        <h3>Paste the prompt</h3>
-        <p>Drop in any supplemental prompt. ✦ Match ranks your entries
-          <em>strong</em> or <em>possible</em> with a concrete why — and Breakdown decodes
-          what the prompt is secretly asking.</p>
-      </div>
-      <div class="step reveal">
-        <div class="n">3</div>
-        <h3>Write from evidence</h3>
-        <p>Draft with receipts instead of a blank page. Luggage-tag chips track which
-          school each story was spent on, so nothing gets reused by accident.</p>
-      </div>
     </div>
   </section>
 
-  <section id="features" class="wrap">
-    <div class="reveal">
-      <span class="eyebrow">Features</span>
-      <h2 class="sect">Built for the way essays actually get written.</h2>
-    </div>
-    <div class="feats">
-      <div class="feat reveal"><span class="cdot" style="background:var(--c0)"></span>
-        <h3>Frictionless capture</h3>
-        <p>Quick-dump modal, per-category dump bars, and a slide-over composer. The whole
-          point is that writing something down never feels like a task.</p></div>
-      <div class="feat reveal"><span class="cdot" style="background:var(--c2)"></span>
-        <h3>✦ Prompt matching</h3>
-        <p>Paste a real prompt and get your best-fitting stories back, each with a reason.
-          Breakdown adds school detection, a gap analysis, and a suggested outline.</p></div>
-      <div class="feat reveal"><span class="cdot" style="background:var(--c3)"></span>
-        <h3>Two-speed search</h3>
-        <p><span class="kbd">⌘K</span> opens a palette with a literal Verbatim tab and an
-          ✦ Ideas tab that searches by meaning — "that essay about losing" finds the
-          chess story.</p></div>
-      <div class="feat reveal"><span class="cdot" style="background:var(--c5)"></span>
-        <h3>Used-in tracking</h3>
-        <p>Every entry carries tags for the essays it's already been spent on, so you can
-          see your coverage across schools at a glance.</p></div>
-      <div class="feat reveal"><span class="cdot" style="background:var(--c4)"></span>
-        <h3>A warm reading room</h3>
-        <p>Serif reading view, paper palette, highlighter-stroke headings, full dark mode.
-          It reads like a notebook, not a database.</p></div>
-      <div class="feat reveal"><span class="cdot" style="background:var(--c6)"></span>
-        <h3>Keyboard-first</h3>
-        <p><span class="kbd">d</span> dump, <span class="kbd">n</span> new,
-          <span class="kbd">j</span>/<span class="kbd">k</span> review,
-          <span class="kbd">⌘K</span> jump anywhere. Your hands never leave the keys.</p></div>
+  <section id="how" class="wrap grow">
+    <h2 class="sect">Collect now. <span class="hl">Retrieve</span> at 11:58pm.</h2>
+    <p class="prose">The best essay material never shows up while you're staring at the prompt.
+      It shows up in June, at a Saturday garden shift, in the middle of something else. By the time
+      &ldquo;Tell us about a community you belong to&rdquo; arrives, the moment is eight
+      months old.</p>
+    <div class="beats">
+      <p class="beat"><b>Dump the story.</b> Press <span class="kbd">d</span> anywhere and type
+        the moment; messy is fine. AI titles it and files it into the right categories while
+        you get on with your day.</p>
+      <p class="beat"><b>Paste the prompt.</b> Drop in any supplemental. ✦ Match ranks your
+        stories strong or possible, each with a concrete why, and Breakdown decodes what the
+        prompt is secretly asking.</p>
+      <p class="beat"><b>Write from evidence.</b> Draft with receipts instead of a blank page.
+        Once a story is spent on a school, its chip says so, and the next prompt starts from
+        what's left.</p>
     </div>
   </section>
 
-  <section class="priv">
-    <div class="wrap">
-      <div class="reveal">
-        <span class="eyebrow">Your data</span>
-        <h2 class="sect">Your stories are <span class="hl">yours</span>.</h2>
-      </div>
-      <div class="cols">
-        <div class="reveal"><h3>Private by default</h3>
-          <p>Sign-in is allowlisted per person. Nobody else — including other users — can
-            ever read your library.</p></div>
-        <div class="reveal"><h3>Backed up daily</h3>
-          <p>Server-side snapshots every day, point-in-time recovery, and wipe protection
-            that rejects suspicious overwrites.</p></div>
-        <div class="reveal"><h3>Leave anytime</h3>
-          <p>One-click JSON export of everything you've written, whenever you want it.
-            No lock-in, no formats to fight.</p></div>
-      </div>
+  <section id="features" class="wrap grow">
+    <h2 class="sect">What it <span class="hl">does</span>.</h2>
+    <div class="entries">
+      <div class="entry"><span class="cdot" style="background:var(--c0)"></span>
+        <div><h3>One-keystroke capture</h3>
+        <p>Press <span class="kbd">d</span>, type the moment, save. Writing something down
+          never feels like a task. AI files it into the right categories for you.</p></div></div>
+      <div class="entry"><span class="cdot" style="background:var(--c2)"></span>
+        <div><h3>✦ Prompt matching</h3>
+        <p>Paste a real prompt; get your best-fitting stories back, each with a reason.
+          Breakdown adds the question under the question, a gap analysis, and an
+          outline.</p></div></div>
+      <div class="entry"><span class="cdot" style="background:var(--c3)"></span>
+        <div><h3>Two-speed search</h3>
+        <p><span class="kbd">⌘K</span> opens Verbatim for exact words and ✦ Ideas for meaning.
+          &ldquo;That essay about losing&rdquo; finds the chess story.</p></div></div>
+      <div class="entry"><span class="cdot" style="background:var(--c5)"></span>
+        <div><h3>Used-in tracking</h3>
+        <p>Luggage-tag chips mark which school each story was spent on. Nothing gets reused
+          by accident.</p></div></div>
+      <div class="entry"><span class="cdot" style="background:var(--c4)"></span>
+        <div><h3>A warm reading room</h3>
+        <p>Serif reading view, paper palette, full dark mode. It reads like a notebook, not
+          a database.</p></div></div>
+    </div>
+    <p class="keys">The whole thing runs on the keyboard:
+      <span class="kbd">⌘K</span> search · <span class="kbd">d</span> quick dump ·
+      <span class="kbd">n</span> new entry · <span class="kbd">j</span><span class="kbd">k</span> review</p>
+  </section>
+
+  <section id="wont" class="wrap">
+    <h2 class="sect">It will <span class="hl">not</span> write your essay.</h2>
+    <p class="prose">The AI here only works on what you've already written. It files things and
+      finds them again. It can tell you which of your stories fits a prompt, and why. What goes
+      on the page is you. That's not a limitation to apologize for; for a college-essay tool in
+      2026, it's the point.</p>
+  </section>
+
+  <section class="priv" id="data">
+    <div class="wrap wide split">
+      <h2 class="sect">Your stories are <span class="hl">yours</span>.</h2>
+      <p>Every account is approved by hand; nobody else, including other users, can ever read
+        your library. The whole library is snapshotted daily and can be rolled back to any
+        minute. And you can export everything as JSON whenever you like. No lock-in, no
+        formats to fight.</p>
     </div>
   </section>
 
-  <section id="faq" class="wrap">
-    <div class="reveal" style="text-align:center">
-      <span class="eyebrow">FAQ</span>
-      <h2 class="sect">Questions, answered.</h2>
+  <section class="wrap notewrap">
+    <div class="note">
+      <p>I built this because my own stories kept disappearing. I'd remember the perfect detail
+        for an essay two days after submitting it. So I made a place to keep them, and now I use
+        it every night — I'm a senior, applying right now, same as you. The name riffs on the
+        Library of Congress: a library of one applicant, catalogued just as seriously.</p>
+      <p class="sig">— K.</p>
     </div>
-    <div class="faq reveal">
-      <details>
-        <summary>What exactly is Library of College?</summary>
-        <p>A personal evidence bank for college applications. You collect real moments —
-          stories, details, small scenes — all year, and when supplemental essays arrive,
-          LoC surfaces which of <em>your own</em> stories fit each prompt. It helps you find
-          your material; the writing stays yours.</p>
-      </details>
-      <details>
-        <summary>Does the AI write my essays?</summary>
-        <p>No, and it's designed not to. The AI only works on what you've already written:
-          filing it, finding it, and matching it against prompts. What goes on the page is
-          you.</p>
-      </details>
-      <details>
-        <summary>Why is there a waitlist?</summary>
-        <p>LoC started as one student's personal tool during application season, and it's
-          being opened up carefully so it stays fast and personal. Joining the waitlist is
-          the way in — we'll reach out as spots open.</p>
-      </details>
-      <details>
-        <summary>What does it cost?</summary>
-        <p>Nothing while it's in beta. If that ever changes, everyone on the waitlist hears
-          about it first — and export is always free.</p>
-      </details>
-      <details>
-        <summary>Is my writing used to train anything?</summary>
+    <p class="shipped">Shipped in August: prompt Breakdown, ⌘K semantic search, an editable
+      per-school prompt map.</p>
+  </section>
+
+  <section id="faq" class="wrap grow">
+    <h2 class="sect">Fair questions.</h2>
+    <div class="faq">
+      <div class="qa">
+        <h3>What exactly is Library of College?</h3>
+        <p>A personal evidence bank for college applications. You collect real moments and
+          small scenes all year. When the supplemental essays arrive, it surfaces which of
+          <em>your own</em> stories fit each prompt. It helps you find your material; the
+          writing stays yours.</p>
+      </div>
+      <div class="qa">
+        <h3>Why is there a waitlist?</h3>
+        <p>LoC is one student's tool, built and run mid-application-season, opening up slowly
+          enough that one person can keep it fast and personal. Joining the waitlist is the
+          way in.</p>
+      </div>
+      <div class="qa">
+        <h3>Why not just a Google Doc?</h3>
+        <p>A doc named <em>college stuff</em> can hold your stories; it just can't hand you
+          the right one back. In October you'd be scrolling through forty paragraphs
+          looking for the garden one. LoC files every entry the moment you dump it,
+          tracks which school each has been spent on, and matches all of them against a
+          real prompt in seconds.</p>
+      </div>
+      <div class="qa">
+        <h3>Is using it cheating?</h3>
+        <p>No. What colleges object to is submitting words that aren't yours. LoC never
+          generates essay text; every sentence in your library is one you typed about your
+          own life, and every sentence in the essay is one you wrote. Keeping good notes
+          on yourself isn't cheating — it's what strong applicants already do, on paper.</p>
+      </div>
+      <div class="qa">
+        <h3>Is my writing used to train anything?</h3>
         <p>No. Your entries live in your private library and are only sent to an AI model
           at the moment you ask for a title, a match, or a search — never for training.</p>
-      </details>
+      </div>
+      <div class="qa">
+        <h3>Does the AI write my essays?</h3>
+        <p>No. See above; it's designed not to.</p>
+      </div>
     </div>
   </section>
 
   <section class="cta wrap">
-    <div class="reveal">
-      <h2>Application season is coming.<br>Start the library <span class="hl">now</span>.</h2>
-      <form class="wl" data-wl>
-        <label for="wl-email2" style="position:absolute;left:-9999px">Email address</label>
-        <input id="wl-email2" type="email" name="email" required autocomplete="email"
-          placeholder="you@school.edu" inputmode="email">
-        <button class="btn primary" type="submit">Join the waitlist</button>
-      </form>
-      <div class="wlmsg" data-wlmsg aria-live="polite"></div>
-      <div class="wlnote">Free while in beta · Export your data anytime</div>
-    </div>
+    <h2>Application season is <span class="hl">here</span>.<br>Start the library early.</h2>
+    <form class="wl" data-wl>
+      <label class="sr" for="wl-email2">Email address</label>
+      <input id="wl-email2" type="email" name="email" required autocomplete="email"
+        placeholder="you@school.edu" inputmode="email">
+      <button class="btn primary" type="submit">Get early access</button>
+    </form>
+    <div class="wlmsg" data-wlmsg aria-live="polite"></div>
+    <div class="wlnote">Free while in beta · Export is always free</div>
   </section>
 </main>
 
 <footer>
-  <div class="wrap row">
+  <div class="wrap wide row">
     <span class="brand"><span class="hl">L</span>ibrary of College</span>
     <span>Where the stories live until the essay needs them.</span>
     <span class="spacer"></span>
     <a href="/app">Log in</a>
     <a href="#waitlist">Waitlist</a>
+    <a href="#data">Your data</a>
+    <a href="https://github.com/aicoder2009/library-of-college" rel="noopener">GitHub</a>
   </div>
-  <div class="wrap" style="margin-top:14px">Built in the middle of application season.</div>
+  <div class="wrap wide fine">Built in the middle of application season.</div>
 </footer>
 
 <script>
+document.documentElement.classList.add("js");
+
 const API = "https://3abskrlijk.execute-api.us-east-1.amazonaws.com";
 
-// ---- waitlist forms (hero + footer share behavior) ----
+// ---- waitlist forms (hero + CTA band share behavior) ----
 document.querySelectorAll("[data-wl]").forEach(form => {
   const msg = form.parentElement.querySelector("[data-wlmsg]");
   form.addEventListener("submit", async e => {
     e.preventDefault();
     const btn = form.querySelector("button");
+    const label = btn.textContent;
     const email = form.email.value.trim();
     if(!email) return;
-    btn.disabled = true; btn.textContent = "Joining…";
+    btn.disabled = true; btn.textContent = "One sec…";
     msg.className = "wlmsg";
     try{
       const r = await fetch(API + "/waitlist", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email }),
+        signal: AbortSignal.timeout(10000)
       });
       const d = await r.json().catch(() => ({}));
       if(r.ok && d.ok){
         form.style.display = "none";
         msg.className = "wlmsg ok";
-        msg.innerHTML = d.dup
-          ? "You're already on the list — sit tight, we'll reach out as spots open."
-          : `<span class="rtag">#${d.position} on the list</span> You're in — we'll reach out as spots open.`;
+        msg.innerHTML = (d.dup
+          ? "You're already on the list. Nothing more to do."
+          : `<span class="rtag">#${d.position} on the list</span> You're in. One email when your spot opens.`)
+          + `<span class="share">Applying alongside friends? <a href="/" data-copy>Copy the link</a> to pass along.</span>`;
+        msg.querySelector("[data-copy]").addEventListener("click", async ev => {
+          ev.preventDefault();
+          try{
+            await navigator.clipboard.writeText("https://liboc.vercel.app/");
+            ev.target.textContent = "Copied";
+          }catch{ ev.target.textContent = "liboc.vercel.app"; }
+        });
+        msg.setAttribute("tabindex", "-1");
+        msg.focus({ preventScroll: true });
       }else{
         msg.className = "wlmsg err";
-        msg.textContent = d.error || "Something hiccuped — try again in a moment.";
+        msg.textContent = d.error || "That didn't go through. Try again in a moment.";
       }
     }catch{
       msg.className = "wlmsg err";
-      msg.textContent = "Couldn't reach the server — check your connection and try again.";
+      msg.textContent = "Couldn't reach the server. Check your connection and try again.";
     }
-    btn.disabled = false; btn.textContent = "Join the waitlist";
+    btn.disabled = false; btn.textContent = label;
   });
 });
 
-// ---- gentle scroll reveals (skipped when reduced motion is preferred) ----
-const io = new IntersectionObserver(es => es.forEach(e => {
-  if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); }
-}), { rootMargin: "0px 0px -8% 0px" });
-document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+// ---- the mock plays its one trick: prompt gets pasted, matches land ----
+const mockRows = [...document.querySelectorAll(".mrow")];
+function playMock(){
+  const p = document.querySelector(".mprompt");
+  if(!p || matchMedia("(prefers-reduced-motion: reduce)").matches){
+    mockRows.forEach(r => r.classList.add("in"));
+    return;
+  }
+  const full = p.textContent.trim().replace(/\s+/g, " ");
+  p.textContent = ""; p.classList.add("typing");
+  let i = 0;
+  const t = setInterval(() => {
+    p.textContent = full.slice(0, i += 3);
+    if(i >= full.length){
+      clearInterval(t);
+      setTimeout(() => p.classList.remove("typing"), 900);
+      mockRows.forEach((r, n) => setTimeout(() => r.classList.add("in"), 350 + n * 220));
+    }
+  }, 26);
+}
+
+// ---- fade the mock in once it's on screen, then run the vignette ----
+const stage = document.querySelector(".mockstage");
+if("IntersectionObserver" in window){
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); playMock(); }
+  }), { rootMargin: "0px 0px -8% 0px" });
+  io.observe(stage);
+}else{
+  stage.classList.add("in");
+  mockRows.forEach(r => r.classList.add("in"));
+}
 
 // ---- returning owner nicety: swap "Log in" for "Open library" if the app
 // has been used in this browser before (localStorage cache from /app) ----

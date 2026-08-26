@@ -78,10 +78,10 @@ export const handler = async (event) => {
         return resp(200, { ok: true, position: list.length });
       }catch(e){
         if(e.name !== "ConditionalCheckFailedException")
-          return resp(500, { error: "Something hiccuped — try again in a moment." });
+          return resp(500, { error: "That didn't go through. Try again in a moment." });
       }
     }
-    return resp(500, { error: "Something hiccuped — try again in a moment." });
+    return resp(500, { error: "That didn't go through. Try again in a moment." });
   }
 
   const auth = await verifyClerk((event.headers.authorization || "").replace(/^Bearer /, ""));
