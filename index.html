@@ -604,6 +604,14 @@ if("IntersectionObserver" in window){
   mockRows.forEach(r => r.classList.add("in"));
 }
 
+// ---- "Get early access" anchors land in the form, cursor ready — otherwise a
+// click from the top of the page (where the hero already is) does nothing ----
+document.querySelectorAll('a[href="#waitlist"]').forEach(a =>
+  a.addEventListener("click", () => setTimeout(() => {
+    const inp = document.getElementById("wl-email");
+    if(inp && inp.offsetParent) inp.focus({ preventScroll: true });
+  }, 0)));
+
 // ---- returning owner nicety: if the app has been used in this browser before
 // (localStorage cache from /app), link straight to the app, skipping /login ----
 try{
