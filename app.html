@@ -669,7 +669,10 @@ function load(){
   try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s && s.entries) return s; }catch(e){}
   return { entries:[], rev:0, backupRev:0 };
 }
-function persist(){ state.rev++; localStorage.setItem(KEY, JSON.stringify(state)); render(); push(); }
+// Quota errors (private browsing, full storage) must not kill render/sync —
+// the server copy is the source of truth, localStorage is only a cache.
+function store(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+function persist(){ state.rev++; store(); render(); push(); }
 function saveUI(){ try{ localStorage.setItem(KEY_UI, JSON.stringify({nav, unusedOnly, matchDeep})); }catch(e){} }
 
 const newId = () => (crypto.randomUUID ? crypto.randomUUID()
@@ -835,9 +838,15 @@ async function mergeSync(depth = 0, msg = "Merged changes from another device"){
       if(!s || (l.updatedAt || 0) >= (s.updatedAt || 0)) m.set(l.id, l);
     });
     state.entries = [...m.values()].sort((a,b) => b.createdAt - a.createdAt);
+    // Prompts too — otherwise this device's copy silently overwrites prompts
+    // added on another device. Union by id: local order first, then any
+    // server prompts this device hasn't seen.
+    const pIds = new Set(mapPrompts().map(p => p.id));
+    state.prompts = [...mapPrompts(),
+      ...(server.prompts || []).filter(p => p && p.id && !pIds.has(p.id))];
     state.rev = Math.max(state.rev, server.rev || 0) + 1;
     state.backupRev = Math.max(state.backupRev || 0, server.backupRev || 0);
-    localStorage.setItem(KEY, JSON.stringify(state));
+    store();
     render();
     await api("PUT", "/entries", state);
     syncState = "synced"; renderStatus();
@@ -871,7 +880,7 @@ async function boot(){
     } else {
       if(s && Array.isArray(s.entries)){
         state = s;
-        localStorage.setItem(KEY, JSON.stringify(state));
+        store();
       }
       syncState = "synced";
       render();
@@ -1755,7 +1764,7 @@ $("export").onclick = () => {
   a.download = `liboc-${new Date().toISOString().slice(0,10)}.json`;
   a.click(); URL.revokeObjectURL(a.href);
   state.backupRev = state.rev;
-  localStorage.setItem(KEY, JSON.stringify(state));
+  store();
   render();
 };
 $("importBtn").onclick = () => $("importFile").click();
