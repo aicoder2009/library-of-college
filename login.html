@@ -89,13 +89,33 @@ window.addEventListener("unhandledrejection", e => {
   $("lockErr").textContent = "Sign-in error: " + (e.reason?.message || e.reason);
 });
 
+// Friendly copy for the not-invited-yet paths: the restricted-access screen a
+// stranger's Google attempt lands on, the unknown-email error, and the card's
+// waitlist action line. Tone matches the landing page.
+const CLERK_COPY = {
+  signIn: { start: {
+    actionText__join_waitlist: "Not invited yet?",
+    actionLink__join_waitlist: "Join the waitlist",
+  }},
+  signUp: { restrictedAccess: {
+    title: "You’re not in — yet",
+    subtitleWaitlist: "That account isn’t invited yet. Accounts are approved by hand while Library of College is in beta — join the waitlist and your invite will land by email.",
+    subtitle: "That account isn’t invited yet. Accounts are approved by hand while Library of College is in beta.",
+    blockButton__joinWaitlist: "Join the waitlist",
+  }},
+  unstable__errors: {
+    not_allowed_access: "That account isn’t invited yet — join the waitlist on the home page and your invite will land by email.",
+    form_identifier_not_found: "No account matches that email yet. Library of College is invite-only while in beta — join the waitlist and we’ll email your invite.",
+  },
+};
+
 async function clerkInit(){
   const watchdog = setTimeout(() => {
     if($("lockText").textContent === "Loading sign-in…")
       $("lockErr").textContent =
         "Still connecting to sign-in… a content blocker may be blocking clerk.accounts.dev";
   }, 10000);
-  try{ await window.Clerk.load(); }
+  try{ await window.Clerk.load({ localization: CLERK_COPY }); }
   catch(e){
     clearTimeout(watchdog);
     $("lockText").textContent = "Couldn’t load sign-in — refresh to retry.";
@@ -114,7 +134,9 @@ async function clerkInit(){
   const v = n => css.getPropertyValue(n).trim();
   window.Clerk.mountSignIn($("clerkMount"), {
     fallbackRedirectUrl: "/app", forceRedirectUrl: "/app",
-    waitlistUrl: "/", // our landing page (waitlist form is the hero), not Clerk's hosted page
+    // Landing page — its hero IS the waitlist form. (Not "/#waitlist": Clerk's
+    // router appends a trailing slash to hash URLs, which kills the anchor.)
+    waitlistUrl: "/",
     appearance: {
     variables: {
       colorPrimary: v("--ink"),
