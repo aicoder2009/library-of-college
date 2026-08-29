@@ -3,7 +3,10 @@ import { createPublicKey, verify as cryptoVerify } from "node:crypto";
 
 const db = new DynamoDBClient({});
 const TABLE = process.env.TABLE;
-const ISSUER = process.env.CLERK_ISSUER;      // e.g. https://xxxxx.clerk.accounts.dev
+// Comma-separated issuer allowlist: the dev instance (localhost + legacy
+// aliases) and the prod instance's proxy URL (https://liboc.vercel.app/__clerk).
+const ISSUERS = new Set((process.env.CLERK_ISSUER || "").split(",")
+  .map(s => s.trim()).filter(Boolean));
 // The owner's Clerk user IDs (comma-separated). No longer an access gate — any
 // signed-in Clerk user gets a library (account creation is gated by waitlist
 // approval in Clerk). These IDs are (a) admins for /waitlist, and (b) mapped to
@@ -11,14 +14,17 @@ const ISSUER = process.env.CLERK_ISSUER;      // e.g. https://xxxxx.clerk.accoun
 // library needs no migration.
 const OWNERS = new Set((process.env.ALLOWED_USER_ID || "").split(","));
 
-let jwks = null, jwksAt = 0;
-async function getJwks(){
-  if(!jwks || Date.now() - jwksAt > 3600e3){
-    const r = await fetch(`${ISSUER}/.well-known/jwks.json`,
+const jwksCache = new Map(); // issuer -> { keys, at }
+async function getJwks(iss){
+  const c = jwksCache.get(iss);
+  if(!c || Date.now() - c.at > 3600e3){
+    const r = await fetch(`${iss}/.well-known/jwks.json`,
       { signal: AbortSignal.timeout(3000) });
-    jwks = (await r.json()).keys; jwksAt = Date.now();
+    const keys = (await r.json()).keys;
+    jwksCache.set(iss, { keys, at: Date.now() });
+    return keys;
   }
-  return jwks;
+  return c.keys;
 }
 const b64uJson = s => JSON.parse(Buffer.from(s, "base64url").toString());
 
@@ -28,21 +34,21 @@ async function verifyClerk(token){
     if(!h || !p || !sig) return null;
     const header = b64uJson(h);
     if(header.alg !== "RS256") return null;
-    let jwk = (await getJwks()).find(k => k.kid === header.kid);
-    if(!jwk && Date.now() - jwksAt > 60e3){
+    const c = b64uJson(p); // claims are untrusted until the signature verifies —
+    if(!ISSUERS.has(c.iss)) return null; // iss only picks which JWKS to check against
+    let jwk = (await getJwks(c.iss)).find(k => k.kid === header.kid);
+    if(!jwk && Date.now() - (jwksCache.get(c.iss)?.at ?? 0) > 60e3){
       // Unknown kid on a >60s-old cache: Clerk may have rotated keys — refetch
       // once instead of 401ing everyone until the hourly cache expires. The 60s
       // floor keeps a garbage-token flood from hammering the JWKS endpoint.
-      jwks = null;
-      jwk = (await getJwks()).find(k => k.kid === header.kid);
+      jwksCache.delete(c.iss);
+      jwk = (await getJwks(c.iss)).find(k => k.kid === header.kid);
     }
     if(!jwk) return null;
     const key = createPublicKey({ key: jwk, format: "jwk" });
     if(!cryptoVerify("RSA-SHA256", Buffer.from(`${h}.${p}`), key, Buffer.from(sig, "base64url")))
       return null;
-    const c = b64uJson(p);
     const now = Date.now() / 1000;
-    if(c.iss !== ISSUER) return null;
     if(c.exp < now - 5 || (c.nbf && c.nbf > now + 5)) return null;
     if(!c.sub || typeof c.sub !== "string" || c.sub.length > 64) return null;
     if(c.azp && !AZP.has(c.azp)) return null;
