@@ -1,5 +1,6 @@
 // Network-first, cache-fallback. Same-origin GETs only — the API and ClerkJS
-// are cross-origin and must never be intercepted or cached.
+// are cross-origin and must never be intercepted or cached. /__clerk/* is the
+// proxied (same-origin) Clerk prod Frontend API — never intercept that either.
 const CACHE = "eb-v1";
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", e => {
@@ -9,7 +10,8 @@ self.addEventListener("activate", e => {
 });
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
-  if(e.request.method !== "GET" || url.origin !== location.origin) return;
+  if(e.request.method !== "GET" || url.origin !== location.origin
+     || url.pathname.startsWith("/__clerk")) return;
   e.respondWith(
     fetch(e.request).then(r => {
       const copy = r.clone();
