@@ -773,7 +773,12 @@ async function clerkInit(){
     KEY_DRAFT = "liboc-draft:" + window.Clerk.user.id;
     state = load(); // this account's own cache (warm start; server still wins)
     loadUI();       // per-account too — nav position shouldn't follow you across accounts
-    lockHide(); boot();
+    render();
+    // Warm cache: show it right away while boot() refreshes from the server.
+    // Cold cache: keep the "Opening the library…" screen up so the user never
+    // sees an empty dashboard; boot() drops it once the first sync settles.
+    if(state.entries.length) lockHide();
+    boot();
     return;
   }
   // Signed out: sign-in lives on its own page now
@@ -790,6 +795,7 @@ async function api(method, path, body){
     body: body ? JSON.stringify(body) : undefined });
   if(r.status === 401){
     if(window.Clerk && window.Clerk.user){
+      authBlocked = true;
       lockShow("");
       $("lockText").textContent = `Signed in as ${
         window.Clerk.user.primaryEmailAddress?.emailAddress || "an unrecognized account"
@@ -812,6 +818,7 @@ async function api(method, path, body){
 }
 
 let pushT = null, syncState = "synced";
+let authBlocked = false; // a 401 put the lock screen up — boot() must not drop it
 function doPush(){
   pushT = null;
   api("PUT", "/entries", state).then(() => {
@@ -895,6 +902,7 @@ async function boot(){
   }catch(e){
     if(e.message !== "auth"){ syncState = "offline"; render(); toast("Offline — using local copy"); }
   }
+  if(!authBlocked) lockHide(); // cold start held the lock until this first sync
   if(pendingKey){
     const k = pendingKey; pendingKey = null;
     if(k === "d") openDump();
