@@ -51,6 +51,10 @@
   .alt{color:var(--faint-text);font-size:13px;margin-top:22px;line-height:1.6}
   .alt a{color:var(--muted);font-weight:600}
   .alt a:hover{color:var(--ink)}
+  .wl-note{color:var(--muted);font-size:14px;line-height:1.65;margin:10px 0 0}
+  .wl-note a{color:var(--ink);font-weight:600}
+  .wl-tag{display:inline-block;background:var(--tagbg);color:var(--tagink);
+    border-radius:6px;padding:1px 8px;font-weight:600;font-size:13px}
 </style>
 </head>
 <body>
@@ -65,6 +69,7 @@
 
 <script>
 const $ = id => document.getElementById(id);
+const API = "https://3abskrlijk.execute-api.us-east-1.amazonaws.com";
 // liboc.vercel.app runs the Clerk PROD instance through the /__clerk proxy;
 // localhost and the legacy aliases stay on the dev instance.
 const CLERK_LIVE = location.hostname === "liboc.vercel.app";
@@ -128,6 +133,9 @@ async function clerkInit(){
     location.replace("/app");
     return;
   }
+  // Came back from Google with an account we don't know? Handle it ourselves —
+  // the prebuilt card's sign-up transfer throws in waitlist mode.
+  if(/sso-callback/.test(location.hash) && await handleUninvitedOauth()) return;
   $("lockText").textContent = "Sign in to open the library.";
   // Dress the Clerk card in the app's own palette (tracks light/dark automatically)
   const css = getComputedStyle(document.documentElement);
@@ -164,6 +172,88 @@ async function clerkInit(){
   }});
   // Belt and braces: if Clerk signs the user in without navigating, go ourselves
   window.Clerk.addListener(({ user }) => { if(user) location.replace("/app"); });
+}
+
+// An OAuth round-trip that found no matching account leaves the sign-in
+// verification "transferable" (or failed with a restricted/not-found error).
+// Instead of surfacing Clerk's error, add the Google email to the waitlist and
+// say so warmly. Returns true when it took over the page.
+async function handleUninvitedOauth(){
+  try{
+    const client = window.Clerk.client || {};
+    const v = client.signIn && client.signIn.firstFactorVerification;
+    const suExt = client.signUp && client.signUp.verifications &&
+      client.signUp.verifications.externalAccount;
+    const blocked = code => /not_found|not_allowed|restricted/.test(code || "");
+    const orphan =
+      (v && (v.status === "transferable" || blocked(v.error && v.error.code))) ||
+      (suExt && (suExt.status === "transferable" || blocked(suExt.error && suExt.error.code)));
+    if(!orphan) return false;
+
+    let email = client.signUp && client.signUp.emailAddress;
+    if(!email && v && v.status === "transferable"){
+      try{ // try the transfer ourselves: if sign-ups are open it just works…
+        const res = await client.signUp.create({ transfer: true });
+        if(res.status === "complete"){
+          await window.Clerk.setActive({ session: res.createdSessionId });
+          location.replace("/app");
+          return true;
+        }
+        email = res.emailAddress || null;
+      }catch(e){ // …and in waitlist mode it throws, often after echoing the email
+        email = (window.Clerk.client.signUp && window.Clerk.client.signUp.emailAddress) || null;
+      }
+    }
+
+    history.replaceState(null, "", "/login"); // drop the #/sso-callback route
+    let joined = null;
+    if(email){
+      try{
+        const r = await fetch(API + "/waitlist", { method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ email }),
+          signal: AbortSignal.timeout(10000) });
+        const d = await r.json().catch(() => ({}));
+        if(r.ok && d.ok) joined = d;
+      }catch{}
+    }
+    renderNotInvited(email, joined);
+    return true;
+  }catch(e){ return false; } // anything unexpected: fall through to the normal card
+}
+
+function renderNotInvited(email, joined){
+  $("lockText").textContent = joined
+    ? (joined.dup ? "You’re already on the waitlist." : "You’re on the waitlist.")
+    : "That account isn’t invited yet.";
+  const box = $("clerkMount");
+  box.textContent = "";
+  const wrap = document.createElement("div"); // clerkMount is a flex ROW — stack inside one column
+  const note = document.createElement("p");
+  note.className = "wl-note";
+  if(joined){
+    if(joined.position){
+      const tag = document.createElement("span");
+      tag.className = "wl-tag";
+      tag.textContent = "#" + joined.position + " in line";
+      note.append(tag, " ");
+    }
+    note.append((email ? email + (joined.dup ? " was already in line." : " just joined the list.")
+      : (joined.dup ? "You’re already in line." : "You just joined the list."))
+      + " Accounts are approved by hand while Library of College is in beta — your invite will land by email.");
+  }else{
+    note.append("Library of College is invite-only while in beta. ");
+    const a = document.createElement("a");
+    a.href = "/"; a.textContent = "Join the waitlist";
+    note.append(a, " and your invite will land by email.");
+  }
+  const retry = document.createElement("p");
+  retry.className = "wl-note";
+  const b = document.createElement("a");
+  b.href = "/login"; b.textContent = "Try a different account";
+  retry.append(b);
+  wrap.append(note, retry);
+  box.append(wrap);
 }
 </script>
 </body>
