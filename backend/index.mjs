@@ -1,4 +1,4 @@
-import { DynamoDBClient, GetItemCommand, PutItemCommand, DeleteItemCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, GetItemCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { createPublicKey, verify as cryptoVerify } from "node:crypto";
 
 const db = new DynamoDBClient({});
@@ -14,7 +14,8 @@ const OWNERS = new Set((process.env.ALLOWED_USER_ID || "").split(","));
 let jwks = null, jwksAt = 0;
 async function getJwks(){
   if(!jwks || Date.now() - jwksAt > 3600e3){
-    const r = await fetch(`${ISSUER}/.well-known/jwks.json`);
+    const r = await fetch(`${ISSUER}/.well-known/jwks.json`,
+      { signal: AbortSignal.timeout(3000) });
     jwks = (await r.json()).keys; jwksAt = Date.now();
   }
   return jwks;
@@ -27,7 +28,14 @@ async function verifyClerk(token){
     if(!h || !p || !sig) return null;
     const header = b64uJson(h);
     if(header.alg !== "RS256") return null;
-    const jwk = (await getJwks()).find(k => k.kid === header.kid);
+    let jwk = (await getJwks()).find(k => k.kid === header.kid);
+    if(!jwk && Date.now() - jwksAt > 60e3){
+      // Unknown kid on a >60s-old cache: Clerk may have rotated keys — refetch
+      // once instead of 401ing everyone until the hourly cache expires. The 60s
+      // floor keeps a garbage-token flood from hammering the JWKS endpoint.
+      jwks = null;
+      jwk = (await getJwks()).find(k => k.kid === header.kid);
+    }
     if(!jwk) return null;
     const key = createPublicKey({ key: jwk, format: "jwk" });
     if(!cryptoVerify("RSA-SHA256", Buffer.from(`${h}.${p}`), key, Buffer.from(sig, "base64url")))
@@ -169,7 +177,7 @@ export const handler = async (event) => {
         method: "POST",
         headers: { "content-type": "application/json",
           authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-        signal: AbortSignal.timeout(55000),
+        signal: AbortSignal.timeout(25000),
         body: JSON.stringify({
           model: "gpt-4.1-nano",
           max_tokens: 80,
@@ -237,7 +245,7 @@ Identify the school only from what the prompt itself gives you — its wording, 
         method: "POST",
         headers: { "content-type": "application/json",
           authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-        signal: AbortSignal.timeout(55000),
+        signal: AbortSignal.timeout(25000),
         body: JSON.stringify({
           model: "gpt-5.6-sol",
           reasoning_effort: "low",
@@ -305,7 +313,7 @@ ${notes}` }]
         method: "POST",
         headers: { "content-type": "application/json",
           authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-        signal: AbortSignal.timeout(55000),
+        signal: AbortSignal.timeout(25000),
         body: JSON.stringify({
           model: "gpt-5.6-sol",
           reasoning_effort: "none", // interactive palette search — speed over deliberation
@@ -346,7 +354,7 @@ ${notes}` }]
         method: "POST",
         headers: { "content-type": "application/json",
           authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-        signal: AbortSignal.timeout(55000),
+        signal: AbortSignal.timeout(25000),
         body: JSON.stringify({
           model: "gpt-4.1-mini",
           max_tokens: 700,
@@ -371,7 +379,7 @@ Note:
         method: "POST",
         headers: { "content-type": "application/json",
           authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-        signal: AbortSignal.timeout(55000),
+        signal: AbortSignal.timeout(25000),
         body: JSON.stringify({
           model: "gpt-4.1-nano",
           max_tokens: 30,
@@ -404,16 +412,16 @@ Note:
     const curN = curState ? (curState.entries || []).length : 0;
     if(curN >= 10 && body.entries.length < curN / 2)
       return resp(409, { error: "stale", rev: curRev });
-    // Once per day, snapshot the pre-change state (kept ~14 days) so app-level
-    // corruption is a one-item restore. Best-effort — never blocks the save.
+    // Once per day, snapshot the pre-change state so app-level corruption is a
+    // one-item restore. DynamoDB TTL (attribute "ttl", enabled on the table)
+    // reaps snapshots after ~15 days. Best-effort — never blocks the save.
     if(cur.Item){
       const day = new Date().toISOString().slice(0, 10);
       try{
         await db.send(new PutItemCommand({ TableName: TABLE,
-          Item: { pk: { S: BACKUP_PREFIX + day }, state: cur.Item.state },
+          Item: { pk: { S: BACKUP_PREFIX + day }, state: cur.Item.state,
+            ttl: { N: String(Math.floor(Date.now() / 1000) + 15 * 86400) } },
           ConditionExpression: "attribute_not_exists(pk)" }));
-        const old = new Date(Date.now() - 14 * 864e5).toISOString().slice(0, 10);
-        await db.send(new DeleteItemCommand({ TableName: TABLE, Key: { pk: { S: BACKUP_PREFIX + old } } }));
       }catch(e){ /* today's snapshot already exists */ }
     }
     // Atomic guard: the write lands only if this rev is still ahead of the
