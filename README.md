@@ -2,7 +2,7 @@
 
 A personal **college-essay evidence bank**: a place to dump stories, details, and moments as they come to you, then mine them with AI while drafting supplemental essays. The name riffs on the Library of Congress.
 
-Live at [liboc.vercel.app](https://liboc.vercel.app) — sign-in is restricted to the owner, since it holds real application essays. This repo is public so others can read the code, borrow ideas, or self-host their own instance.
+Live at [liboc.vercel.app](https://liboc.vercel.app) — account creation is gated by a waitlist; each signed-in user gets their own private library. This repo is public so others can read the code, borrow ideas, or self-host their own instance.
 
 ## Why this exists
 
@@ -41,12 +41,12 @@ index.html            the public landing page (waitlist signup), served at /
 app.html              the entire app in one file, served at /app;
                       only external resource is ClerkJS
 backend/index.mjs     one AWS Lambda (Node 20) behind an API Gateway HTTP API
-DynamoDB              one table; the full app state lives in a single JSON item
+DynamoDB              one table; each account's full library is a single JSON item
                       (waitlist signups in one more)
 ```
 
 - **Sync model**: the client GETs/PUTs the whole state. Every PUT carries a `rev`; the Lambda rejects stale revs (409), the client then re-fetches, merges by entry id (newer `updatedAt` wins, nothing dropped), and retries. Simple, and safe across devices.
-- **Auth**: [Clerk](https://clerk.com). The frontend mounts Clerk's sign-in; the Lambda verifies the RS256 session JWT against the instance JWKS and additionally checks the user id against an `ALLOWED_USER_ID` allowlist env var.
+- **Auth**: [Clerk](https://clerk.com) (waitlist sign-up mode). The frontend mounts Clerk's sign-in; the Lambda verifies the RS256 session JWT against the instance JWKS. Any signed-in user gets their own library; `ALLOWED_USER_ID` marks the owner/admin account(s).
 - **AI**: OpenAI, called only from the Lambda (the key never ships to the browser). Cheap fast models handle titling/classifying/polish; a reasoning model handles prompt matching and semantic search.
 - **localStorage** is only a boot cache — server state always wins.
 
@@ -57,7 +57,7 @@ There's no one-command installer; it's a personal tool. But the surface area is 
 1. **DynamoDB**: create a table (any name) with partition key `pk` (string). Enable point-in-time recovery.
 2. **Lambda**: deploy `backend/index.mjs` (Node 20) behind an API Gateway HTTP API with routes `GET/PUT /entries`, `POST /title|classify|match|search|polish`, `POST/GET /waitlist`, and `OPTIONS` passthrough. Set env vars: `TABLE`, `CLERK_ISSUER`, `ALLOWED_USER_ID`, `OPENAI_API_KEY`.
 3. **Clerk**: create an app, restrict sign-ups, and put your user id(s) in `ALLOWED_USER_ID`.
-4. **Frontend**: edit the `API` and `CLERK_PK` constants near the top of the `<script>` in `app.html` (and `API` in `index.html` if you keep the landing page), then host both anywhere static (`vercel deploy --prod`).
+4. **Frontend**: edit the `API` constant and the hostname-gated `CLERK_LIVE` key block near the top of the `<script>` in `app.html` and `login.html` (and `API` in `index.html` if you keep the landing page), then host everything anywhere static (`vercel deploy --prod`). The `/__clerk` proxy (`api/clerk-proxy.mjs`) is only needed when, like liboc, you can't point a CNAME at Clerk — on your own domain, skip it.
 
 Sanity-check the JS before deploying (there's no test suite):
 
@@ -71,8 +71,10 @@ node --check backend/index.mjs
 | Path | What |
 |------|------|
 | `index.html` | Public landing page (waitlist) |
+| `login.html` | Sign-in page at `/login` |
 | `app.html` | The entire app |
 | `backend/index.mjs` | The entire API |
+| `api/clerk-proxy.mjs` | Vercel edge proxy for Clerk's Frontend API (vercel.app-subdomain workaround) |
 | `docs/design-system.md` | Design tokens, components, overlay + responsive rules |
 | `tools/genicons.py` | Generates the favicon/app icons and `og-image.png` (Pillow) |
 | `sw.js` | Minimal service worker |
