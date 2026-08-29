@@ -65,14 +65,21 @@
 
 <script>
 const $ = id => document.getElementById(id);
-const CLERK_PK = "pk_test_bGFzdGluZy1mYWxjb24tOTEuY2xlcmsuYWNjb3VudHMuZGV2JA";
+// liboc.vercel.app runs the Clerk PROD instance through the /__clerk proxy;
+// localhost and the legacy aliases stay on the dev instance.
+const CLERK_LIVE = location.hostname === "liboc.vercel.app";
+const CLERK_PK = CLERK_LIVE
+  ? "pk_live_Y2xlcmsubGlib2MudmVyY2VsLmFwcCQ"
+  : "pk_test_bGFzdGluZy1mYWxjb24tOTEuY2xlcmsuYWNjb3VudHMuZGV2JA";
 
-(() => { // load ClerkJS from the frontend API encoded in the publishable key
-  const fapi = atob(CLERK_PK.split("_")[2]).replace(/\$$/, "");
+(() => { // load ClerkJS via the proxy (prod) or the FAPI encoded in the key (dev)
+  const base = CLERK_LIVE ? location.origin + "/__clerk"
+    : "https://" + atob(CLERK_PK.split("_")[2]).replace(/\$$/, "");
   const s = document.createElement("script");
-  s.src = `https://${fapi}/npm/@clerk/clerk-js@5/dist/clerk.browser.js`;
+  s.src = `${base}/npm/@clerk/clerk-js@5/dist/clerk.browser.js`;
   s.crossOrigin = "anonymous";
   s.setAttribute("data-clerk-publishable-key", CLERK_PK);
+  if(CLERK_LIVE) s.setAttribute("data-clerk-proxy-url", location.origin + "/__clerk");
   s.onload = clerkInit;
   s.onerror = () => { $("lockText").textContent = "Couldn’t load sign-in — check your connection and refresh."; };
   document.head.appendChild(s);
