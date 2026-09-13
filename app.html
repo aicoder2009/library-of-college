@@ -503,7 +503,7 @@
   <input id="palq" placeholder="Search entries, categories, tags…">
   <div class="paltabs">
     <button class="paltab on" id="palTabText" type="button" title="Literal text search — every word must appear">Verbatim</button>
-    <button class="paltab" id="palTabIdea" type="button" title="GPT-5.6 Sol finds entries related to an idea, even with different words">✦ Ideas</button>
+    <button class="paltab" id="palTabIdea" type="button" title="GPT-6 Astra finds entries related to an idea, even with different words">✦ Ideas</button>
     <span class="hint" id="palModel"></span>
     <span class="hint kbonly palkbd"><span class="kbd">Tab</span> switch</span>
   </div>
@@ -526,7 +526,7 @@
   <textarea id="matchQ" rows="3"
     placeholder="Paste the essay prompt — e.g. “Describe a community you belong to…”"></textarea>
   <div class="dumprow">
-    <span class="hint" id="matchHint">GPT-5.6 Sol picks your best-fitting stories</span>
+    <span class="hint" id="matchHint">GPT-6 Astra picks your best-fitting stories</span>
     <span class="spacer"></span>
     <button class="switch" id="matchDeep" type="button" role="switch" aria-checked="true">
       <span>✦ Breakdown</span><span class="swtrack"><span class="swknob"></span></span>
@@ -1084,7 +1084,7 @@ function setPalMode(m){
   $("palq").placeholder = m === "idea"
     ? "Describe an idea — a theme, person, place…"
     : "Search entries, categories, tags…";
-  $("palModel").textContent = m === "idea" ? "GPT-5.6 Sol" : "";
+  $("palModel").textContent = m === "idea" ? "GPT-6 Astra" : "";
   palRefresh();
   const q = $("palq").value.trim();
   if(m === "idea" && q && q !== palIdeaQ) palIdeaRun();
@@ -1187,7 +1187,7 @@ function palGoEntry(e){
 }
 function palIdeaItems(){
   const q = $("palq").value.trim();
-  if(palIdeaState === "loading") return { items: [], msg: "✦ GPT-5.6 Sol is searching the stacks…" };
+  if(palIdeaState === "loading") return { items: [], msg: "✦ GPT-6 Astra is searching the stacks…" };
   if(palIdeaState === "error") return { items: [], msg: "Search failed — press Enter to retry." };
   if(palIdeaHits.length){
     const label = palIdeaQ.length > 34 ? palIdeaQ.slice(0, 34) + "…" : palIdeaQ;
@@ -1428,8 +1428,8 @@ function matchDeepLabel(){
     : "Off — just matches your notes to the prompt. Click to add the deconstruction, school read, outline, and gap analysis.";
   // The hint doubles as visible state — tooltips don't exist on touch.
   $("matchHint").textContent = matchDeep
-    ? "GPT-5.6 Sol picks stories + outline, school read & gaps"
-    : "GPT-5.6 Sol picks your best-fitting stories";
+    ? "GPT-6 Astra picks stories + outline, school read & gaps"
+    : "GPT-6 Astra picks your best-fitting stories";
 }
 $("matchDeep").onclick = () => { matchDeep = !matchDeep; saveUI(); matchDeepLabel(); };
 matchDeepLabel();
@@ -1463,7 +1463,7 @@ async function matchRun(){
   const prompt = $("matchQ").value.trim();
   if(prompt.length < 4) return toast("Paste a bit more of the prompt");
   $("matchGo").disabled = true;
-  $("matchList").innerHTML = `<div class="matchempty">✦ GPT-5.6 Sol is searching the stacks${
+  $("matchList").innerHTML = `<div class="matchempty">✦ GPT-6 Astra is searching the stacks${
     matchDeep ? " and building an outline" : ""}…</div>`;
   try{
     const r = await api("POST", "/match", { prompt, deep: matchDeep });

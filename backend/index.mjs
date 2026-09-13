@@ -253,9 +253,9 @@ Identify the school only from what the prompt itself gives you — its wording, 
           authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
         signal: AbortSignal.timeout(25000),
         body: JSON.stringify({
-          model: "gpt-5.6-sol",
-          reasoning_effort: "low",
-          max_completion_tokens: deep ? 2500 : 1500,
+          model: "gpt-6-astra",
+          reasoning_effort: "high",
+          max_completion_tokens: deep ? 6000 : 3000, // shared with reasoning tokens — keep headroom
           response_format: { type: "json_object" },
           messages: [{ role: "user", content:
 `These are a student's evidence notes for college essays. Given the essay prompt, pick the notes that genuinely fit BEST as material for answering it, best first — usually 3-8, fewer if few genuinely fit.
