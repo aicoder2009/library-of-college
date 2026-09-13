@@ -254,7 +254,7 @@ Identify the school only from what the prompt itself gives you — its wording, 
         signal: AbortSignal.timeout(25000),
         body: JSON.stringify({
           model: "gpt-6-astra",
-          reasoning_effort: "high",
+          reasoning_effort: "medium", // high took ~28s on a 50-entry library — past the 25s abort
           max_completion_tokens: deep ? 6000 : 3000, // shared with reasoning tokens — keep headroom
           response_format: { type: "json_object" },
           messages: [{ role: "user", content:
