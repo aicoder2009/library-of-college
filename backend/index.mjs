@@ -321,9 +321,9 @@ ${notes}` }]
           authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
         signal: AbortSignal.timeout(25000),
         body: JSON.stringify({
-          model: "gpt-5.6-sol",
-          reasoning_effort: "none", // interactive palette search — speed over deliberation
-          max_completion_tokens: 700,
+          model: "gpt-6-astra",
+          reasoning_effort: "high", // gpt-6-astra has no "none"; user chose high for search quality
+          max_completion_tokens: 2000, // shared with reasoning tokens — keep headroom
           response_format: { type: "json_object" },
           messages: [{ role: "user", content:
 `These are a student's evidence notes for college essays. The student is searching their library by IDEA, not exact words. Pick the notes genuinely related to the search — by theme, topic, person, place, event, or concept — best first, up to 8. Fewer if few relate; an empty list is a valid answer.
