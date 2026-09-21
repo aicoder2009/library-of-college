@@ -62,9 +62,11 @@ const resp = (code, body) => ({ statusCode: code,
 
 // Origins the frontend legitimately runs on (mirrors the API Gateway CORS list).
 // A session token minted on any other origin is rejected even if its signature
-// is valid — stops a token replayed from a page we don't serve.
-const AZP = new Set(["https://liboc.vercel.app", "https://evidence-bank.vercel.app",
-  "http://localhost:8765"]);
+// is valid — stops a token replayed from a page we don't serve. Self-hosters set
+// ALLOWED_ORIGINS (comma-separated); the default is this deployment's list.
+const AZP = new Set((process.env.ALLOWED_ORIGINS ||
+  "https://liboc.vercel.app,https://evidence-bank.vercel.app,http://localhost:8765")
+  .split(",").map(s => s.trim()).filter(Boolean));
 
 // Best-effort per-user budget for the AI routes (cost guard, not a turnstile):
 // counts live in container memory, so it resets on cold start and is per

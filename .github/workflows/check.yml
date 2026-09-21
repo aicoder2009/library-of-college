@@ -1,0 +1,21 @@
+name: check
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Syntax-check inline scripts and backend
+        run: |
+          for f in index.html login.html app.html; do
+            awk '/<script>/{f=1;next}/<\/script>/{f=0}f' "$f" > /tmp/x.js
+            node --check /tmp/x.js || { echo "::error file=$f::syntax error"; exit 1; }
+          done
+          node --check backend/index.mjs
+          node --check api/clerk-proxy.mjs
+          node --check sw.js

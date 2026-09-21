@@ -54,10 +54,10 @@ DynamoDB              one table; each account's full library is a single JSON it
 
 There's no one-command installer; it's a personal tool. But the surface area is small:
 
-1. **DynamoDB**: create a table (any name) with partition key `pk` (string). Enable point-in-time recovery.
-2. **Lambda**: deploy `backend/index.mjs` (Node 20) behind an API Gateway HTTP API with routes `GET/PUT /entries`, `POST /title|classify|match|search|polish`, `POST/GET /waitlist`, and `OPTIONS` passthrough. Set env vars: `TABLE`, `CLERK_ISSUER`, `ALLOWED_USER_ID`, `OPENAI_API_KEY`.
-3. **Clerk**: create an app, restrict sign-ups, and put your user id(s) in `ALLOWED_USER_ID`.
-4. **Frontend**: edit the `API` constant and the hostname-gated `CLERK_LIVE` key block near the top of the `<script>` in `app.html` and `login.html` (and `API` in `index.html` if you keep the landing page), then host everything anywhere static (`vercel deploy --prod`). The `/__clerk` proxy (`api/clerk-proxy.mjs`) is only needed when, like liboc, you can't point a CNAME at Clerk — on your own domain, skip it.
+1. **DynamoDB**: create a table (any name) with partition key `pk` (string). Enable point-in-time recovery, and TTL on attribute `ttl` (reaps the daily backups).
+2. **Lambda**: deploy `backend/index.mjs` (Node 20 — it only uses the AWS SDK bundled with the runtime, so a zip of that one file is enough) behind an API Gateway HTTP API with routes `GET/PUT /entries`, `POST /title|classify|match|search|polish`, `POST/GET /waitlist`, and `OPTIONS` passthrough. Give its role `dynamodb:GetItem/PutItem/DeleteItem` on the table. Set the env vars listed in [`backend/.env.example`](backend/.env.example). Configure API Gateway CORS with the same origins as `ALLOWED_ORIGINS`.
+3. **Clerk**: create an app, put its Frontend API URL in `CLERK_ISSUER`, and restrict sign-ups (waitlist or allowlist) — anyone who can sign in gets a library and can spend your OpenAI budget. Optionally list admin user ids in `ALLOWED_USER_ID`.
+4. **Frontend**: edit the `API` constant and the hostname-gated `CLERK_LIVE` key block near the top of the `<script>` in `app.html` and `login.html` (and `API` in `index.html` if you keep the landing page); swap the `liboc.vercel.app` URLs in the `<head>` meta tags for your own. Host everything anywhere static (`vercel deploy --prod`). The `/__clerk` proxy (`api/clerk-proxy.mjs`) is only needed when, like liboc, you can't point a CNAME at Clerk — then set `CLERK_PROXY_URL` and `CLERK_SECRET_KEY` in the Vercel env. On your own domain, skip it.
 
 Sanity-check the JS before deploying (there's no test suite):
 
@@ -79,6 +79,10 @@ node --check backend/index.mjs
 | `tools/genicons.py` | Generates the favicon/app icons and `og-image.png` (Pillow) |
 | `sw.js` | Minimal service worker |
 
+## Contributing
+
+Issues and PRs are welcome — read [CONTRIBUTING.md](CONTRIBUTING.md) first. Security issues go through [SECURITY.md](SECURITY.md), not public issues.
+
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). Not affiliated with the Library of Congress or any college.

@@ -9,7 +9,8 @@
 // runtime here invokes (req, res) style and body/header relaying gets murky).
 export const config = { runtime: "edge" };
 
-const PROXY_URL = "https://liboc.vercel.app/__clerk";
+// Self-hosters set CLERK_PROXY_URL (Vercel env) to their own https://<host>/__clerk.
+const PROXY_URL = process.env.CLERK_PROXY_URL || "https://liboc.vercel.app/__clerk";
 const FAPI = "https://frontend-api.clerk.dev";
 
 // Hop-by-hop / transport headers that must not be relayed in either direction.
