@@ -6,3 +6,6 @@ backend/fn.zip
 scratch/
 CLAUDE.local.md
 .claude/
+
+# graphify knowledge-graph output (local only)
+graphify-out/
