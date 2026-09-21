@@ -1,0 +1,16 @@
+<!-- @dsCard group="Overlays" height=170 subtitle="One line, one undo" -->
+<link rel="stylesheet" href="../../tokens.css">
+<style>
+  body{margin:0;padding:24px;background:var(--bg);color:var(--ink);
+    font:15px/1.5 var(--font-sans);display:flex;flex-direction:column;align-items:center;gap:16px}
+  .toast{background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;
+    white-space:nowrap}
+  .toast .tbtn{border:none;background:none;color:var(--bg);text-decoration:underline;
+    font:inherit;font-size:13.5px;font-weight:600;padding:0 0 0 8px;cursor:pointer}
+  .hint{color:var(--faint);font-size:12px}
+</style>
+<div id="root">
+  <div class="toast">Saved to Leadership</div>
+  <div class="toast">Deleted “Fixing the greenhouse drip timer”<button class="tbtn">Undo</button></div>
+  <p class="hint">Fixed 76px from the bottom, centered, fading in over 0.18s.</p>
+</div>

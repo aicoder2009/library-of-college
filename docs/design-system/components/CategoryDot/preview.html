@@ -1,0 +1,32 @@
+<!-- @dsCard group="Foundations" height=180 subtitle="The whole iconography" -->
+<link rel="stylesheet" href="../../tokens.css">
+<style>
+  body{margin:0;padding:24px;background:var(--bg);color:var(--ink);
+    font:15px/1.5 var(--font-sans)}
+  .cdot{display:inline-block;flex:none;width:9px;height:9px;border-radius:50%}
+  .dot{flex:none;width:7px;height:7px;border-radius:50%;display:inline-block}
+  .dots{display:inline-flex;gap:4px;margin-left:8px;vertical-align:2px}
+  .cdot.tagdot{background:var(--tagbg);border:1.5px solid var(--tagink);width:8px;height:8px}
+  .list{display:flex;flex-direction:column;gap:9px;margin-bottom:20px}
+  .r{display:flex;align-items:center;gap:9px;font-size:14px}
+  .ecats{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--muted)}
+  .ecat{display:inline-flex;align-items:center;gap:5px}
+  .ecat .dot{width:6px;height:6px}
+  .lab{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--faint);margin:0 0 9px}
+  .title{font-size:15px;font-weight:600}
+</style>
+<div id="root">
+  <p class="lab">In the sidebar</p>
+  <div class="list">
+    <div class="r"><span class="cdot" style="background:var(--c0)"></span>Community/Perspective</div>
+    <div class="r"><span class="cdot" style="background:var(--c1)"></span>Leadership</div>
+    <div class="r"><span class="cdot tagdot"></span>Hollis · Roommate</div>
+  </div>
+  <p class="lab">On an entry</p>
+  <div class="title">Fixing the greenhouse drip timer<span class="dots"><span class="dot" style="background:var(--c1)"></span><span class="dot" style="background:var(--c5)"></span></span></div>
+  <div class="ecats" style="margin-top:7px">
+    <span class="ecat"><span class="dot" style="background:var(--c1)"></span>Leadership</span>
+    <span class="ecat"><span class="dot" style="background:var(--c5)"></span>Problem-solver</span>
+  </div>
+</div>

@@ -1,0 +1,30 @@
+<!-- @dsCard group="Library" height=230 subtitle="The dashed bar that means 'you may put something here'" -->
+<link rel="stylesheet" href="../../tokens.css">
+<style>
+  body{margin:0;padding:24px;background:var(--bg);color:var(--ink);
+    font:15px/1.5 var(--font-sans)}
+  .quickadd{width:100%;font:inherit;font-size:14px;line-height:1.55;padding:9px 12px;
+    border:1px dashed var(--line);border-radius:9px;background:transparent;
+    color:var(--ink);resize:none;display:block;font-family:inherit}
+  .quickadd::placeholder{color:var(--faint)}
+  .quickadd.focused{border-color:var(--muted);border-style:solid;background:var(--panel);
+    outline:none}
+  .polished{margin-top:20px;border:1px dashed var(--line);border-radius:10px;
+    padding:11px 14px 13px;background:var(--bg)}
+  .pollab{display:flex;align-items:center;gap:10px;font-size:10.5px;font-weight:700;
+    letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+  .pollab .linkbtn{font-size:12px;font-weight:400;letter-spacing:0;text-transform:none;
+    border:none;background:none;padding:0;color:var(--ink);text-decoration:underline;
+    text-underline-offset:2px;font-family:inherit;cursor:pointer}
+  .polished .full{font-family:var(--font-serif);font-size:15px;line-height:1.7;margin:0;
+    white-space:pre-wrap}
+  .empty{color:var(--muted);font-size:14.5px;line-height:1.65;margin:0 0 18px;max-width:44ch}
+</style>
+<div id="root">
+  <p class="empty">Nothing filed under Why School yet. Drop the smallest true detail — a professor's name, a building, one overheard sentence.</p>
+  <textarea class="quickadd" rows="2" placeholder="Add to Why School — one detail per line…"></textarea>
+  <div class="polished">
+    <div class="pollab">✦ Polished <button class="linkbtn">Replace original</button></div>
+    <p class="full">I kept a list of what people came back for. It was never the expensive things, and I only saw the pattern at the end of the summer.</p>
+  </div>
+</div>

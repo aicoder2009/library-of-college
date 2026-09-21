@@ -1,0 +1,53 @@
+<!-- @dsCard group="Actions" height=230 subtitle="Filing an entry into its categories" -->
+<link rel="stylesheet" href="../../tokens.css">
+<style>
+  body{margin:0;padding:24px;background:var(--panel);color:var(--ink);
+    font:15px/1.5 var(--font-sans)}
+  .chips{display:flex;flex-direction:column;gap:11px}
+  .chiplab{display:block;font-size:10.5px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--faint);margin:0 0 5px}
+  .chiprow{display:flex;gap:7px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;
+    padding:5px 12px;font-size:13px;font-weight:600;background:transparent;color:var(--muted);
+    user-select:none;font-family:inherit;cursor:pointer}
+  .chip:hover{border-color:var(--muted);color:var(--ink)}
+  .chip.on{background:var(--cc);border-color:transparent;color:var(--cat-ink)}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .chip.on{background:color-mix(in srgb,var(--cc) 16%,transparent);
+      color:var(--cc);border-color:color-mix(in srgb,var(--cc) 40%,transparent)}
+  }
+  :root[data-theme="dark"] .chip.on{background:color-mix(in srgb,var(--cc) 16%,transparent);
+    color:var(--cc);border-color:color-mix(in srgb,var(--cc) 40%,transparent)}
+  .chip.mini{font-size:11.5px;padding:3px 9px}
+  .picklab{margin:0 0 10px;font-size:10.5px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted);border-top:1px solid var(--line);padding-top:13px}
+</style>
+<div id="root">
+  <p class="picklab">Categories</p>
+  <div class="chips">
+    <div>
+      <span class="chiplab">Supplementals</span>
+      <div class="chiprow">
+        <button class="chip" style="--cc:var(--c0)">Community/Perspective</button>
+        <button class="chip on" style="--cc:var(--c1)">Leadership</button>
+        <button class="chip" style="--cc:var(--c2)">Why School</button>
+        <button class="chip" style="--cc:var(--c3)">Why Major</button>
+      </div>
+    </div>
+    <div>
+      <span class="chiplab">About me · UC PIQs</span>
+      <div class="chiprow">
+        <button class="chip" style="--cc:var(--c4)">Creative</button>
+        <button class="chip on" style="--cc:var(--c5)">Problem-solver</button>
+        <button class="chip" style="--cc:var(--c6)">My favorite topic</button>
+      </div>
+    </div>
+    <div>
+      <span class="chiplab">Refile</span>
+      <div class="chiprow">
+        <button class="chip mini" style="--cc:var(--c2)">Why School</button>
+        <button class="chip mini on" style="--cc:var(--c4)">Creative</button>
+      </div>
+    </div>
+  </div>
+</div>

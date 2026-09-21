@@ -1,0 +1,33 @@
+<!-- @dsCard group="Foundations" height=180 subtitle="Used-in tags, in three sizes" -->
+<link rel="stylesheet" href="../../tokens.css">
+<style>
+  body{margin:0;padding:24px;background:var(--bg);color:var(--ink);
+    font:15px/1.5 var(--font-sans)}
+  .rtag{position:relative;display:inline-flex;align-items:center;gap:5px;
+    font-size:11.5px;font-weight:600;color:var(--tagink);background:var(--tagbg);
+    padding:3px 9px 3px 15px;
+    clip-path:polygon(9px 0,100% 0,100% 100%,9px 100%,0 50%)}
+  .rtag::before{content:"";position:absolute;left:5.5px;top:50%;transform:translateY(-50%);
+    width:4.5px;height:4.5px;border-radius:50%;background:var(--bg)}
+  .rtag.mini{font-size:10.5px;padding:2px 7px 2px 13px}
+  .rtag.htag{font-size:14px;font-weight:600;padding:5px 13px 5px 22px;
+    clip-path:polygon(12px 0,100% 0,100% 100%,12px 100%,0 50%)}
+  .rtag.htag::before{left:7.5px;width:6px;height:6px}
+  .tagadd{border:1px dashed var(--line);background:none;color:var(--muted);font-size:11.5px;
+    padding:2px 9px;border-radius:999px;font-family:inherit;cursor:pointer}
+  .tagadd:hover{color:var(--ink);border-color:var(--muted)}
+  .usedin{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:22px}
+  .lab{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--faint);margin:0 0 9px}
+</style>
+<div id="root">
+  <p class="lab">Used in</p>
+  <div class="usedin">
+    <span class="rtag">Hollis · Roommate</span>
+    <span class="rtag">Wexford · Community</span>
+    <span class="rtag mini">UC PIQ 2</span>
+    <button class="tagadd">+ tag</button>
+  </div>
+  <p class="lab">As a view heading</p>
+  <span class="rtag htag">Hollis · Roommate</span>
+</div>

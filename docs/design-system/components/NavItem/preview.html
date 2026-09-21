@@ -1,0 +1,46 @@
+<!-- @dsCard group="Library" height=390 subtitle="The sidebar, grouped and counted" -->
+<link rel="stylesheet" href="../../tokens.css">
+<style>
+  body{margin:0;padding:0;background:var(--side);color:var(--ink);
+    font:15px/1.5 var(--font-sans)}
+  .side{width:256px;padding:20px 14px 16px;display:flex;flex-direction:column}
+  .brand{font-size:12.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--muted);padding:0 9px;margin-bottom:16px}
+  .new{display:block;width:100%;background:var(--ink);color:var(--bg);border:1px solid var(--ink);
+    border-radius:9px;padding:9px 12px;font-weight:600;font:inherit;font-size:14px;font-weight:600;
+    cursor:pointer;margin-bottom:18px}
+  #nav{display:flex;flex-direction:column;gap:2px}
+  .navgroup{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--faint);padding:0 9px;margin:12px 0 4px}
+  #nav > .navgroup:first-child{margin-top:0}
+  .navitem{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:transparent;
+    border:none;border-radius:8px;padding:7px 9px;font-size:14px;color:var(--ink);
+    font-family:inherit;cursor:pointer}
+  .navitem:hover{background:var(--wash)}
+  .navitem.on{background:var(--washon);font-weight:600}
+  .cdot{flex:none;width:9px;height:9px;border-radius:50%}
+  .cdot.tagdot{background:var(--tagbg);border:1.5px solid var(--tagink);width:8px;height:8px}
+  .cdot.dump{background:none;width:9px;height:auto;border-radius:0;font-size:11px;
+    line-height:1;color:var(--muted);text-align:center}
+  .navlab{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .navn{margin-left:auto;color:var(--muted);font-size:12px;font-weight:400;padding-left:8px;
+    font-variant-numeric:tabular-nums}
+  .navn.thin{color:var(--warn);opacity:.85;font-weight:600}
+</style>
+<div id="root"><div class="side">
+  <div class="brand">Library of College</div>
+  <button class="new">New entry</button>
+  <div id="nav">
+    <div class="navgroup">Supplementals</div>
+    <button class="navitem"><span class="cdot" style="background:var(--c0)"></span><span class="navlab">Community/Perspective</span><span class="navn">9</span></button>
+    <button class="navitem on"><span class="cdot" style="background:var(--c1)"></span><span class="navlab">Leadership</span><span class="navn">12</span></button>
+    <button class="navitem"><span class="cdot" style="background:var(--c2)"></span><span class="navlab">Why School</span><span class="navn thin">2</span></button>
+    <button class="navitem"><span class="cdot" style="background:var(--c3)"></span><span class="navlab">Why Major</span><span class="navn">7</span></button>
+    <div class="navgroup">About me · UC PIQs</div>
+    <button class="navitem"><span class="cdot" style="background:var(--c4)"></span><span class="navlab">Creative</span><span class="navn">5</span></button>
+    <button class="navitem"><span class="cdot" style="background:var(--c5)"></span><span class="navlab">Problem-solver</span><span class="navn">6</span></button>
+    <div class="navgroup">Used in</div>
+    <button class="navitem"><span class="cdot tagdot"></span><span class="navlab">Hollis · Roommate</span><span class="navn">3</span></button>
+    <button class="navitem"><span class="cdot dump">·</span><span class="navlab">Unfiled</span><span class="navn">4</span></button>
+  </div>
+</div></div>

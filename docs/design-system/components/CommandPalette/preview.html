@@ -1,0 +1,71 @@
+<!-- @dsCard group="Overlays" height=420 subtitle="Two tabs: literal match, and AI semantic search" -->
+<link rel="stylesheet" href="../../tokens.css">
+<style>
+  body{margin:0;padding:22px;background:var(--bg);color:var(--ink);
+    font:15px/1.5 var(--font-sans);display:flex;justify-content:center}
+  .pal{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:100%;
+    max-width:560px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;
+    height:fit-content}
+  #palq{border:none;background:transparent;font:inherit;font-size:16px;color:var(--ink);
+    padding:15px 18px 10px;outline:none;width:100%;font-family:inherit}
+  .paltabs{display:flex;gap:4px;align-items:center;padding:0 12px 8px;
+    border-bottom:1px solid var(--line)}
+  .paltab{border:none;background:none;padding:3px 9px;border-radius:6px;font-size:11px;
+    font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);
+    font-family:inherit;cursor:pointer}
+  .paltab.on{color:var(--ink);background:var(--washon)}
+  #palModel{margin-left:auto;color:var(--faint);font-size:11px;font-weight:700;
+    letter-spacing:.07em;text-transform:uppercase}
+  #palList{padding:6px}
+  .palsec{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--faint);padding:8px 10px 3px}
+  .palitem{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer}
+  .palitem.on{background:var(--washon)}
+  .palitem .cdot{flex:none;width:8px;height:8px;border-radius:50%}
+  .palmain{min-width:0;flex:1;display:flex;flex-direction:column}
+  .paltitle{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .palsnip{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis}
+  .palsnip b{color:var(--ink);font-weight:600}
+  .palhint{flex:none;font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
+  .kbd{display:inline-block;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;
+    padding:0 4.5px;font-size:10.5px;line-height:1.55;background:var(--panel);color:var(--muted);
+    font-family:var(--font-mono);font-weight:600;margin-left:10px}
+</style>
+<div id="root"><div class="pal">
+  <input id="palq" value="a time I changed my mind">
+  <div class="paltabs">
+    <button class="paltab">Verbatim</button>
+    <button class="paltab on">✦ Ideas</button>
+    <span class="kbd">Tab</span>
+    <span id="palModel">GPT-6 Astra</span>
+  </div>
+  <div id="palList">
+    <div class="palsec">Strong fit</div>
+    <div class="palitem on">
+      <span class="cdot" style="background:var(--c5)"></span>
+      <span class="palmain">
+        <span class="paltitle">Coaching the under-10 swim relay</span>
+        <span class="palsnip">You were sure the problem was <b>practice</b>, then found it was the handoff.</span>
+      </span>
+      <span class="palhint">204w</span>
+    </div>
+    <div class="palitem">
+      <span class="cdot" style="background:var(--c0)"></span>
+      <span class="palmain">
+        <span class="paltitle">What the lost-and-found box taught me</span>
+        <span class="palsnip">A pattern you only saw by writing it all down.</span>
+      </span>
+      <span class="palhint">96w</span>
+    </div>
+    <div class="palsec">Possible</div>
+    <div class="palitem">
+      <span class="cdot" style="background:var(--c1)"></span>
+      <span class="palmain">
+        <span class="paltitle">Fixing the greenhouse drip timer</span>
+        <span class="palsnip">Changed method, not mind — use only if the essay wants process.</span>
+      </span>
+      <span class="palhint">182w</span>
+    </div>
+  </div>
+</div></div>
