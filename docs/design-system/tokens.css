@@ -1,0 +1,224 @@
+/* Warm Paper — the design tokens of Library of College.
+ *
+ * GENERATED from docs/design-system/tokens.json. Edit that file, then rerun
+ *   python3 tools/gentokens.py
+ *
+ * This file is documentation and a starting point for new surfaces. The three
+ * shipping pages (index.html, login.html, app.html) keep their own inline
+ * :root blocks on purpose: the app loads no external stylesheet, and adding
+ * one here would cost a request on first paint. When a token changes, change
+ * tokens.json and the inline blocks together.
+ *
+ * Themes: light (Paper) is the base. Dark (Lamplight) applies when the OS asks
+ * for it, unless the document opts out with data-theme="light", and always
+ * when the document sets data-theme="dark".
+ */
+
+:root,
+:root[data-theme="light"] {
+  /* Color */
+  --bg: #faf8f3;
+  --panel: #fffdf8;
+  --side: #f3efe6;
+  --line: #e6e0d4;
+  --ink: #221f1a;
+  --muted: #756e64;
+  --faint: #aca397;
+  --faint-text: #8a8276;
+  --wash: rgba(34,31,26,.045);
+  --washon: rgba(34,31,26,.09);
+  --scrim: rgba(24,20,14,.45);
+  --scrim-light: rgba(24,20,14,.35);
+  --warn: #c2410c;
+  --star: #c9922e;
+  --tagbg: #eadfc6;
+  --tagink: #6d5f42;
+  --cat-ink: #241d12;
+  --c0: #f3b97a;
+  --c1: #ef9a9a;
+  --c2: #b7d7a8;
+  --c3: #a4c2ce;
+  --c4: #c7b5d8;
+  --c5: #e9d47f;
+  --c6: #9dcfc3;
+  /* Shadow */
+  --shadow: 0 18px 50px rgba(30,25,15,.22);
+  --lift: 0 8px 28px rgba(30,25,15,.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    /* Color */
+    --bg: #191712;
+    --panel: #211e18;
+    --side: #141310;
+    --line: #322e26;
+    --ink: #ede8dd;
+    --muted: #a29a8b;
+    --faint: #6f695e;
+    --faint-text: #857d6f;
+    --wash: rgba(237,232,221,.05);
+    --washon: rgba(237,232,221,.1);
+    --warn: #fb923c;
+    --star: #e0b34c;
+    --tagbg: #35301f;
+    --tagink: #c9b988;
+    /* Shadow */
+    --shadow: 0 18px 50px rgba(0,0,0,.5);
+    --lift: 0 8px 28px rgba(0,0,0,.4);
+  }
+}
+
+:root[data-theme="dark"] {
+  /* Color */
+  --bg: #191712;
+  --panel: #211e18;
+  --side: #141310;
+  --line: #322e26;
+  --ink: #ede8dd;
+  --muted: #a29a8b;
+  --faint: #6f695e;
+  --faint-text: #857d6f;
+  --wash: rgba(237,232,221,.05);
+  --washon: rgba(237,232,221,.1);
+  --warn: #fb923c;
+  --star: #e0b34c;
+  --tagbg: #35301f;
+  --tagink: #c9b988;
+  /* Shadow */
+  --shadow: 0 18px 50px rgba(0,0,0,.5);
+  --lift: 0 8px 28px rgba(0,0,0,.4);
+}
+
+:root {
+  /* Typeface stacks */
+  --font-serif: ui-serif, "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --font-sans: ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Spacing — the values that recur in the source, not an arithmetic scale */
+  --space-1: 4px;
+  --space-2: 7px;
+  --space-3: 9px;
+  --space-4: 12px;
+  --space-5: 14px;
+  --space-6: 18px;
+  --space-7: 26px;
+  --space-8: 40px;
+  --space-9: 84px;
+  --measure-read: 660px;
+  --measure-sub: 52ch;
+  --sidebar: 256px;
+
+  /* Radius */
+  --radius-xs: 4px;
+  --radius-sm: 7px;
+  --radius-md: 8px;
+  --radius-lg: 9px;
+  --radius-xl: 12px;
+  --radius-2xl: 14px;
+  --radius-pill: 999px;
+}
+
+/* Type styles. Each class sets a complete text style; pair it with a color
+   token yourself, since the same style is used in ink, muted and faint. */
+
+/* Reading */
+.hero {
+  font-family: var(--font-serif);
+  font-size: 56px;
+  line-height: 1.13;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+.section-heading {
+  font-family: var(--font-serif);
+  font-size: 38px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.view-heading {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  line-height: 1.35;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.entry-title {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  line-height: 1.35;
+  font-weight: 600;
+}
+.reading {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 1.75;
+}
+.prompt {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+/* Interface */
+.ui {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.ui-title {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+.control {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.snippet {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.meta {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.micro {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+/* Labels */
+.label {
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  line-height: 1.4;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.brand {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.4;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+/* Keys */
+.kbd {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.55;
+  font-weight: 600;
+}

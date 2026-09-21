@@ -1,0 +1,94 @@
+<!-- @dsCard group="Library" height=560 subtitle="Collapsed rows, and one opened in place" -->
+<link rel="stylesheet" href="../../tokens.css">
+<style>
+  body{margin:0;padding:24px 34px;background:var(--bg);color:var(--ink);
+    font:15px/1.5 var(--font-sans)}
+  .entry{border-bottom:1px solid var(--line);margin:0 -10px}
+  .entry:first-child{border-top:1px solid var(--line)}
+  .entry:not(.open):hover{background:var(--wash)}
+  .ehead{display:flex;gap:12px;align-items:flex-start;padding:14px 10px;cursor:pointer}
+  .etext{min-width:0;flex:1}
+  .entry h3{margin:0;font-size:15px;font-weight:600;line-height:1.4}
+  .entry p.snip{margin:3px 0 0;font-size:13.5px;line-height:1.5;color:var(--muted);
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .dots{display:inline-flex;gap:4px;margin-left:8px;vertical-align:2px}
+  .dot{flex:none;width:7px;height:7px;border-radius:50%}
+  .ecats{display:flex;gap:12px;flex-wrap:wrap;margin-top:7px;font-size:11.5px;color:var(--muted)}
+  .ecat{display:inline-flex;align-items:center;gap:5px}
+  .ecat .dot{width:6px;height:6px}
+  .eside{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px;margin-top:2px}
+  .ectl{display:flex;gap:8px;align-items:center}
+  .ewc{font-size:11px;color:var(--faint);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .star{width:17px;height:17px;line-height:17px;text-align:center;font-size:15px;
+    color:var(--faint);cursor:pointer;user-select:none;opacity:.22}
+  .star.on{color:var(--star);opacity:1}
+  .rowpick{flex:none;width:17px;height:17px;border-radius:50%;border:1.5px solid var(--faint);
+    opacity:.22}
+  .entry.open{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    margin:8px -18px;box-shadow:var(--lift)}
+  .entry.open .ehead{padding:16px 18px 0}
+  .entry.open h3{font-family:var(--font-serif);font-size:19px;line-height:1.35}
+  .ebody{padding:0 18px 16px}
+  .ebody .meta{color:var(--muted);font-size:12.5px;margin:6px 0 12px}
+  .full{white-space:pre-wrap;font-family:var(--font-serif);font-size:16px;line-height:1.75;
+    overflow-wrap:break-word;margin:0}
+  .eacts{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);
+    margin-top:18px;padding-top:13px}
+  .eacts button{font:inherit;font-size:13.5px;padding:6px 11px;border:1px solid var(--line);
+    background:var(--panel);color:var(--ink);border-radius:8px;cursor:pointer}
+  .eacts .ghost{border-color:transparent;background:transparent;color:var(--muted)}
+  .rtag{position:relative;display:inline-flex;align-items:center;gap:5px;font-size:11.5px;
+    font-weight:600;color:var(--tagink);background:var(--tagbg);padding:3px 9px 3px 15px;
+    clip-path:polygon(9px 0,100% 0,100% 100%,9px 100%,0 50%)}
+  .rtag::before{content:"";position:absolute;left:5.5px;top:50%;transform:translateY(-50%);
+    width:4.5px;height:4.5px;border-radius:50%;background:var(--panel)}
+  .usedin{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0 0 16px}
+  .usedin .lab{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--faint)}
+</style>
+<div id="root">
+  <div class="entry">
+    <div class="ehead">
+      <div class="etext">
+        <h3>Fixing the greenhouse drip timer<span class="dots"><span class="dot" style="background:var(--c1)"></span><span class="dot" style="background:var(--c5)"></span></span></h3>
+        <p class="snip">Nobody assigned me the drip timer. I just kept showing up on Thursdays after club, when the greenhouse was empty and the tomatoes were still wilting.</p>
+        <div class="ecats">
+          <span class="ecat"><span class="dot" style="background:var(--c1)"></span>Leadership</span>
+          <span class="ecat"><span class="dot" style="background:var(--c5)"></span>Problem-solver</span>
+        </div>
+      </div>
+      <div class="eside"><div class="ectl"><span class="star on">★</span><span class="rowpick"></span></div><span class="ewc">182 words</span></div>
+    </div>
+  </div>
+
+  <div class="entry open">
+    <div class="ehead">
+      <div class="etext">
+        <h3>What the lost-and-found box taught me<span class="dots"><span class="dot" style="background:var(--c0)"></span></span></h3>
+      </div>
+      <div class="eside"><div class="ectl"><span class="star">★</span><span class="rowpick"></span></div><span class="ewc">96 words</span></div>
+    </div>
+    <div class="ebody">
+      <p class="meta">Community/Perspective · added Aug 14 · edited 2 days ago</p>
+      <div class="usedin"><span class="lab">Used in</span><span class="rtag">Wexford · Community</span></div>
+      <p class="full">Two summers at the rec center front desk, I kept a list of what people came back for. It was never the expensive things. It was a library card, a keychain, one mitten. I only saw the pattern when I read the whole list at once in August.</p>
+      <div class="eacts">
+        <button>Copy</button>
+        <button>Edit</button>
+        <button class="ghost">✦ Polish</button>
+        <button class="ghost">+ tag</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="entry">
+    <div class="ehead">
+      <div class="etext">
+        <h3>Coaching the under-10 swim relay</h3>
+        <p class="snip">They could already swim fast. They just couldn't hand off. Two different skills, and I only found that out after a month of disqualifications.</p>
+        <div class="ecats"><span class="ecat"><span class="dot" style="background:var(--c6)"></span>My favorite topic</span></div>
+      </div>
+      <div class="eside"><div class="ectl"><span class="star">★</span><span class="rowpick"></span></div><span class="ewc">204 words</span></div>
+    </div>
+  </div>
+</div>

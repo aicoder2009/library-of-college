@@ -1,0 +1,54 @@
+<!-- @dsCard group="Fields" height=300 subtitle="Search, tag entry with suggestions, waitlist" -->
+<link rel="stylesheet" href="../../tokens.css">
+<style>
+  body{margin:0;padding:24px;background:var(--bg);color:var(--ink);
+    font:15px/1.5 var(--font-sans)}
+  .lab{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--faint);margin:0 0 8px}
+  .block{margin-bottom:22px}
+  .search{width:256px;font:inherit;font-size:13.5px;padding:7px 10px;border:1px solid var(--line);
+    border-radius:8px;background:var(--panel);color:var(--ink)}
+  .search::placeholder{color:var(--faint)}
+  .taginput{font:inherit;font-size:12.5px;padding:3px 8px;border:1px solid var(--line);
+    border-radius:7px;background:var(--bg);color:var(--ink);width:170px}
+  .tagwrap{position:relative;display:inline-block}
+  .tagsugs{position:absolute;top:calc(100% + 4px);left:0;min-width:170px;
+    background:var(--panel);border:1px solid var(--line);border-radius:9px;
+    box-shadow:var(--shadow);padding:4px;display:flex;flex-direction:column;z-index:5}
+  .tagsug{text-align:left;border:none;background:none;padding:5px 8px;border-radius:6px;
+    font:inherit;font-size:13px;color:var(--ink);cursor:pointer}
+  .tagsug:hover{background:var(--wash)}
+  .tagsug[data-create]{color:var(--muted);font-style:italic}
+  .wl{display:flex;gap:9px;flex-wrap:wrap}
+  .wl input{width:280px;border:1px solid var(--line);background:var(--panel);
+    color:var(--ink);border-radius:9px;padding:11px 14px;font-size:15px;font-family:inherit}
+  .wl input::placeholder{color:var(--faint)}
+  .wl .btn{border:1px solid var(--ink);background:var(--ink);color:var(--bg);border-radius:9px;
+    padding:11px 20px;font-size:14.5px;font-weight:600;font-family:inherit;cursor:pointer}
+  .wlnote{font-size:13px;color:var(--faint-text);margin:12px 0 0}
+</style>
+<div id="root">
+  <div class="block">
+    <p class="lab">Sidebar search</p>
+    <input class="search" placeholder="Search everything…">
+  </div>
+  <div class="block" style="height:118px">
+    <p class="lab">Used-in tag</p>
+    <span class="tagwrap">
+      <input class="taginput" value="Hol">
+      <span class="tagsugs">
+        <button class="tagsug">Hollis · Roommate</button>
+        <button class="tagsug">Hollis · Why Major</button>
+        <button class="tagsug" data-create>Create “Hol”</button>
+      </span>
+    </span>
+  </div>
+  <div class="block" style="margin-bottom:0">
+    <p class="lab">Waitlist</p>
+    <form class="wl" onsubmit="return false">
+      <input id="wl-email" type="email" placeholder="you@school.edu">
+      <button class="btn">Join the waitlist</button>
+    </form>
+    <p class="wlnote">No spam. One email when a seat opens.</p>
+  </div>
+</div>

@@ -1,0 +1,17 @@
+<!-- @dsCard group="Foundations" height=150 subtitle="Keycaps, in the sidebar and in copy" -->
+<link rel="stylesheet" href="../../tokens.css">
+<style>
+  body{margin:0;padding:24px;background:var(--bg);color:var(--ink);
+    font:15px/1.5 var(--font-sans)}
+  .kbd{display:inline-block;border:1px solid var(--line);border-bottom-width:2px;
+    border-radius:4px;padding:0 4.5px;font-size:10.5px;line-height:1.55;
+    background:var(--panel);color:var(--muted);font-family:var(--font-mono);font-weight:600}
+  .kbd.lg{min-width:20px;text-align:center;padding:1px 5px;border-radius:5px;font-size:12px}
+  #kbhint{color:var(--faint);font-size:12px;margin:0 0 20px}
+  p.copy{margin:0;max-width:52ch;color:var(--muted);font-size:14px}
+  p.copy .kbd{margin:0 2px}
+</style>
+<div id="root">
+  <p id="kbhint"><span class="kbd">⌘K</span> search · <span class="kbd">d</span> dump · <span class="kbd">n</span> new · <span class="kbd">↑↓</span> review</p>
+  <p class="copy">Press <span class="kbd lg">d</span> anywhere and type the detail before you lose it. <span class="kbd lg">⌘</span><span class="kbd lg">↵</span> saves and closes; <span class="kbd lg">Esc</span> backs out one layer at a time.</p>
+</div>

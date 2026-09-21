@@ -1,0 +1,28 @@
+<!-- @dsCard group="Overlays" height=170 subtitle="Selection actions, floating" -->
+<link rel="stylesheet" href="../../tokens.css">
+<style>
+  body{margin:0;padding:24px;background:var(--bg);color:var(--ink);
+    font:15px/1.5 var(--font-sans);display:flex;flex-direction:column;align-items:center;gap:16px}
+  .bulk{background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    padding:7px 8px 7px 16px;display:flex;gap:8px;align-items:center;box-shadow:var(--shadow);
+    font-size:13.5px;white-space:nowrap}
+  .bulk button{border:1px solid var(--line);background:var(--panel);color:var(--ink);
+    border-radius:999px;font:inherit;font-size:13.5px;padding:6px 12px;cursor:pointer}
+  .bulk button:hover{border-color:var(--muted)}
+  .bulk .ghost{border-color:transparent;background:transparent;color:var(--muted)}
+  .bulk .danger:hover{color:var(--warn)}
+  .chip.mini{display:inline-flex;align-items:center;border:1px solid var(--line);
+    border-radius:999px;padding:3px 9px;font-size:11.5px;font-weight:600;background:transparent;
+    color:var(--muted);font-family:inherit;cursor:pointer}
+  .hint{color:var(--faint);font-size:12px}
+</style>
+<div id="root">
+  <div class="bulk">
+    3 selected
+    <button>Refile</button>
+    <span class="chip mini">+ tag</span>
+    <button class="danger">Delete</button>
+    <button class="ghost">Clear</button>
+  </div>
+  <p class="hint">Fixed 18px from the bottom, centered, shown only while rows are selected.</p>
+</div>

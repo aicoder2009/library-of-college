@@ -1,0 +1,35 @@
+<!-- @dsCard group="Actions" height=170 subtitle="Four weights of one button" -->
+<link rel="stylesheet" href="../../tokens.css">
+<style>
+  body{margin:0;padding:22px;background:var(--bg);color:var(--ink);
+    font:15px/1.5 var(--font-sans)}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .row + .row{margin-top:14px}
+  button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);
+    color:var(--ink);border-radius:8px;padding:7px 12px;font-size:14px}
+  button:hover{border-color:var(--muted)}
+  button:focus-visible{outline:2px solid var(--muted);outline-offset:1px}
+  .primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .primary:hover{opacity:.88}
+  .ghost{border-color:transparent;background:transparent;color:var(--muted)}
+  .ghost:hover{color:var(--ink);border-color:var(--line)}
+  .danger:hover{color:var(--warn)}
+  .new{display:block;width:232px;background:var(--ink);color:var(--bg);border:1px solid var(--ink);
+    border-radius:9px;padding:9px 12px;font-weight:600;font-size:14px}
+  .linkbtn{border:none;background:none;padding:0;color:var(--ink);text-decoration:underline;
+    text-underline-offset:2px;font:inherit;font-size:13.5px;cursor:pointer}
+  .linkbtn:hover{color:var(--muted)}
+  .lab{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--faint);margin-bottom:8px}
+</style>
+<div id="root">
+  <p class="lab">Row actions</p>
+  <div class="row">
+    <button class="primary">Save</button>
+    <button>Copy</button>
+    <button class="ghost">Polish</button>
+    <button class="danger">Delete</button>
+    <button class="linkbtn">Copy all 6</button>
+  </div>
+  <div class="row"><button class="new">New entry</button></div>
+</div>

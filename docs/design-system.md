@@ -1,5 +1,7 @@
 # Library of College — Design System
 
+> **See also [`design-system/`](design-system/)** — the extracted system as files: `tokens.json` and a generated `tokens.css`, a brand book, and fifteen components with live previews. That folder is the machine-readable form; this document is the prose reference for how the pages are actually built.
+
 Documentation of the visual language and UI components in [index.html](../index.html) (the entire frontend — single file, no build step, no framework). All styles live in the one `<style>` block; there are no external stylesheets and no utility framework. This document records what exists — established conventions from CLAUDE.md apply: don't relitigate them.
 
 ## Principles

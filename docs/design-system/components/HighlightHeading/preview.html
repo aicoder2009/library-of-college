@@ -1,0 +1,27 @@
+<!-- @dsCard group="Foundations" height=250 subtitle="The highlighter stroke, in all seven categories" -->
+<link rel="stylesheet" href="../../tokens.css">
+<style>
+  body{margin:0;padding:24px;background:var(--bg);color:var(--ink);
+    font:15px/1.5 var(--font-sans)}
+  h2{font-family:var(--font-serif);font-size:26px;font-weight:600;letter-spacing:-.01em;
+    line-height:1.35;margin:0 0 6px;text-wrap:balance}
+  .hl{background:linear-gradient(transparent 60%,var(--hc) 0);padding:0 3px;margin:0 -3px}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .hl{background:linear-gradient(transparent calc(100% - 3px),var(--hc) 0)}
+  }
+  :root[data-theme="dark"] .hl{background:linear-gradient(transparent calc(100% - 3px),var(--hc) 0)}
+  .sub2{color:var(--muted);font-size:13.5px;line-height:1.5;margin:0 0 20px;max-width:52ch}
+  .strip{display:flex;flex-wrap:wrap;gap:10px 16px;font-family:var(--font-serif);font-size:17px}
+</style>
+<div id="root">
+  <h2><span class="hl" style="--hc:var(--c2)">Why School</span></h2>
+  <p class="sub2">Named classes, professors, programs, traditions — and your hook into them.</p>
+  <div class="strip">
+    <span class="hl" style="--hc:var(--c0)">Community</span>
+    <span class="hl" style="--hc:var(--c1)">Leadership</span>
+    <span class="hl" style="--hc:var(--c3)">Why Major</span>
+    <span class="hl" style="--hc:var(--c4)">Creative</span>
+    <span class="hl" style="--hc:var(--c5)">Problem-solver</span>
+    <span class="hl" style="--hc:var(--c6)">Favorite topic</span>
+  </div>
+</div>
