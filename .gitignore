@@ -10,3 +10,6 @@ CLAUDE.local.md
 # graphify knowledge-graph output (local only)
 graphify-out/
 !.env.example
+
+# backend dependencies (installed by the deploy command, never committed)
+backend/node_modules/

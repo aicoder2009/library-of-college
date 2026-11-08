@@ -1,0 +1,8 @@
+{
+  "name": "evidence-bank-api",
+  "private": true,
+  "description": "Library of College API (one AWS Lambda). The AWS SDK comes with the Lambda runtime; the Anthropic SDK is the only bundled dependency.",
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.6.0"
+  }
+}

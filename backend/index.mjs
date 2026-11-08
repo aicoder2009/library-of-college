@@ -81,6 +81,218 @@ function aiBudgetExceeded(sub){
   return false;
 }
 
+// ── AI: Claude, signed in by Workload Identity Federation ──────────────────
+// No API key exists anywhere. The Lambda's IAM role asks AWS STS for a
+// short-lived identity token addressed to Anthropic (the role's IAM policy
+// allows no other audience), and the SDK trades it at Anthropic for a
+// short-lived access token that it caches and refreshes on its own. The three
+// ANTHROPIC_* env vars are identifiers, not secrets. The SDK loads lazily, so a
+// packaging problem can only break the AI routes, never sync.
+const MODEL = "claude-opus-5-5";
+// The whole AI call, token included, gets one attempt within 24s. The rest of
+// the Lambda's 28s covers auth, the library read and sending the 502.
+const AI_TIMEOUT = 24000;
+let claudeP = null;
+function claude(){
+  return claudeP ??= (async () => {
+    if(!process.env.ANTHROPIC_FEDERATION_RULE_ID)
+      throw new Error("ANTHROPIC_* federation env vars are not set");
+    const [{ default: Anthropic }, { oidcFederationProvider }, { STSClient, GetWebIdentityTokenCommand }] =
+      await Promise.all([import("@anthropic-ai/sdk"),
+        import("@anthropic-ai/sdk/lib/credentials/oidc-federation"), import("@aws-sdk/client-sts")]);
+    const sts = new STSClient({});
+    return new Anthropic({
+      maxRetries: 0, // a retry wouldn't fit the time budget
+      credentials: oidcFederationProvider({
+        identityTokenProvider: async () => (await sts.send(new GetWebIdentityTokenCommand({
+          Audience: ["https://api.anthropic.com"], SigningAlgorithm: "RS256", DurationSeconds: 300 }),
+          { abortSignal: AbortSignal.timeout(3000) })).WebIdentityToken,
+        federationRuleId: process.env.ANTHROPIC_FEDERATION_RULE_ID,
+        organizationId: process.env.ANTHROPIC_ORGANIZATION_ID,
+        serviceAccountId: process.env.ANTHROPIC_SERVICE_ACCOUNT_ID,
+        baseURL: "https://api.anthropic.com",
+        // the SDK's token exchange has no timeout of its own
+        fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(4000) }),
+      }),
+    });
+  })().catch(e => { claudeP = null; throw e; });
+}
+
+// One Claude request. With a schema, structured outputs guarantee the reply's
+// JSON shape and this returns the parsed object; without one, the reply text.
+async function ask(route, { prompt, effort, maxTokens, schema = null, model = MODEL }){
+  const t0 = Date.now();
+  // The SDK fetches the Claude token inside create(), before its own `timeout`
+  // starts counting, so a signal started here is what holds the whole call
+  // (SDK load, token exchange, model) to the budget.
+  const signal = AbortSignal.timeout(AI_TIMEOUT);
+  const msg = await (await claude()).beta.messages.create({
+    model,
+    max_tokens: maxTokens, // covers the (always-on) thinking as well as the reply
+    inference_geo: "us", // notes are processed only in the US (the owner's choice)
+    output_config: { effort, ...(schema && { format: { type: "json_schema", schema } }) },
+    // If a safety classifier declines (a note about, say, a security project
+    // can trip one), Anthropic reruns the request on the model it recommends
+    // for that kind of refusal instead of returning nothing.
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    messages: [{ role: "user", content: prompt }],
+  }, { signal });
+  const u = msg.usage || {};
+  console.log(JSON.stringify({ ai: route, model: msg.model, ms: Date.now() - t0,
+    in: u.input_tokens, out: u.output_tokens, geo: u.inference_geo, stop: msg.stop_reason }));
+  if(msg.stop_reason !== "end_turn") throw new Error(`stop_reason ${msg.stop_reason}`);
+  // After a mid-reply fallback, the answer is the text after the last fallback block.
+  const from = msg.content.map(b => b.type).lastIndexOf("fallback") + 1;
+  const text = msg.content.slice(from).filter(b => b.type === "text").map(b => b.text).join("").trim();
+  return schema ? JSON.parse(text) : text;
+}
+
+// Reply shapes for structured outputs. Allowed values live in descriptions, not
+// `enum` (the SDK's own schema transform doesn't pass enum through), and the
+// routes still validate every field.
+const str = { type: "string" };
+const obj = properties => ({ type: "object", additionalProperties: false,
+  required: Object.keys(properties), properties });
+const PICK = obj({ i: { type: "integer" },
+  fit: { type: "string", description: '"strong" or "possible"' }, why: str });
+const SCHEMAS = {
+  classify: obj({ title: str, cats: { type: "array", items: { type: "integer" } } }),
+  match: obj({ matches: { type: "array", items: PICK } }),
+  // Same order the prompt works in: the read, the school, the picks, the gaps, the outline.
+  deepMatch: obj({ deconstruction: str, college: str, college_advice: str,
+    matches: { type: "array", items: PICK }, gap_analysis: str, outline: { type: "array", items: str } }),
+  search: obj({ matches: { type: "array", items: obj({ i: { type: "integer" }, why: str }) } }),
+};
+
+// The library as one numbered list; replies point at notes by these numbers.
+const numbered = (entries, chars) => entries.map((e, i) => `${i}. ${e.title || "Untitled"} — ${
+  String(e.body || "").slice(0, chars).replace(/\s+/g, " ")}`).join("\n");
+// Note numbers back to entry ids: in range, no repeats, best first, at most 8.
+function picked(list, entries, fields){
+  const seen = new Set(), out = [];
+  for(const m of list || []){
+    const i = Number(m.i);
+    if(!Number.isInteger(i) || i < 0 || i >= entries.length || seen.has(entries[i].id)) continue;
+    seen.add(entries[i].id);
+    out.push({ id: entries[i].id, ...fields(m) });
+    if(out.length >= 8) break;
+  }
+  return out;
+}
+
+// The AI work behind each route, kept apart from HTTP and auth. Each resolves to
+// the response body, or null when the reply came back empty.
+export const ai = {
+  async title(text){
+    const title = (await ask("title", { effort: "low", maxTokens: 2000, prompt:
+      "Write a title for this college-essay evidence note: a short, specific, memorable label of 3-6 words that makes the story easy to recognize in a list later. Reply with the title only - no quotes, no ending punctuation.\n\nNote:\n"
+      + String(text).slice(0, 4000) })).replace(/^["“]|["”]$/g, "").slice(0, 60);
+    return title ? { title } : null;
+  },
+
+  async classify(text){
+    const out = await ask("classify", { effort: "low", maxTokens: 2000, schema: SCHEMAS.classify, prompt:
+`File this college-application evidence note. Categories:
+0 Community/Perspective - identity, family, culture, background, communities, values, worldview
+1 Leadership - leading people, organizing events, taking responsibility, influencing others
+2 Why School - specific colleges, campus programs, classes, professors, campus communities
+3 Why Major - interest in their intended field (business/entrepreneurship, AI, writing), projects, origin stories
+4 Creative - making, building, art, music, design, creative expression
+5 Problem-solver - untangling a specific problem, resilience, perseverance under constraints
+6 My favorite topic - subjects they love and pursue on their own time
+
+Reply ONLY with JSON: {"title": "3-6 word specific memorable label, no ending punctuation", "cats": [1-3 category numbers that GENUINELY fit - fewer is better, never pad]}
+
+Note:
+` + String(text).slice(0, 4000) });
+    const cats = [...new Set((out.cats || []).map(Number)
+      .filter(n => Number.isInteger(n) && n >= 0 && n <= 6))].slice(0, 3);
+    const title = String(out.title || "").trim().replace(/^["“]|["”]$/g, "").slice(0, 60);
+    return title || cats.length ? { title, cats } : null;
+  },
+
+  async polish(text){
+    const out = await ask("polish", { effort: "low", maxTokens: 4000, prompt:
+`Lightly polish this college-essay evidence note. Fix grammar and awkward phrasing, tighten wordiness, and keep the writer's natural voice. Keep ALL facts exactly as given — never invent details, names, or embellishment. Plain first person, roughly the same length or shorter. Reply with the polished text only — no preamble, no quotes.
+
+Note:
+` + String(text).slice(0, 6000) });
+    return out ? { text: out } : null;
+  },
+
+  async match(prompt, entries, deep){
+    if(!entries.length) return { matches: [] };
+    const task = deep
+? `First, deconstruct what the prompt is secretly asking for beneath the surface.
+Then, work out which college or university this prompt is from, and what that school in particular rewards in an answer to it.
+Then, select the matching notes and explain the connection concretely.
+Then, write a gap analysis: what is missing from these selected notes to answer the prompt completely.
+Finally, generate a structural outline showing how to arrange these specific notes into a narrative arc.`
+: `Select the notes and explain the connection concretely: name the specific detail, moment, or theme in the note and the part of the prompt it answers. Never a generic reason that could apply to any note.`;
+    const shape = deep
+? `{
+  "deconstruction": "<what the prompt is actually asking for, max 30 words>",
+  "college": "<the school this prompt is from, or an empty string if you can't identify it confidently>",
+  "college_advice": "<advice that names that school and says what it rewards here, max 45 words>",
+  "matches": [{"i": <note number>, "fit": "strong" or "possible", "why": "<the concrete link, one sentence, max 25 words>"}],
+  "gap_analysis": "<what is missing to fully answer the prompt, max 40 words>",
+  "outline": ["<bullet 1>", "<bullet 2>", "<bullet 3>"]
+}
+
+Identify the school only from what the prompt itself gives you — its wording, named programs, traditions, or stated values. Never guess: if you are not confident, set "college" and "college_advice" to empty strings. Naming the wrong school is worse than naming none.`
+: `{"matches": [{"i": <note number>, "fit": "strong" or "possible", "why": "<the concrete link, one sentence, max 25 words>"}]}`;
+    const out = await ask("match", { effort: "medium", maxTokens: deep ? 12000 : 6000,
+      schema: deep ? SCHEMAS.deepMatch : SCHEMAS.match, prompt:
+`These are a student's evidence notes for college essays. Given the essay prompt, pick the notes that genuinely fit BEST as material for answering it, best first — usually 3-8, fewer if few genuinely fit.
+
+${task}
+
+Address the student as "you" (or use subjectless fragments) — never third person.
+In the text you write, refer to notes by their titles, never by their numbers: the student never sees the numbers.
+
+Reply ONLY with JSON:
+${shape}
+
+"strong" = answers the prompt as-is. "possible" = works with reframing, or covers only part of the prompt.
+
+Essay prompt:
+${prompt}
+
+Notes:
+${numbered(entries, 600)}` });
+    const matches = picked(out.matches, entries, m => ({
+      fit: m.fit === "strong" ? "strong" : "possible", why: String(m.why || "").slice(0, 200) }));
+    if(!deep) return { matches };
+    // Advice only ships alongside a named school — a confident-sounding line with no
+    // school attached is exactly the hallucination the prompt tells it to suppress.
+    const college = String(out.college || "").slice(0, 80);
+    return {
+      deconstruction: String(out.deconstruction || "").slice(0, 300),
+      college,
+      college_advice: college ? String(out.college_advice || "").slice(0, 300) : "",
+      gap_analysis: String(out.gap_analysis || "").slice(0, 400),
+      outline: Array.isArray(out.outline) ? out.outline.map(String).slice(0, 5) : [],
+      matches
+    };
+  },
+
+  async search(q, entries){
+    if(!entries.length) return { matches: [] };
+    const out = await ask("search", { effort: "high", maxTokens: 6000, schema: SCHEMAS.search, prompt:
+`These are a student's evidence notes for college essays. The student is searching their library by IDEA, not exact words. Pick the notes genuinely related to the search — by theme, topic, person, place, event, or concept — best first, up to 8. Fewer if few relate; an empty list is a valid answer.
+
+Reply ONLY with JSON: {"matches": [{"i": <note number>, "why": "<the connection, max 12 words, addressing the student as "you" or subjectless — never third person>"}]}
+
+Search:
+${q}
+
+Notes:
+${numbered(entries, 400)}` });
+    return { matches: picked(out.matches, entries, m => ({ why: String(m.why || "").slice(0, 120) })) };
+  },
+};
+
 export const handler = async (event) => {
   const method = event.requestContext.http.method;
   const path = event.rawPath;
@@ -178,231 +390,39 @@ export const handler = async (event) => {
     try{ list = d.Item ? JSON.parse(d.Item.list.S) : []; }catch{}
     return resp(200, { waitlist: list });
   }
-  if(method === "POST" && path === "/classify"){
-    if(!body || !body.body) return resp(400, { error: "Bad request" });
+  // AI routes. A failure logs one line (never note text) so an outage shows up
+  // in CloudWatch instead of silently leaving entries Untitled.
+  const AI_FAIL = { "/title": "Title generation failed", "/classify": "Classification failed",
+    "/polish": "Polish failed", "/match": "Match failed", "/search": "Search failed" };
+  if(method === "POST" && AI_FAIL[path]){
+    const library = async () => {
+      const d = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: DATA_KEY } } }));
+      return (d.Item ? JSON.parse(d.Item.state.S) : {}).entries || [];
+    };
+    let args;
+    if(path === "/match"){
+      if(!body || typeof body.prompt !== "string" || body.prompt.trim().length < 4)
+        return resp(400, { error: "Bad request" });
+      // The breakdown roughly doubles the work, so the client can opt out.
+      // Absent flag = on, so an older client keeps its current behaviour.
+      args = [body.prompt.slice(0, 2000), await library(), body.deep !== false];
+    }else if(path === "/search"){
+      if(!body || typeof body.q !== "string" || !body.q.trim())
+        return resp(400, { error: "Bad request" });
+      args = [body.q.slice(0, 300), await library()];
+    }else{
+      if(!body || !body.body) return resp(400, { error: "Bad request" });
+      args = [body.body];
+    }
     try{
-      const r = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { "content-type": "application/json",
-          authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-        signal: AbortSignal.timeout(25000),
-        body: JSON.stringify({
-          model: "gpt-4.1-nano",
-          max_tokens: 80,
-          temperature: 0.3,
-          response_format: { type: "json_object" },
-          messages: [{ role: "user", content:
-`File this college-application evidence note. Categories:
-0 Community/Perspective - identity, family, culture, background, communities, values, worldview
-1 Leadership - leading people, organizing events, taking responsibility, influencing others
-2 Why School - specific colleges, campus programs, classes, professors, campus communities
-3 Why Major - interest in their intended field (business/entrepreneurship, AI, writing), projects, origin stories
-4 Creative - making, building, art, music, design, creative expression
-5 Problem-solver - untangling a specific problem, resilience, perseverance under constraints
-6 My favorite topic - subjects they love and pursue on their own time
-
-Reply ONLY with JSON: {"title": "3-6 word specific memorable label, no ending punctuation", "cats": [1-3 category numbers that GENUINELY fit - fewer is better, never pad]}
-
-Note:
-` + String(body.body).slice(0, 4000) }]
-        })
-      });
-      const d = await r.json();
-      const out = JSON.parse(d.choices?.[0]?.message?.content || "{}");
-      const cats = [...new Set((out.cats || []).map(Number)
-        .filter(n => Number.isInteger(n) && n >= 0 && n <= 6))].slice(0, 3);
-      const title = String(out.title || "").trim().replace(/^["“]|["”]$/g, "").slice(0, 60);
-      if(!title && !cats.length) return resp(502, { error: "Classification failed" });
-      return resp(200, { title, cats });
-    }catch(e){ return resp(502, { error: "Classification failed" }); }
-  }
-  if(method === "POST" && path === "/match"){
-    if(!body || typeof body.prompt !== "string" || body.prompt.trim().length < 4)
-      return resp(400, { error: "Bad request" });
-    const prompt = body.prompt.slice(0, 2000);
-    // The breakdown roughly doubles the reasoning budget, so the client can opt out.
-    // Absent flag = on, so an older client keeps its current behaviour.
-    const deep = body.deep !== false;
-    const d = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: DATA_KEY } } }));
-    const state = d.Item ? JSON.parse(d.Item.state.S) : { entries: [] };
-    const entries = state.entries || [];
-    if(!entries.length) return resp(200, { matches: [] });
-    const notes = entries.map((e, i) => `${i}. ${e.title || "Untitled"} — ${
-      String(e.body || "").slice(0, 600).replace(/\s+/g, " ")}`).join("\n");
-    const task = deep
-? `First, deconstruct what the prompt is secretly asking for beneath the surface.
-Then, work out which college or university this prompt is from, and what that school in particular rewards in an answer to it.
-Then, select the matching notes and explain the connection concretely.
-Then, write a gap analysis: what is missing from these selected notes to answer the prompt completely.
-Finally, generate a structural outline showing how to arrange these specific notes into a narrative arc.`
-: `Select the notes and explain the connection concretely: name the specific detail, moment, or theme in the note and the part of the prompt it answers. Never a generic reason that could apply to any note.`;
-    const schema = deep
-? `{
-  "deconstruction": "<what the prompt is actually asking for, max 30 words>",
-  "college": "<the school this prompt is from, or an empty string if you can't identify it confidently>",
-  "college_advice": "<advice that names that school and says what it rewards here, max 45 words>",
-  "matches": [{"i": <note number>, "fit": "strong" or "possible", "why": "<the concrete link, one sentence, max 25 words>"}],
-  "gap_analysis": "<what is missing to fully answer the prompt, max 40 words>",
-  "outline": ["<bullet 1>", "<bullet 2>", "<bullet 3>"]
-}
-
-Identify the school only from what the prompt itself gives you — its wording, named programs, traditions, or stated values. Never guess: if you are not confident, set "college" and "college_advice" to empty strings. Naming the wrong school is worse than naming none.`
-: `{"matches": [{"i": <note number>, "fit": "strong" or "possible", "why": "<the concrete link, one sentence, max 25 words>"}]}`;
-    try{
-      const r = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { "content-type": "application/json",
-          authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-        signal: AbortSignal.timeout(25000),
-        body: JSON.stringify({
-          model: "gpt-6-astra",
-          reasoning_effort: "medium", // high took ~28s on a 50-entry library — past the 25s abort
-          max_completion_tokens: deep ? 6000 : 3000, // shared with reasoning tokens — keep headroom
-          response_format: { type: "json_object" },
-          messages: [{ role: "user", content:
-`These are a student's evidence notes for college essays. Given the essay prompt, pick the notes that genuinely fit BEST as material for answering it, best first — usually 3-8, fewer if few genuinely fit.
-
-${task}
-
-Address the student as "you" (or use subjectless fragments) — never third person.
-
-Reply ONLY with JSON:
-${schema}
-
-"strong" = answers the prompt as-is. "possible" = works with reframing, or covers only part of the prompt.
-
-Essay prompt:
-${prompt}
-
-Notes:
-${notes}` }]
-        })
-      });
-      const d2 = await r.json();
-      const out = JSON.parse(d2.choices?.[0]?.message?.content || "{}");
-      const seen = new Set();
-      const matches = [];
-      for(const m of (out.matches || [])){
-        const i = Number(m.i);
-        if(!Number.isInteger(i) || i < 0 || i >= entries.length) continue;
-        const id = entries[i].id;
-        if(seen.has(id)) continue;
-        seen.add(id);
-        matches.push({ id, fit: m.fit === "strong" ? "strong" : "possible",
-          why: String(m.why || "").slice(0, 200) });
-        if(matches.length >= 8) break;
-      }
-      if(!deep) return resp(200, { matches });
-      // Advice only ships alongside a named school — a confident-sounding line with no
-      // school attached is exactly the hallucination the prompt tells it to suppress.
-      const college = String(out.college || "").slice(0, 80);
-      return resp(200, {
-        deconstruction: String(out.deconstruction || "").slice(0, 300),
-        college,
-        college_advice: college ? String(out.college_advice || "").slice(0, 300) : "",
-        gap_analysis: String(out.gap_analysis || "").slice(0, 400),
-        outline: Array.isArray(out.outline) ? out.outline.map(String).slice(0, 5) : [],
-        matches
-      });
-    }catch(e){ return resp(502, { error: "Match failed" }); }
-  }
-  if(method === "POST" && path === "/search"){
-    if(!body || typeof body.q !== "string" || !body.q.trim())
-      return resp(400, { error: "Bad request" });
-    const q = body.q.slice(0, 300);
-    const d = await db.send(new GetItemCommand({ TableName: TABLE, Key: { pk: { S: DATA_KEY } } }));
-    const state = d.Item ? JSON.parse(d.Item.state.S) : { entries: [] };
-    const entries = state.entries || [];
-    if(!entries.length) return resp(200, { matches: [] });
-    const notes = entries.map((e, i) => `${i}. ${e.title || "Untitled"} — ${
-      String(e.body || "").slice(0, 400).replace(/\s+/g, " ")}`).join("\n");
-    try{
-      const r = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { "content-type": "application/json",
-          authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-        signal: AbortSignal.timeout(25000),
-        body: JSON.stringify({
-          model: "gpt-6-astra",
-          reasoning_effort: "high", // gpt-6-astra has no "none"; user chose high for search quality
-          max_completion_tokens: 2000, // shared with reasoning tokens — keep headroom
-          response_format: { type: "json_object" },
-          messages: [{ role: "user", content:
-`These are a student's evidence notes for college essays. The student is searching their library by IDEA, not exact words. Pick the notes genuinely related to the search — by theme, topic, person, place, event, or concept — best first, up to 8. Fewer if few relate; an empty list is a valid answer.
-
-Reply ONLY with JSON: {"matches": [{"i": <note number>, "why": "<the connection, max 12 words, addressing the student as "you" or subjectless — never third person>"}]}
-
-Search:
-${q}
-
-Notes:
-${notes}` }]
-        })
-      });
-      const d2 = await r.json();
-      const out = JSON.parse(d2.choices?.[0]?.message?.content || "{}");
-      const seen = new Set();
-      const matches = [];
-      for(const m of (out.matches || [])){
-        const i = Number(m.i);
-        if(!Number.isInteger(i) || i < 0 || i >= entries.length) continue;
-        const id = entries[i].id;
-        if(seen.has(id)) continue;
-        seen.add(id);
-        matches.push({ id, why: String(m.why || "").slice(0, 120) });
-        if(matches.length >= 8) break;
-      }
-      return resp(200, { matches });
-    }catch(e){ return resp(502, { error: "Search failed" }); }
-  }
-  if(method === "POST" && path === "/polish"){
-    if(!body || !body.body) return resp(400, { error: "Bad request" });
-    try{
-      const r = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { "content-type": "application/json",
-          authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-        signal: AbortSignal.timeout(25000),
-        body: JSON.stringify({
-          model: "gpt-4.1-mini",
-          max_tokens: 700,
-          temperature: 0.4,
-          messages: [{ role: "user", content:
-`Lightly polish this college-essay evidence note. Fix grammar and awkward phrasing, tighten wordiness, and keep the writer's natural voice. Keep ALL facts exactly as given — never invent details, names, or embellishment. Plain first person, roughly the same length or shorter. Reply with the polished text only — no preamble, no quotes.
-
-Note:
-` + String(body.body).slice(0, 6000) }]
-        })
-      });
-      const d = await r.json();
-      const text = (d.choices?.[0]?.message?.content || "").trim();
-      if(!text) return resp(502, { error: "Polish failed" });
-      return resp(200, { text });
-    }catch(e){ return resp(502, { error: "Polish failed" }); }
-  }
-  if(method === "POST" && path === "/title"){
-    if(!body || !body.body) return resp(400, { error: "Bad request" });
-    try{
-      const r = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { "content-type": "application/json",
-          authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-        signal: AbortSignal.timeout(25000),
-        body: JSON.stringify({
-          model: "gpt-4.1-nano",
-          max_tokens: 30,
-          temperature: 0.4,
-          messages: [{ role: "user", content:
-            "Write a title for this college-essay evidence note: a short, specific, memorable label of 3-6 words that makes the story easy to recognize in a list later. Reply with the title only - no quotes, no ending punctuation.\n\nNote:\n"
-            + String(body.body).slice(0, 4000) }]
-        })
-      });
-      const d = await r.json();
-      const title = (d.choices?.[0]?.message?.content || "").trim()
-        .replace(/^["“]|["”]$/g, "").slice(0, 60);
-      if(!title) return resp(502, { error: "Title generation failed" });
-      return resp(200, { title });
-    }catch(e){ return resp(502, { error: "Title generation failed" }); }
+      const out = await ai[path.slice(1)](...args);
+      return out ? resp(200, out) : resp(502, { error: AI_FAIL[path] });
+    }catch(e){
+      console.error(JSON.stringify({ aiError: path, status: e?.status, name: e?.name,
+        // a JSON parse error's message quotes the reply, which can quote a note
+        msg: e?.name === "SyntaxError" ? "" : String(e?.message || "").slice(0, 300) }));
+      return resp(502, { error: AI_FAIL[path] });
+    }
   }
   if(method === "PUT" && path === "/entries"){
     if(!body || !Array.isArray(body.entries) || !Number.isFinite(body.rev))
