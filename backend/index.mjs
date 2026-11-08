@@ -243,6 +243,7 @@ Identify the school only from what the prompt itself gives you — its wording, 
 ${task}
 
 Address the student as "you" (or use subjectless fragments) — never third person.
+In the text you write, refer to notes by their titles, never by their numbers: the student never sees the numbers.
 
 Reply ONLY with JSON:
 ${shape}
