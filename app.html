@@ -266,6 +266,8 @@
     background:var(--bg);color:var(--ink);width:100%;min-width:0}
   .pinput:focus{outline:2px solid var(--muted);outline-offset:-1px}
   textarea.pinput{resize:vertical;line-height:1.55}
+  /* native date/number parts (calendar icon, spinners, picker) follow the theme */
+  @media (prefers-color-scheme: dark){ .pinput{color-scheme:dark} }
   .pformrow{display:grid;grid-template-columns:1fr auto 110px;gap:8px;align-items:end}
   .pformacts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .pformacts .primary{font-size:13px;padding:5px 12px}
@@ -2503,7 +2505,8 @@ function download(text, name, type){
 $("expMenu").onclick = e => {
   const b = e.target.closest("[data-exp]"); if(!b) return;
   $("expMenu").hidden = true; $("export").setAttribute("aria-expanded", false);
-  const day = new Date().toISOString().slice(0, 10);
+  const d = new Date(); // the local date — toISOString() is a day ahead in US evenings
+  const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   if(b.dataset.exp === "json"){
     download(JSON.stringify({ app: "liboc", version: 2, exportedAt: new Date().toISOString(),
       entries: state.entries, prompts: mapPrompts() }, null, 2), `liboc-${day}.json`, "application/json");
