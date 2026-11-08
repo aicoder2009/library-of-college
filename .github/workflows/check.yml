@@ -19,3 +19,5 @@ jobs:
           node --check backend/index.mjs
           node --check api/clerk-proxy.mjs
           node --check sw.js
+      - name: App tests (sync, Essays, trash, rendering — no browser)
+        run: node tests/app.test.mjs

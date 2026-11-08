@@ -14,11 +14,15 @@ Supplemental essays ("Why us?", community, leadership…) reward specific, lived
 - **Frictionless capture** — a quick-dump modal (`d`), per-category multiline dump bars, and a slide-over composer. AI auto-titles and auto-categorizes dumps (`/title`, `/classify`).
 - **Prompt matching** (`/match`) — paste a real essay prompt; the model returns your best-fitting entries labeled *strong* or *possible*, each with a concrete "why", plus an optional **✦ Breakdown**: what the prompt is secretly asking, school-specific advice, a gap analysis, and a suggested outline.
 - **⌘K palette with two search modes** — *Verbatim* (literal word-AND fuzzy matching, instant) and *✦ Ideas* (AI semantic search via `/search`, with a one-line "why" per hit).
-- **Why School prompt map** — a per-school tracker of prompts, editable in place.
+- **Essays page** — every prompt you're answering, with its deadline, word limit, and status, sorted by what's due next (the nearest deadline shows in the sidebar). Pick stories per prompt, then **Copy brief** for the prompt plus those stories word for word.
 - **Used-in tags** — luggage-tag chips tracking which essay/school each story was spent on.
+- **Clip to Library** — a bookmarklet: select text on a college's site, click it, and the composer opens with the passage and its link, filed under Why School.
+- **Memory joggers** — specific questions in each category's dump bar and empty state; the quick-dump modal nudges with one from your thinnest category.
+- **Recently deleted** — deleted entries wait 30 days before they're gone; **Merge** combines duplicate entries from the bulk bar.
+- **Export** — a re-importable backup (entries + prompts), a readable Markdown document grouped by category, or print / save as PDF.
 - **AI polish** (`/polish`) — session-only grammar tidy that never overwrites your raw entry.
 - **Warm paper design** — serif reading view, highlighter-stroke headings, full dark-mode parity, all hand-rolled CSS.
-- **Data safety** — optimistic-concurrency sync with entry-level merge (no lost writes across devices), daily server-side snapshots kept ~14 days, wipe protection that rejects suspiciously shrinking writes, and DynamoDB point-in-time recovery.
+- **Data safety** — optimistic-concurrency sync where a device that hasn't seen the latest write must merge before it can save (newest edit wins per entry; deletions travel as tombstones so stale copies can't bring them back), daily server-side snapshots kept ~14 days, wipe protection that rejects suspiciously shrinking writes, and DynamoDB point-in-time recovery.
 
 ## Keyboard shortcuts
 
@@ -45,7 +49,7 @@ DynamoDB              one table; each account's full library is a single JSON it
                       (waitlist signups in one more)
 ```
 
-- **Sync model**: the client GETs/PUTs the whole state. Every PUT carries a `rev`; the Lambda rejects stale revs (409), the client then re-fetches, merges by entry id (newer `updatedAt` wins, nothing dropped), and retries. Simple, and safe across devices.
+- **Sync model**: the client GETs/PUTs the whole state. Every PUT claims the next `rev` after the one the client last saw; the Lambda rejects stale revs (409), and the client re-fetches, merges by id (newer `updatedAt` wins per entry and prompt; deletions travel as tombstones), and retries. Simple, and safe across devices.
 - **Auth**: [Clerk](https://clerk.com) (waitlist sign-up mode). The frontend mounts Clerk's sign-in; the Lambda verifies the RS256 session JWT against the instance JWKS. Any signed-in user gets their own library; `ALLOWED_USER_ID` marks the owner/admin account(s).
 - **AI**: OpenAI, called only from the Lambda (the key never ships to the browser). Cheap fast models handle titling/classifying/polish; a reasoning model handles prompt matching and semantic search.
 - **localStorage** is only a boot cache — server state always wins.
@@ -59,11 +63,12 @@ There's no one-command installer; it's a personal tool. But the surface area is 
 3. **Clerk**: create an app, put its Frontend API URL in `CLERK_ISSUER`, and restrict sign-ups (waitlist or allowlist) — anyone who can sign in gets a library and can spend your OpenAI budget. Optionally list admin user ids in `ALLOWED_USER_ID`.
 4. **Frontend**: edit the `API` constant and the hostname-gated `CLERK_LIVE` key block near the top of the `<script>` in `app.html` and `login.html` (and `API` in `index.html` if you keep the landing page); swap the `liboc.vercel.app` URLs in the `<head>` meta tags for your own. Host everything anywhere static (`vercel deploy --prod`). The `/__clerk` proxy (`api/clerk-proxy.mjs`) is only needed when, like liboc, you can't point a CNAME at Clerk — then set `CLERK_PROXY_URL` and `CLERK_SECRET_KEY` in the Vercel env. On your own domain, skip it.
 
-Sanity-check the JS before deploying (there's no test suite):
+Sanity-check the JS and run the tests before deploying:
 
 ```sh
 awk '/<script>/{f=1;next}/<\/script>/{f=0}f' index.html > /tmp/x.js && node --check /tmp/x.js
 node --check backend/index.mjs
+node tests/app.test.mjs   # runs app.html in Node against a fake server — no dependencies
 ```
 
 ## Repo layout

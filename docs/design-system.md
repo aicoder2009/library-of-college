@@ -1,6 +1,6 @@
 # Library of College — Design System
 
-> **See also [`design-system/`](design-system/)** — the extracted system as files: `tokens.json` and a generated `tokens.css`, a brand book, and fifteen components with live previews. That folder is the machine-readable form; this document is the prose reference for how the pages are actually built.
+> **See also [`design-system/`](design-system/)** — the extracted system as files: `tokens.json` and a generated `tokens.css`, a brand book, and seventeen components with live previews. That folder is the machine-readable form; this document is the prose reference for how the pages are actually built.
 
 Documentation of the visual language and UI components in [index.html](../index.html) (the entire frontend — single file, no build step, no framework). All styles live in the one `<style>` block; there are no external stylesheets and no utility framework. This document records what exists — established conventions from CLAUDE.md apply: don't relitigate them.
 
@@ -147,7 +147,11 @@ Pill (radius 999px) with `--line` border and muted text. `[data-c="0"–"6"]` se
 | `.sel` (bulk-selected) | `--wash` fill; `.rowpick` circle fills `--ink` with a `--bg` checkmark; bulk bar appears |
 | `.open` (expanded in place) | Becomes a `--panel` card: 1px border, radius 12px, `--lift` shadow, negative margins so it outgrows the list; title switches to serif 19px; body `.full` serif 16px/1.75; `.eacts` action row under a hairline; `.polished` dashed inset for AI-tidied text |
 
-`.star` (pin) turns `--star` when on. `.quickadd` is the per-category dashed dump bar — dashed border goes solid + `--panel` fill on focus.
+`.star` (pin) turns `--star` when on. `.quickadd` is the per-category dashed dump bar — dashed border goes solid + `--panel` fill on focus; its placeholder is a memory jogger (`.jog` buttons in serif italic list three more in an empty category).
+
+### Pages: Essays and Recently deleted
+
+Both render into the same reading column as a category, from sidebar items that use a glyph instead of a dot. **Essays** rows are `.entry.prow`: school as the title with an uppercase status label (`.pstat`; `--star` while drafting), the prompt as the snippet, days left in the word-count slot (`.pdays`, `--warn` within a week). Opened in place they show the prompt in serif, Deadline / Word limit / Status fields (selected status chip is `--ink` on `--bg`, never a category color), the picked stories, and a dashed `＋ pick stories` that opens an inline filter list. **Recently deleted** rows are `.entry.trow` with Restore in the word-count slot; opened, they add Delete forever.
 
 ### `.kbd`
 
@@ -155,7 +159,7 @@ Keycap: 1px `--line` border with 2px bottom edge, radius 4px, 10.5px `--muted` o
 
 ### Toast & bulk bar
 
-Both fixed, bottom-centered, pill-shaped. `.toast`: inverted (`--ink` fill, `--bg` text), fades in/out, optional underlined `.tbtn` action (e.g. Undo). `.bulk`: `--panel` pill with `--shadow`, appears when rows are selected (Copy as one block / Tag / Clear).
+Both fixed, bottom-centered, pill-shaped. `.toast`: inverted (`--ink` fill, `--bg` text), fades in/out, optional underlined `.tbtn` action (e.g. Undo). `.bulk`: `--panel` pill with `--shadow`, appears when rows are selected (Copy as one block / Tag / Merge, with two or more / Clear).
 
 ## Overlay Patterns
 

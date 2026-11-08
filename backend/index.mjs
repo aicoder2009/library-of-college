@@ -415,10 +415,22 @@ Note:
     const curState = cur.Item ? JSON.parse(cur.Item.state.S) : null;
     const curRev = curState ? (curState.rev || 0) : 0;
     if(body.rev <= curRev) return resp(409, { error: "stale", rev: curRev });
+    // Clients from before tombstone sync (2026-11) neither send nor keep
+    // `deleted`, so their whole-state PUT would wipe Recently deleted and every
+    // tombstone, or overwrite newer edits. Once a current client has written
+    // this library, refuse them: an old tab shows "offline" until it reloads
+    // into the current app, whose boot merges its unsynced edits back in.
+    const tomb = body.deleted && typeof body.deleted === "object" && !Array.isArray(body.deleted)
+      ? body.deleted : null;
+    if(curState && curState.deleted && !tomb)
+      return resp(409, { error: "stale", rev: curRev });
     // A sync that would wipe half the library is a bug, not an edit. The 409
     // makes the client merge the server's entries back in and re-push the union.
-    const curN = curState ? (curState.entries || []).length : 0;
-    if(curN >= 10 && body.entries.length < curN / 2)
+    // Entries the client deliberately deleted (tombstoned) don't count as lost,
+    // so a big delete or merge isn't mistaken for a wipe.
+    const curEntries = curState ? curState.entries || [] : [];
+    const deliberate = tomb ? curEntries.filter(e => e && tomb[e.id]).length : 0;
+    if(curEntries.length >= 10 && body.entries.length + deliberate < curEntries.length / 2)
       return resp(409, { error: "stale", rev: curRev });
     // Once per day, snapshot the pre-change state so app-level corruption is a
     // one-item restore. DynamoDB TTL (attribute "ttl", enabled on the table)

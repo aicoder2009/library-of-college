@@ -13,11 +13,11 @@ Asymmetric padding — 16px on the left for the count, 8px on the right where th
 
 ## The consumer provides
 
-The selected count, and handlers for the actions that make sense in bulk: Refile (mini category chips), add tag, Delete, Clear. It appears and disappears with selection; it is never empty and never disabled.
+The selected count, and handlers for the actions that make sense in bulk: **Copy as one block**, **Tag**, **Merge** and **Clear**. It appears and disappears with selection; it is never empty and never disabled. Merge shows only while two or more rows are selected: the oldest entry absorbs the others (texts joined, categories and tags combined) and the rest go to Recently deleted, with Undo in the toast.
 
 ## Order
 
-Count, then constructive actions, then destructive, then Clear as a `ghost`. Delete is `danger` — no color until hover.
+Count, then the actions, then Clear as a `ghost`. Nothing in the bar is destructive on its own: the toast's Undo reverses a Merge for six seconds, and after that the merged-away entries wait in Recently deleted — within its limits (30 days, 100 entries, about 80KB), so an enormous merge can push the oldest out.
 
 ## At phone width
 

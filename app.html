@@ -112,10 +112,9 @@
   .piqrow:first-of-type{border-top:none;margin-top:4px;padding-top:0}
   .piqacts{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:5px;font-size:12.5px}
   .piqtip{margin-top:11px;border-top:1px solid var(--line);padding-top:9px}
-  .mapform{display:flex;flex-direction:column;gap:6px}
-  .mapform .taginput{width:100%;box-sizing:border-box;font-size:13px;padding:6px 9px}
-  .mapform textarea.taginput{resize:vertical;line-height:1.5;min-height:44px}
-  .mapform .primary{font-size:13px;padding:5px 12px}
+  .navitem.on .cdot.dump{color:var(--ink)}
+  .pagenav{margin-bottom:6px}
+  .trashnav{margin-top:12px}
 
   .side-foot{margin-top:auto;border-top:1px solid var(--line);padding-top:14px;
     display:flex;flex-direction:column;gap:10px}
@@ -126,6 +125,9 @@
   .tools .ghost{padding:4px 9px;font-size:13px}
   #signout{color:var(--faint)}
   #signout:hover{color:var(--ink)}
+  .expmenu{display:flex;flex-direction:column;gap:1px;margin-top:-6px}
+  .expmenu[hidden]{display:none}
+  .expmenu .ghost{text-align:left;padding:4px 9px;font-size:13px}
   .backup{font-size:12px;color:var(--muted);padding:0 9px}
   .backup.warn{color:var(--warn);font-weight:600}
   #kbhint{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;
@@ -253,6 +255,67 @@
   .linkbtn{border:none;background:none;padding:0;color:var(--ink);text-decoration:underline;
     text-underline-offset:2px;font:inherit;cursor:pointer}
   .linkbtn:hover{border:none;color:var(--muted)}
+
+  /* ---- Essays page: prompt rows reuse the entry row + expand-in-place ---- */
+  .padd{margin:0 0 14px;text-align:left;color:var(--faint);cursor:pointer}
+  .padd:hover{color:var(--ink)}
+  .pform{display:flex;flex-direction:column;gap:8px;margin:0 0 14px;padding:12px 14px;
+    border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+  .ebody .pform{margin:0;padding:0;border:none;background:none}
+  .pinput{font:inherit;font-size:13.5px;padding:6px 9px;border:1px solid var(--line);border-radius:7px;
+    background:var(--bg);color:var(--ink);width:100%;min-width:0}
+  .pinput:focus{outline:2px solid var(--muted);outline-offset:-1px}
+  textarea.pinput{resize:vertical;line-height:1.55}
+  .pformrow{display:grid;grid-template-columns:1fr auto 110px;gap:8px;align-items:end}
+  .pformacts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .pformacts .primary{font-size:13px;padding:5px 12px}
+  .pf{display:flex;flex-direction:column;gap:4px;min-width:0}
+  .pf .chiplab{margin:0}
+  .pfields{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;margin-top:16px}
+  .pfields .pinput{width:auto}
+  .pfields input[type=number]{width:96px}
+  .pstat{font:700 10.5px/1 ui-sans-serif,-apple-system,"Segoe UI",system-ui,sans-serif;letter-spacing:.07em;
+    text-transform:uppercase;color:var(--faint);vertical-align:2px;margin-left:6px;white-space:nowrap}
+  .pstat.drafting{color:var(--star)}
+  .pstat.done{color:var(--muted)}
+  .prow.done:not(.open){opacity:.6}
+  .pdays{font-size:11px;color:var(--faint);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .pdays.soon{color:var(--warn);font-weight:600}
+  .chip.pstatbtn.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .ppicks{display:flex;flex-direction:column;margin-top:4px}
+  .ppick{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
+  .ppickmain{flex:1;min-width:0}
+  .ptitle{font-weight:600;text-decoration:none;text-align:left}
+  .ptitle:hover{text-decoration:underline}
+  .ppick .ewc{margin-left:8px}
+  .ppick .snip{margin:2px 0 0;font-size:13px;line-height:1.5;color:var(--muted);
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .ppicks .tagadd{align-self:flex-start;margin-top:10px}
+  .picker{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+  .pickres{display:flex;flex-direction:column;max-height:280px;overflow-y:auto;border:1px solid var(--line);
+    border-radius:9px;padding:4px;background:var(--bg);scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  .pickopt{display:flex;align-items:center;gap:9px;text-align:left;border:none;background:none;
+    border-radius:6px;padding:6px 8px;width:100%}
+  .pickopt:hover{background:var(--wash);border:none}
+  .pcheck{flex:none;width:16px;text-align:center;color:var(--faint);font-weight:700}
+  .pickopt.on .pcheck{color:var(--ink)}
+  .pickmain{flex:1;min-width:0;display:flex;flex-direction:column}
+  .pickt{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .picks{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pickempty{padding:8px}
+  .trow .eside .ghost{font-size:13px;padding:4px 10px}
+  .mpick{font-size:12px;margin-left:10px;white-space:nowrap}
+
+  /* ---- memory joggers (empty states) ---- */
+  .jogs{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-top:12px}
+  .jog{border:1px dashed var(--line);background:none;color:var(--muted);font-family:var(--serif);
+    font-style:italic;font-size:14.5px;text-align:left;border-radius:9px;padding:6px 12px}
+  .jog:hover{color:var(--ink);border-color:var(--muted)}
+
+  /* ---- web clipper bookmarklet ---- */
+  .bml{display:inline-block;margin-left:4px;padding:1px 10px;border:1px solid var(--line);border-radius:999px;
+    background:var(--bg);color:var(--ink);font-weight:600;font-style:normal;text-decoration:none;cursor:grab}
+  .bml:hover{border-color:var(--muted)}
 
   /* ---- composer: slide-over from the right ---- */
   .scrim{position:fixed;inset:0;background:rgba(24,20,14,.45);display:none;z-index:20;
@@ -436,6 +499,24 @@
     .bulk{max-width:calc(100vw - 20px);overflow-x:auto;scrollbar-width:none}
     .toast{max-width:calc(100vw - 28px);overflow:hidden;text-overflow:ellipsis}
     .lockscrim{padding:14px}
+    .trashnav{margin-top:0}
+    .expmenu{width:100%;margin-top:0;flex-direction:row;flex-wrap:wrap}
+    .pformrow{grid-template-columns:1fr 1fr}
+    .pformrow #psch{grid-column:1 / -1}
+  }
+
+  /* ---- readable export: print / save as PDF ---- */
+  #printout{display:none}
+  @media print{
+    body.printing{background:#fff}
+    body.printing > :not(#printout){display:none !important}
+    body.printing #printout{display:block;color:#111;font:11pt/1.55 var(--serif)}
+    #printout h1{font-size:20pt;margin:0 0 4pt}
+    #printout h2{font-size:14pt;margin:22pt 0 6pt;border-bottom:1px solid #999;padding-bottom:3pt;break-after:avoid}
+    #printout h3{font-size:12pt;margin:14pt 0 2pt;break-after:avoid}
+    #printout .pmeta{font:9pt/1.4 ui-sans-serif,-apple-system,"Segoe UI",system-ui,sans-serif;color:#555;margin:0 0 5pt}
+    #printout blockquote{margin:4pt 0;padding-left:10pt;border-left:2px solid #999;font-style:italic;white-space:pre-wrap}
+    #printout .pbody{white-space:pre-wrap;overflow-wrap:break-word}
   }
 </style>
 </head>
@@ -457,11 +538,16 @@
     <div class="side-foot">
       <input class="search" id="search" type="search" placeholder="Search everything…  ⌘K">
       <div class="tools">
-        <button class="ghost" id="export" title="Download all entries as a backup file">Export</button>
-        <button class="ghost" id="importBtn" title="Add entries back in from a backup file">Import</button>
+        <button class="ghost" id="export" title="Back up, download, or print your library" aria-expanded="false">Export</button>
+        <button class="ghost" id="importBtn" title="Add entries and prompts back in from a backup file">Import</button>
         <span class="spacer"></span>
         <button class="ghost" id="signout">Sign out</button>
         <input type="file" id="importFile" accept="application/json" hidden>
+      </div>
+      <div class="expmenu" id="expMenu" hidden>
+        <button class="ghost" data-exp="json" title="Every entry and prompt — Import can read it back">Backup file (.json)</button>
+        <button class="ghost" data-exp="md" title="A readable document, grouped by category — good for a counselor">Readable document (.md)</button>
+        <button class="ghost" data-exp="print" title="Print it, or choose Save as PDF in the print dialog">Print or save as PDF</button>
       </div>
       <div class="backup" id="backup"></div>
       <div class="hint" id="kbhint"
@@ -482,6 +568,7 @@
   <strong id="bulkCount"></strong>
   <button id="copySel">Copy as one block</button>
   <button id="tagSel">Tag</button>
+  <button id="mergeSel" title="Combine into one entry — the extras go to Recently deleted" hidden>Merge</button>
   <button class="ghost" id="clearSel">Clear</button>
 </div>
 
@@ -537,6 +624,7 @@
 </div></div>
 
 <div class="toast" id="toast"></div>
+<div id="printout"></div>
 
 <script>
 const CATEGORIES = ["Community/Perspective","Leadership","Why School","Why Major",
@@ -596,57 +684,371 @@ function piqGuideHTML(i){
   return `<span class="rules">UC PIQs · answer any 4 of 8 · 350 words each · ${status}</span>${rows}
     <div class="piqtip">${PIQ_TIPS[i]}</div>`;
 }
-function tagCount(tag){
-  return state.entries.filter(e => (e.tags || []).some(t => t.toLowerCase() === tag.toLowerCase())).length;
-}
-// Your own supplemental prompts (Common App, UC PIQs, school portals) — synced
-// with the library. Each: {id, q: full prompt, sch: school(s), tag, createdAt}.
+// ---- Essays: the prompts you're answering ----
+// Synced with the library. Each prompt: {id, q, sch, due: "YYYY-MM-DD" | "",
+// limit: words | 0, status: "todo" | "drafting" | "done", picks: [entry ids],
+// createdAt, updatedAt}. Prompts saved before the Essays page carry only
+// {id, q, sch, createdAt}; every reader below copes with the missing fields.
 const mapPrompts = () => state.prompts || [];
+const promptById = id => mapPrompts().find(p => p.id === id);
 // Used-in tag for a prompt: the first school named on it ("UC · MIT" → "UC").
 const schTag = sch => (sch || "").split(/[·,]/)[0].trim();
-function mapGuideHTML(){
-  const rows = mapPrompts().map(p => {
-    const tag = schTag(p.sch);
-    const k = tag ? tagCount(tag) : 0;
-    return `<div class="piqrow"><span class="q">${esc(p.q)}</span>
-      ${p.sch ? `<span class="sch">${esc(p.sch)}</span>` : ""}
-      <div class="piqacts">
-        <button class="linkbtn" data-mapmatch="${p.id}">⌕ find evidence</button>
-        ${k ? `<span class="rtag mini" data-tag="${esc(tag)}" title="See everything picked for this prompt">${esc(tag)} · ${k} picked</span>`
-            : `<span class="hint">none picked yet</span>`}
-        <button class="linkbtn" data-mapdel="${p.id}" title="Remove this prompt from the map">remove</button>
-      </div></div>`;
-  }).join("");
-  return `<span class="rules">Your prompt map · Common App, UCs & beyond</span>${
-    rows || `<div class="piqrow"><span class="hint">No prompts yet — add the supplementals you’re actually answering, from any application.</span></div>`}
-    <div class="piqacts" style="margin-top:11px"><button class="linkbtn" data-mapadd>＋ add a prompt</button></div>
-    <div class="piqtip">File per-school research below (classes, professors, programs) and tag entries with the school once used — tags are your used-in tracker.</div>`;
+const STATUS = { todo: "To do", drafting: "Drafting", done: "Done" };
+const DAY = 86400000;
+const dueDate = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+function daysLeft(s){ const t = new Date(); t.setHours(0, 0, 0, 0); return Math.round((dueDate(s) - t) / DAY); }
+const fmtDue = s => dueDate(s).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+const fmtDueLong = s => dueDate(s).toLocaleDateString(undefined,
+  { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+const daysPhrase = d => d < 0 ? `${-d} day${d === -1 ? "" : "s"} overdue`
+  : d === 0 ? "due today" : d === 1 ? "due tomorrow" : `${d} days left`;
+const shortDays = d => d < 0 ? `${-d}d late` : d === 0 ? "today" : `${d}d`;
+const validDue = v => /^\d{4}-\d{2}-\d{2}$/.test(v || "") ? v : "";
+const promptPicks = p => (p.picks || []).map(byId).filter(Boolean);
+// Open prompts with a deadline first (soonest on top), then undated, then done.
+function sortedPrompts(){
+  const rank = p => p.status === "done" ? 2 : p.due ? 0 : 1;
+  return [...mapPrompts()].sort((a, b) => rank(a) - rank(b)
+    || (rank(a) === 0 ? a.due.localeCompare(b.due) : 0)
+    || (b.createdAt || 0) - (a.createdAt || 0));
 }
-// Inline add form — same pattern as the tag inputs: inserted on demand,
-// wired directly, closed by Esc; a full render (after save) removes it.
-function showMapAdd(btn){
-  if($("mapAddQ")) return $("mapAddQ").focus();
-  btn.closest(".piqacts").insertAdjacentHTML("beforebegin", `<div class="piqrow mapform">
-      <textarea id="mapAddQ" class="taginput" rows="2" placeholder="Paste the essay prompt…"></textarea>
-      <input id="mapAddSch" class="taginput" placeholder="School(s) — e.g. UC, or Yale · UPenn">
-      <div class="piqacts"><button class="primary" id="mapAddGo">Add</button>
-        <span class="hint">Enter to add · Esc to cancel</span></div>
-    </div>`);
-  const q = $("mapAddQ"), sch = $("mapAddSch");
-  const save = () => {
-    const qv = q.value.trim(), sv = sch.value.trim();
-    if(qv.length < 4) return toast("Paste a bit more of the prompt");
-    state.prompts = [{ id: newId(), q: qv.slice(0, 600), sch: sv.slice(0, 120),
-      createdAt: Date.now() }, ...mapPrompts()];
+function nextDeadline(){
+  const ds = mapPrompts().filter(p => p.status !== "done" && p.due).map(p => daysLeft(p.due));
+  return ds.length ? Math.min(...ds) : null;
+}
+// Picking a story for a prompt also tags it with the prompt's school, so the
+// "Used in" list keeps working the way it always has.
+function togglePick(p, id){
+  const picks = p.picks || [];
+  if(picks.includes(id)) p.picks = picks.filter(x => x !== id);
+  else {
+    p.picks = [...picks, id];
+    const tag = schTag(p.sch), en = byId(id);
+    if(tag && en && !(en.tags || []).some(t => t.toLowerCase() === tag.toLowerCase())){
+      en.tags = [...(en.tags || []), allTags().find(t => t.toLowerCase() === tag.toLowerCase()) || tag];
+      en.updatedAt = Date.now();
+    }
+  }
+  p.updatedAt = Date.now();
+}
+function promptBrief(p){
+  const picks = promptPicks(p);
+  const meta = [p.limit ? `${p.limit}-word limit` : "", p.due ? `due ${fmtDueLong(p.due)}` : ""]
+    .filter(Boolean).join(" · ");
+  return `ESSAY PROMPT${p.sch ? ` — ${p.sch}` : ""}:\n${p.q}${meta ? `\n(${meta})` : ""}\n\n`
+    + (picks.length
+      ? `--- MY STORIES FOR THIS PROMPT (${picks.length}) ---\n\n` + picks.map((e, i) =>
+          `${i + 1}. ${e.title || "Untitled"} (${wc(e.body)} words)\n${e.body}`).join("\n\n")
+      : "(No stories picked yet.)");
+}
+function addPrompt(){
+  const q = ($("pq")?.value || "").trim();
+  if(q.length < 4){ toast("Paste a bit more of the prompt"); return $("pq")?.focus(); }
+  const lim = parseInt($("plim")?.value || "", 10), now = Date.now();
+  const p = { id: newId(), q: q.slice(0, 2000), sch: ($("psch")?.value || "").trim().slice(0, 120),
+    due: validDue($("pdue")?.value), limit: lim > 0 ? Math.min(lim, 5000) : 0,
+    status: "todo", picks: [], createdAt: now, updatedAt: now };
+  state.prompts = [p, ...mapPrompts()];
+  addingPrompt = false; expanded = p.id;
+  persist();
+  toast("Prompt added — now pick its stories");
+}
+function savePromptEdit(p){
+  const q = ($("peq")?.value || "").trim();
+  if(q.length < 4) return toast("Paste a bit more of the prompt");
+  p.q = q.slice(0, 2000);
+  p.sch = ($("pesch")?.value || "").trim().slice(0, 120);
+  p.updatedAt = Date.now(); promptEdit = null;
+  persist();
+}
+function removePrompt(p){
+  const i = state.prompts.indexOf(p); if(i < 0) return;
+  state.prompts.splice(i, 1);
+  const at = state.deleted[p.id] = Math.max(Date.now(), (p.updatedAt || p.createdAt || 0) + 1);
+  expanded = null;
+  persist();
+  toastAction("Removed prompt", "Undo", () => {
+    delete state.deleted[p.id];
+    p.updatedAt = Math.max(Date.now(), at + 1); // outrank the tombstone on other devices
+    if(!promptById(p.id)) state.prompts.splice(Math.min(i, state.prompts.length), 0, p);
     persist();
-  };
-  const keys = ev => {
-    if(ev.key === "Enter" && (ev.target === sch || ev.metaKey)){ ev.preventDefault(); save(); }
-    else if(ev.key === "Escape"){ ev.stopPropagation(); q.closest(".mapform").remove(); }
-  };
-  q.onkeydown = keys; sch.onkeydown = keys;
-  $("mapAddGo").onclick = save;
-  q.focus();
+  });
+}
+function essaysHeadHTML(){
+  const ps = mapPrompts(), open = ps.filter(p => p.status !== "done").length, d = nextDeadline();
+  const next = d === null ? "" : d < 0 ? " · something’s overdue" : d === 0 ? " · next one due today"
+    : d === 1 ? " · next one due tomorrow" : ` · next one due in ${d} days`;
+  return `<h2>Essays</h2>
+    <p class="sub2">Every prompt you’re answering, soonest deadline first. Pick the stories for each one, then copy its brief into your draft.${
+      ps.length ? ` <span class="nowrap">${open ? `${open} to go` : "All done"}${next}</span>` : ""}</p>`;
+}
+function addPromptHTML(){
+  if(!addingPrompt) return `<button class="quickadd padd" data-padd type="button">＋ Add a prompt you’re answering — paste it straight from the application</button>`;
+  return `<div class="pform">
+    <textarea class="pinput" id="pq" data-keep="pq" rows="3" placeholder="Paste the essay prompt…"></textarea>
+    <div class="pformrow">
+      <input class="pinput" id="psch" data-keep="psch" placeholder="School — e.g. Stanford, or UC · MIT">
+      <label class="pf"><span class="chiplab">Deadline</span><input class="pinput" id="pdue" data-keep="pdue" type="date"></label>
+      <label class="pf"><span class="chiplab">Word limit</span><input class="pinput" id="plim" data-keep="plim" type="number" min="1" max="5000" inputmode="numeric" placeholder="650"></label>
+    </div>
+    <div class="pformacts"><button class="primary" data-paddgo type="button">Add prompt</button>
+      <button class="ghost" data-paddx type="button">Cancel</button>
+      <span class="hint kbonly">⌘Enter adds · Esc cancels</span></div>
+  </div>`;
+}
+function promptRowHTML(p){
+  const isOpen = expanded === p.id;
+  const st = STATUS[p.status] ? p.status : "todo";
+  const d = p.due ? daysLeft(p.due) : null;
+  const picks = promptPicks(p);
+  const summary = [
+    p.due ? `${st === "done" ? "Was due" : "Due"} ${fmtDue(p.due)}` : "No deadline",
+    p.limit ? `${p.limit} words` : "",
+    picks.length ? `${picks.length} stor${picks.length === 1 ? "y" : "ies"} picked` : "No stories picked"
+  ].filter(Boolean).join(" · ");
+  return `<article class="entry prow ${isOpen ? "open" : ""} ${st === "done" ? "done" : ""}" data-id="${esc(p.id)}">
+    <div class="ehead">
+      <div class="etext">
+        <h3>${esc(p.sch || "Untitled prompt")}<span class="pstat ${st}">${STATUS[st]}</span></h3>
+        ${isOpen ? "" : `<p class="snip">${esc(p.q)}</p><div class="ecats">${summary}</div>`}
+      </div>
+      <div class="eside">${d !== null && st !== "done"
+        ? `<span class="pdays ${d <= 7 ? "soon" : ""}" title="${daysPhrase(d)}">${shortDays(d)}</span>` : ""}</div>
+    </div>
+    ${isOpen ? promptBodyHTML(p, st, d, picks) : ""}
+  </article>`;
+}
+function promptMetaHTML(p, st, d){
+  return [p.due ? `Due ${fmtDueLong(p.due)}${st === "done" ? "" : ` · ${daysPhrase(d)}`}` : "No deadline yet",
+    p.limit ? `${p.limit}-word limit` : ""].filter(Boolean).join(" · ");
+}
+function promptBodyHTML(p, st, d, picks){
+  const words = picks.reduce((n, e) => n + wc(e.body), 0);
+  const text = promptEdit === p.id
+    ? `<div class="pform">
+        <textarea class="pinput" id="peq" data-keep="peq" rows="4">${esc(p.q)}</textarea>
+        <input class="pinput" id="pesch" data-keep="pesch" value="${esc(p.sch || "")}" placeholder="School — e.g. Stanford, or UC · MIT">
+        <div class="pformacts"><button class="primary" data-pesave type="button">Save prompt</button>
+          <button class="ghost" data-pecancel type="button">Cancel</button>
+          <span class="hint kbonly">⌘Enter saves · Esc cancels</span></div>
+      </div>`
+    : `<div class="full">${esc(p.q)}</div>`;
+  return `<div class="ebody">
+    <p class="meta">${promptMetaHTML(p, st, d)}</p>
+    ${text}
+    <div class="pfields">
+      <label class="pf"><span class="chiplab">Deadline</span>
+        <input class="pinput" type="date" data-pfield="due" data-keep="due-${esc(p.id)}" value="${p.due || ""}"></label>
+      <label class="pf"><span class="chiplab">Word limit</span>
+        <input class="pinput" type="number" min="1" max="5000" inputmode="numeric" data-pfield="limit" data-keep="limit-${esc(p.id)}" value="${p.limit || ""}" placeholder="—"></label>
+      <div class="pf"><span class="chiplab">Status</span><div class="chiprow">${Object.keys(STATUS).map(s =>
+        `<button class="chip mini pstatbtn ${st === s ? "on" : ""}" data-pstatus="${s}" type="button">${STATUS[s]}</button>`).join("")}</div></div>
+    </div>
+    <div class="picklab">Stories for this prompt${picks.length ? ` · ${picks.length} picked · ${words} words of notes` : ""}</div>
+    <div class="ppicks">${picks.map(e => `
+      <div class="ppick">
+        <div class="ppickmain">
+          <button class="linkbtn ptitle" data-goentry="${esc(e.id)}" title="Open this story">${esc(e.title || "Untitled")}</button><span class="ewc">${wc(e.body)} words</span>
+          <p class="snip">${esc(e.body.slice(0, 220))}</p>
+        </div>
+        <button class="tagx" data-unpick="${esc(e.id)}" title="Take it off this prompt">×</button>
+      </div>`).join("")}
+      ${pickFor === p.id ? pickerHTML(p) : `<button class="tagadd" data-pickopen type="button">＋ pick stories</button>`}
+    </div>
+    <div class="eacts">
+      <button class="primary" data-pcopy title="The prompt, its limit and deadline, and your picked stories word for word — ready to paste beside your draft">Copy brief</button>
+      <button data-pfind title="Run Match a prompt on this one">⌕ find evidence</button>
+      ${promptEdit === p.id ? "" : `<button class="ghost" data-pedit>Edit prompt</button>`}
+      <span class="spacer"></span>
+      <button class="ghost danger" data-pdel>Remove</button>
+      <button class="ghost" data-act="collapse">Collapse</button>
+    </div>
+  </div>`;
+}
+function pickerHTML(p){
+  const tag = schTag(p.sch);
+  return `<div class="picker">
+    <input class="pinput" id="pickq" data-keep="pickq" value="${esc(pickQ)}" autocomplete="off"
+      placeholder="Filter your stories by any word…">
+    <div class="pickres" id="pickres">${pickResultsHTML(p)}</div>
+    <span class="hint">${tag ? `Stories already tagged “${esc(tag)}” come first, and picking one tags it. ` : ""}Enter picks the top match · Esc closes</span>
+  </div>`;
+}
+function pickResultsHTML(p){
+  const tag = schTag(p.sch).toLowerCase(), has = new Set(p.picks || []);
+  const words = pickQ.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const tagged = e => !!tag && (e.tags || []).some(t => t.toLowerCase() === tag);
+  const list = state.entries.filter(e => {
+      const hay = (e.title + " " + e.body + " " + (e.tags || []).join(" ")).toLowerCase();
+      return words.every(w => hay.includes(w));
+    }).sort((a, b) => tagged(b) - tagged(a) || b.createdAt - a.createdAt).slice(0, 40);
+  if(!list.length) return `<span class="hint pickempty">${state.entries.length
+    ? "No stories match — try another word." : "Your library is empty — add some stories first."}</span>`;
+  return list.map(e => `<button class="pickopt ${has.has(e.id) ? "on" : ""}" data-picktoggle="${esc(e.id)}" type="button">
+      <span class="pcheck">${has.has(e.id) ? "✓" : "＋"}</span>
+      <span class="pickmain"><span class="pickt">${esc(e.title || "Untitled")}</span><span class="picks">${esc(e.body.slice(0, 90))}</span></span>
+      ${tagged(e) ? `<span class="rtag mini">${esc(schTag(p.sch))}</span>` : ""}
+    </button>`).join("");
+}
+function renderEssays(){
+  if(pickFor !== expanded) pickFor = null;
+  if(promptEdit !== expanded) promptEdit = null;
+  viewIds = [];
+  $("viewhead").innerHTML = essaysHeadHTML();
+  const ps = sortedPrompts();
+  $("view").innerHTML = addPromptHTML() + (ps.length ? ps.map(promptRowHTML).join("")
+    : addingPrompt ? "" : `<div class="empty">No prompts yet. Add each supplemental you’re actually answering — Common App, UC PIQs, school portals — with its deadline and word limit. Then pick the stories that fit, and copy the brief when it’s time to draft.</div>`);
+}
+
+// ---- Recently deleted ----
+function trashRowHTML(t){
+  const isOpen = expanded === t.id;
+  const left = Math.max(1, TRASH_DAYS - Math.floor((Date.now() - (t.deletedAt || 0)) / DAY));
+  return `<article class="entry trow ${isOpen ? "open" : ""}" data-id="${esc(t.id)}">
+    <div class="ehead">
+      <div class="etext">
+        <h3>${esc(t.title || "") || `<span class="untitled">Untitled</span>`}</h3>
+        ${!isOpen && t.body ? `<p class="snip">${esc(t.body.slice(0, 300))}</p>` : ""}
+        <div class="ecats"><span>Deleted ${fmtDate(t.deletedAt)} · ${left} day${left === 1 ? "" : "s"} left</span>${
+          (t.cats || []).map(c => `<span class="ecat"><span class="dot" style="background:var(--c${c})"></span>${CATEGORIES[c]}</span>`).join("")}</div>
+      </div>
+      <div class="eside">${isOpen ? "" : `<button class="ghost" data-restore type="button">Restore</button>`}</div>
+    </div>
+    ${isOpen ? `<div class="ebody">
+      <div class="full">${esc(t.body || "")}</div>
+      <div class="eacts">
+        <button class="primary" data-restore>Restore</button>
+        <span class="spacer"></span>
+        <button class="ghost danger" data-purge>Delete forever</button>
+        <button class="ghost" data-act="collapse">Collapse</button>
+      </div>
+    </div>` : ""}
+  </article>`;
+}
+function renderTrash(){
+  viewIds = [];
+  const items = state.trash || [];
+  $("viewhead").innerHTML = `<h2>Recently deleted</h2>
+    <p class="sub2">Deleted entries wait here for ${TRASH_DAYS} days, then they’re gone for good.${
+      items.length ? ` <button class="linkbtn nowrap" data-emptytrash>Empty now</button>` : ""}</p>`;
+  $("view").innerHTML = items.length ? items.map(trashRowHTML).join("")
+    : `<p class="empty">Nothing here. Anything you delete waits here for ${TRASH_DAYS} days, in case you change your mind.</p>`;
+}
+// Delete = move to Recently deleted + leave a tombstone, so every device drops
+// it and a stale copy can't bring it back. Returns the records, for Undo.
+function trashEntries(ids){
+  const out = [];
+  for(const id of ids){
+    const i = state.entries.findIndex(x => x.id === id);
+    if(i < 0) continue;
+    const [en] = state.entries.splice(i, 1);
+    const rec = { ...en, deletedAt: Math.max(Date.now(), (en.updatedAt || 0) + 1) };
+    state.trash = [rec, ...state.trash.filter(t => t.id !== id)];
+    state.deleted[id] = rec.deletedAt;
+    selected.delete(id); polished.delete(id);
+    if(expanded === id) expanded = null;
+    out.push(rec);
+  }
+  return out;
+}
+// "Delete forever": move the tombstone past the trash copy's deletedAt, so
+// every device's copy of it drops out of Recently deleted on the next merge.
+function purgeMark(rec){
+  state.deleted[rec.id] = Math.max(Date.now(), (rec.deletedAt || 0) + 1);
+}
+function restoreEntries(recs){
+  for(const { deletedAt, ...en } of recs){
+    state.trash = state.trash.filter(t => t.id !== en.id);
+    delete state.deleted[en.id];
+    if(byId(en.id)) continue;
+    en.updatedAt = Math.max(Date.now(), (deletedAt || 0) + 1); // outrank the tombstone elsewhere
+    const at = state.entries.findIndex(x => x.createdAt < en.createdAt);
+    state.entries.splice(at < 0 ? state.entries.length : at, 0, en);
+  }
+}
+
+// ---- memory joggers: specific questions that shake a story loose ----
+const JOGGERS = [
+  [ "What does your family do that guests always ask about?",
+    "Which group do you show up for even when it’s inconvenient?",
+    "When were you the only one in the room like you?",
+    "Who taught you something no class could?",
+    "Where are you a regular — and what do you notice there?",
+    "What’s an inside joke only your people would get?" ],
+  [ "When did you take charge without the title?",
+    "What did you fix that nobody asked you to?",
+    "When did you have to tell a group something they didn’t want to hear?",
+    "Who did you teach, and what changed for them?",
+    "When did a plan fall apart on your watch — and what came next?",
+    "When did you step back so someone else could lead?" ],
+  [ "Which class would you sign up for first — and why that one?",
+    "Whose research would you email about, and what would you ask?",
+    "What did a visit or info session show you that the brochure skipped?",
+    "Which club, lab, or tradition can you picture yourself in?",
+    "What does this school have that your second choice doesn’t?",
+    "Which student or alum story made it click?" ],
+  [ "When did the subject stop feeling like homework?",
+    "What question in this field won’t leave you alone?",
+    "What have you built, read, or tried on your own time?",
+    "Which problem in the world would this major let you work on?",
+    "Who got you into it — and what did they say?",
+    "What’s the hardest thing you’ve learned in it so far?" ],
+  [ "What did you make that nobody assigned?",
+    "What did you redesign because the original annoyed you?",
+    "Where do you get to make up your own rules?",
+    "Which project would you show a stranger first?",
+    "When did a mistake turn into the best part?",
+    "What’s the strangest tool you’ve used to make something?" ],
+  [ "What bug, mess, or mystery did you untangle step by step?",
+    "When was your first answer wrong — and what tipped you off?",
+    "What broken thing at home or school did you actually fix?",
+    "When did an unusual trick solve something?",
+    "What problem did you keep chipping at for weeks?",
+    "When did you have to choose between two good options?" ],
+  [ "What rabbit hole ate your whole weekend?",
+    "What do you explain to friends whether they asked or not?",
+    "Which book, video, or person started it?",
+    "What have you done outside class to go deeper?",
+    "What question about it can’t you answer yet?",
+    "What would you study if grades didn’t exist?" ]
+];
+// Rotates on each quick add and category change — never per render, so the
+// placeholder doesn't change under you mid-thought.
+let jogN = Math.floor(Math.random() * 60);
+const jogger = i => JOGGERS[i][jogN % JOGGERS[i].length];
+function jogsHTML(i){
+  const qs = JOGGERS[i];
+  return `<div class="jogs">${[1, 2, 3].map(k => (jogN + k) % qs.length).map(k =>
+    `<button class="jog" data-jog="${k}" type="button" title="Answer this one in the box above">${esc(qs[k])}</button>`).join("")}</div>`;
+}
+// The category with the fewest stories — where a nudge helps most.
+function thinnestCat(){
+  const counts = CATEGORIES.map((_, i) => state.entries.filter(e => e.cats.includes(i)).length);
+  const min = Math.min(...counts);
+  const thin = counts.flatMap((c, i) => c === min ? [i] : []);
+  return thin[jogN % thin.length];
+}
+
+// ---- web clipper (bookmarklet) ----
+function clipGuideHTML(){
+  const code = `javascript:(()=>{const s=String(getSelection()).trim().slice(0,3000);`
+    + `window.open('${location.origin}/app#clip='+encodeURIComponent(s)+'&src='+encodeURIComponent(location.href)`
+    + `+'&title='+encodeURIComponent(document.title.slice(0,150)),'_blank')})()`;
+  return `<span class="rules">Clip to Library · save research straight from a college’s site</span>
+    <div class="piqrow">1. Drag this to your bookmarks bar: <a class="bml" href="${esc(code)}" title="Drag me to your bookmarks bar">✂ Clip to Library</a></div>
+    <div class="piqrow">2. On any page, select a passage and click the bookmark. A new entry opens here with the text and a link back, filed under Why School.</div>
+    <div class="piqtip">For desktop Chrome, Safari, Edge and Firefox. The clip goes straight into your library — nowhere else.</div>`;
+}
+// A clip stashed at load (see the top of the script) opens in the composer once
+// the library is ready. An unsaved draft is never clobbered — the clip joins it.
+function openClip(){
+  let c = null;
+  try{ c = JSON.parse(sessionStorage.getItem("liboc-clip")); sessionStorage.removeItem("liboc-clip"); }catch(e){}
+  if(!c || !(c.text || c.src)) return;
+  const src = /^https?:\/\//i.test(c.src || "") ? c.src : "";
+  const t = (c.title || "").trim();
+  const body = [(c.text || "").trim(), src ? `Source: ${t ? t + " — " : ""}${src}` : ""].filter(Boolean).join("\n\n");
+  openComposer(null, { title: t.length > 60 ? t.slice(0, 57).replace(/\s+\S*$/, "") + "…" : t, body, cats: [2] });
 }
 // Cache keys are re-pointed to per-account names once Clerk tells us who this
 // is (clerkInit). Starting empty — never from a shared cache — matters: boot()
@@ -656,24 +1058,111 @@ let KEY = "liboc-v1";
 let KEY_UI = "liboc-ui";
 let KEY_DRAFT = "liboc-draft";
 
-let state = { entries: [], rev: 0, backupRev: 0 };
-let nav = 0, query = "", qraw = "", tagFilter = null, unusedOnly = false, piqOpen = false, mapOpen = true;
+// The clipper bookmarklet opens /app#clip=…&src=…&title=… (a hash, so the text
+// never reaches a server log). Stash it for this tab and clean the URL right
+// away: a signed-out visit bounces through /login, which lands back on bare
+// /app — the hash wouldn't survive that, sessionStorage does. boot() opens it.
+(() => {
+  if(!location.hash.startsWith("#clip=")) return;
+  const p = new URLSearchParams(location.hash.slice(1));
+  try{
+    sessionStorage.setItem("liboc-clip", JSON.stringify({ text: (p.get("clip") || "").slice(0, 6000),
+      src: (p.get("src") || "").slice(0, 600), title: (p.get("title") || "").slice(0, 200) }));
+  }catch(e){}
+  history.replaceState(null, "", location.pathname + location.search);
+})();
+
+let state = blankState();
+// Sync bookkeeping (details in the sync section): `dirty` = local edits the
+// server hasn't confirmed; `baseKnown` = state.rev really is a server revision.
+let dirty = false, baseKnown = true, editSeq = 0;
+let nav = 0, query = "", qraw = "", tagFilter = null, unusedOnly = false, piqOpen = false, clipOpen = false;
+// A page that isn't a category takes over the column ("essays" | "trash"); nav
+// keeps the last category, so leaving the page lands somewhere familiar.
+let page = null;
+let addingPrompt = false, promptEdit = null, pickFor = null, pickQ = ""; // Essays page UI
 let matchDeep = true; // run the prompt breakdown alongside the matches (persisted)
 let picked = new Set(), selected = new Set(), editing = null, expanded = null, curSugs = [];
 let pending = new Set(); // entry ids waiting on an AI title/classification
 let polished = new Map(); // entry id -> AI-polished body (session-only, never saved)
 let viewIds = [];
-function loadUI(){ try{ const u = JSON.parse(localStorage.getItem(KEY_UI)); if(u && u.nav >= 0 && u.nav <= 6) nav = +u.nav; if(u) unusedOnly = !!u.unusedOnly; if(u && "matchDeep" in u) matchDeep = !!u.matchDeep; }catch(e){} }
+function loadUI(){ try{ const u = JSON.parse(localStorage.getItem(KEY_UI)); if(u && u.nav >= 0 && u.nav <= 6) nav = +u.nav; if(u && u.page === "essays") page = "essays"; if(u) unusedOnly = !!u.unusedOnly; if(u && "matchDeep" in u) matchDeep = !!u.matchDeep; }catch(e){} }
 
+function blankState(){ return { entries: [], prompts: [], trash: [], deleted: {}, rev: 0, backupRev: 0 }; }
+// Any stored or served copy → the current shape. Older copies lack prompts,
+// trash and tombstones; an item without an id would break merge-by-id.
+function normalize(s){
+  const { _dirty, ...rest } = s && typeof s === "object" ? s : {};
+  const list = a => Array.isArray(a) ? a.filter(x => x && typeof x === "object" && x.id) : [];
+  const d = rest.deleted;
+  return { ...rest, entries: list(rest.entries), prompts: list(rest.prompts), trash: list(rest.trash),
+    deleted: d && typeof d === "object" && !Array.isArray(d) ? { ...d } : {},
+    rev: +rest.rev || 0, backupRev: +rest.backupRev || 0 };
+}
 function load(){
-  try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s && s.entries) return s; }catch(e){}
-  return { entries:[], rev:0, backupRev:0 };
+  try{
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if(s && s.entries){
+      // `_dirty` rides along in the cache only, never to the server. A cache
+      // from before it existed can't say what the server has seen, so boot()
+      // falls back to the old rev comparison for that one load.
+      baseKnown = "_dirty" in s; dirty = !!s._dirty;
+      return normalize(s);
+    }
+  }catch(e){}
+  baseKnown = true; dirty = false;
+  return blankState();
 }
 // Quota errors (private browsing, full storage) must not kill render/sync —
 // the server copy is the source of truth, localStorage is only a cache.
-function store(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
-function persist(){ state.rev++; store(); render(); push(); }
-function saveUI(){ try{ localStorage.setItem(KEY_UI, JSON.stringify({nav, unusedOnly, matchDeep})); }catch(e){} }
+function store(){ try{ localStorage.setItem(KEY, JSON.stringify({ ...state, _dirty: dirty })); }catch(e){} }
+function persist(){ dirty = true; editSeq++; prune(state); store(); render(); push(); }
+// For edits made inside an input that should keep focus (Essays deadline and
+// word limit): save and sync, refresh the sidebar, leave the column alone.
+function persistSoft(){ dirty = true; editSeq++; prune(state); store(); push(); $("nav").innerHTML = navHTML(); renderStatus(); }
+function saveUI(){ try{ localStorage.setItem(KEY_UI, JSON.stringify({nav, page: page === "essays" ? page : null, unusedOnly, matchDeep})); }catch(e){} }
+
+// ---- merging two copies of the library ----
+// Newest edit wins per entry and prompt. Deletions travel as tombstones
+// (`deleted`: id → when), so a stale copy can't resurrect them — unless that
+// copy edited the item after it was deleted, in which case the edit wins.
+const TRASH_DAYS = 30, TRASH_MAX = 100, TRASH_CHARS = 80000, TOMB_DAYS = 120;
+function mergeStates(local, server){
+  const deleted = {};
+  for(const src of [server.deleted, local.deleted])
+    for(const [id, t] of Object.entries(src || {})) deleted[id] = Math.max(deleted[id] || 0, +t || 0);
+  const stamp = x => x.updatedAt || x.createdAt || 0;
+  const union = (mine, theirs) => {
+    const m = new Map(theirs.map(x => [x.id, x]));
+    mine.forEach(x => { const o = m.get(x.id); if(!o || stamp(x) >= stamp(o)) m.set(x.id, x); });
+    return [...m.values()].filter(x => !(deleted[x.id] >= stamp(x)));
+  };
+  const entries = union(local.entries, server.entries).sort((a, b) => b.createdAt - a.createdAt);
+  const prompts = union(local.prompts, server.prompts);
+  const live = new Set([...entries, ...prompts].map(x => x.id));
+  live.forEach(id => delete deleted[id]); // brought back by a later edit or a restore
+  // A trash copy is dropped once its entry is live again, or once it was
+  // purged ("Delete forever" moves the tombstone past the copy's deletedAt).
+  const trash = new Map();
+  [...server.trash, ...local.trash].forEach(t => {
+    if(live.has(t.id) || (deleted[t.id] || 0) > (t.deletedAt || 0)) return;
+    const o = trash.get(t.id);
+    if(!o || (t.deletedAt || 0) >= (o.deletedAt || 0)) trash.set(t.id, t);
+  });
+  return prune({ ...server, ...local, entries, prompts, deleted,
+    trash: [...trash.values()].sort((a, b) => (b.deletedAt || 0) - (a.deletedAt || 0)),
+    rev: server.rev, backupRev: Math.max(local.backupRev, server.backupRev) });
+}
+// Keep the synced copy small (the server caps it at 350KB): trash by age,
+// count and size; tombstones by age.
+function prune(s){
+  const now = Date.now();
+  let t = s.trash.filter(x => now - (x.deletedAt || 0) < TRASH_DAYS * DAY).slice(0, TRASH_MAX);
+  while(t.length && JSON.stringify(t).length > TRASH_CHARS) t = t.slice(0, -1);
+  s.trash = t;
+  for(const [id, at] of Object.entries(s.deleted)) if(now - at > TOMB_DAYS * DAY) delete s.deleted[id];
+  return s;
+}
 
 const newId = () => (crypto.randomUUID ? crypto.randomUUID()
   : Date.now().toString(36) + Math.random().toString(36).slice(2));
@@ -771,6 +1260,7 @@ async function clerkInit(){
     KEY = "liboc-v1:" + window.Clerk.user.id;
     KEY_UI = "liboc-ui:" + window.Clerk.user.id;
     KEY_DRAFT = "liboc-draft:" + window.Clerk.user.id;
+    draft = loadDraft(); // this account's draft — the load-time read used the signed-out key
     state = load(); // this account's own cache (warm start; server still wins)
     loadUI();       // per-account too — nav position shouldn't follow you across accounts
     render();
@@ -787,12 +1277,15 @@ async function clerkInit(){
 }
 
 async function api(method, path, body){
+  // Serialize before the token await: the request must carry exactly the state
+  // the caller saw, so an edit made meanwhile stays unconfirmed (and syncs next).
+  const payload = body ? JSON.stringify(body) : undefined;
   const token = window.Clerk && window.Clerk.session
     ? await window.Clerk.session.getToken() : null;
   const r = await fetch(API + path, { method,
     headers: { "content-type": "application/json",
       ...(token ? { authorization: "Bearer " + token } : {}) },
-    body: body ? JSON.stringify(body) : undefined });
+    body: payload });
   if(r.status === 401){
     if(window.Clerk && window.Clerk.user){
       authBlocked = true;
@@ -817,59 +1310,95 @@ async function api(method, path, body){
   return data;
 }
 
+// ---- sync ----
+// state.rev is the server revision this copy builds on, and `dirty` marks edits
+// the server hasn't confirmed. Every PUT claims rev+1, so the server's "must be
+// ahead" check turns away any device that hasn't seen the latest write; that
+// device pulls, merges (mergeStates) and retries instead of overwriting it.
 let pushT = null, syncState = "synced";
 let authBlocked = false; // a 401 put the lock screen up — boot() must not drop it
+let syncing = false, syncAgain = false, lastPull = 0;
+function setSync(s){ syncState = s; renderStatus(); }
+// One sync at a time; a request that arrives meanwhile runs once it's done.
+async function runSync(job){
+  if(syncing){ syncAgain = true; return; }
+  syncing = true;
+  try{ await job(); }
+  finally{
+    syncing = false;
+    if(syncAgain){ syncAgain = false; if(dirty) push(); }
+  }
+}
 function doPush(){
   pushT = null;
-  api("PUT", "/entries", state).then(() => {
-    if(syncState !== "synced"){ syncState = "synced"; renderStatus(); }
-  }).catch(e => {
-    if(e.message === "auth") return;
-    if(e.status === 409) return mergeSync();
-    syncState = "offline"; renderStatus();
-    toast("Couldn’t sync — changes are safe on this device");
-  });
+  if(dirty && !authBlocked) runSync(() => pushState());
 }
 function push(){
   clearTimeout(pushT);
   pushT = setTimeout(doPush, 600);
 }
-// Leaving the tab (switching apps on mobile, closing the window) shouldn't
-// strand an edit inside the debounce window — flush it right away.
-document.addEventListener("visibilitychange", () => {
-  if(document.visibilityState === "hidden" && pushT){ clearTimeout(pushT); doPush(); }
-});
-
-// Another device wrote first: pull its state, merge by id (newer edit wins,
-// nothing is dropped), then push the union with a rev ahead of the server's.
-async function mergeSync(depth = 0, msg = "Merged changes from another device"){
-  if(depth >= 3){ syncState = "offline"; renderStatus(); return; }
+async function pullMerge(){
+  state = mergeStates(state, normalize(await api("GET", "/entries")));
+  baseKnown = true;
+  store(); render();
+}
+// PUT this copy as rev+1. A 409 means another device wrote first (or the
+// server's wipe guard tripped): pull, merge, try again — a few times at most.
+async function pushState(msg){
   try{
-    const server = await api("GET", "/entries");
-    const m = new Map((server.entries || []).map(e => [e.id, e]));
-    state.entries.forEach(l => {
-      const s = m.get(l.id);
-      if(!s || (l.updatedAt || 0) >= (s.updatedAt || 0)) m.set(l.id, l);
-    });
-    state.entries = [...m.values()].sort((a,b) => b.createdAt - a.createdAt);
-    // Prompts too — otherwise this device's copy silently overwrites prompts
-    // added on another device. Union by id: local order first, then any
-    // server prompts this device hasn't seen.
-    const pIds = new Set(mapPrompts().map(p => p.id));
-    state.prompts = [...mapPrompts(),
-      ...(server.prompts || []).filter(p => p && p.id && !pIds.has(p.id))];
-    state.rev = Math.max(state.rev, server.rev || 0) + 1;
-    state.backupRev = Math.max(state.backupRev || 0, server.backupRev || 0);
-    store();
-    render();
-    await api("PUT", "/entries", state);
-    syncState = "synced"; renderStatus();
-    toast(msg);
+    if(!baseKnown) await pullMerge(); // pre-flag cache: merge before claiming a rev
+    for(let tries = 0; tries < 4; tries++){
+      const seq = editSeq, rev = state.rev + 1;
+      try{
+        await api("PUT", "/entries", { ...state, rev });
+        state.rev = rev;
+        if(seq === editSeq) dirty = false;
+        store(); setSync("synced");
+        if(msg) toast(msg);
+        return;
+      }catch(e){
+        if(e.status !== 409) throw e;
+      }
+      await pullMerge();
+      msg = msg || "Merged changes from another device";
+    }
+    setSync("offline");
+    toast("Couldn’t sync yet — changes are safe on this device");
   }catch(e){
-    if(e.status === 409) return mergeSync(depth + 1, msg);
-    if(e.message !== "auth"){ syncState = "offline"; renderStatus(); }
+    if(e.message === "auth") return;
+    setSync("offline");
+    toast(e.status === 413 ? "Library too big to sync — empty Recently deleted, then try again"
+      : "Couldn’t sync — changes are safe on this device");
   }
 }
+// Back on the tab after a while: pick up edits made on another device. Skipped
+// while anything local is pending, an overlay is open, or an inline editor that
+// a re-render would drop is open (the tag editors; Essays inputs carry their
+// text through render via data-keep).
+const overlayOpen = () => composerOpen() || dumpOpen() || matchOpen() || palOpen();
+async function pull(){
+  if(syncing || dirty || !baseKnown || authBlocked || isLocked() || overlayOpen()
+     || document.querySelector("#view .taginput, #viewhead input")) return;
+  lastPull = Date.now();
+  await runSync(async () => {
+    try{
+      const s = normalize(await api("GET", "/entries"));
+      if(dirty || s.rev <= state.rev) return;
+      state = s; store(); setSync("synced"); render();
+    }catch(e){ /* offline — nothing to pick up */ }
+  });
+}
+document.addEventListener("visibilitychange", () => {
+  if(document.visibilityState === "hidden"){
+    // Leaving the tab (switching apps on mobile, closing the window) shouldn't
+    // strand an edit inside the debounce window — flush it right away.
+    if(pushT){ clearTimeout(pushT); doPush(); }
+  } else if(!isLocked()){
+    if(dirty) push(); // retry anything stranded while offline
+    else if(Date.now() - lastPull > 30000) pull();
+  }
+});
+window.addEventListener("online", () => { if(dirty && !isLocked()) push(); });
 function renderStatus(){
   const b = $("backup");
   if(!state.entries.length){ b.textContent = ""; b.classList.remove("warn"); return; }
@@ -884,24 +1413,27 @@ function renderStatus(){
 }
 
 async function boot(){
-  try{
-    const s = await api("GET", "/entries");
-    if(s && Array.isArray(s.entries)
-        && state.entries.length && (state.rev || 0) > (s.rev || 0)){
-      // Local changes never reached the server (e.g. the tab closed before the
-      // debounced sync fired) — merge them back in instead of dropping them.
-      await mergeSync(0, "Recovered unsynced changes from this device");
-    } else {
-      if(s && Array.isArray(s.entries)){
-        state = s;
-        store();
+  await runSync(async () => {
+    try{
+      const s = normalize(await api("GET", "/entries"));
+      lastPull = Date.now();
+      // Edits this device never got confirmed (the tab closed inside the
+      // debounce, or it was offline) — or, for a cache from before the dirty
+      // flag, the old signal: a local rev ahead of the server's.
+      const unsynced = baseKnown ? dirty : state.entries.length > 0 && state.rev > s.rev;
+      if(unsynced){
+        state = mergeStates(state, s);
+        baseKnown = true; dirty = true;
+        store(); render();
+        await pushState("Recovered unsynced changes from this device");
+      } else {
+        state = s; baseKnown = true; dirty = false;
+        store(); setSync("synced"); render();
       }
-      syncState = "synced";
-      render();
+    }catch(e){
+      if(e.message !== "auth"){ setSync("offline"); render(); toast("Offline — using local copy"); }
     }
-  }catch(e){
-    if(e.message !== "auth"){ syncState = "offline"; render(); toast("Offline — using local copy"); }
-  }
+  });
   if(!authBlocked) lockHide(); // cold start held the lock until this first sync
   if(pendingKey){
     const k = pendingKey; pendingKey = null;
@@ -910,6 +1442,7 @@ async function boot(){
     else if(k === "m") openMatch();
     else if(k === "/") $("search").focus();
   }
+  if(!authBlocked) openClip();
 }
 
 $("signout").onclick = async () => {
@@ -956,12 +1489,20 @@ function liveStash(){
 }
 $("title").oninput = liveStash;
 
-function openComposer(entry){
+function openComposer(entry, prefill){
   if(entry){
     editing = entry.id;
     $("title").value = entry.title; $("body").value = entry.body;
     picked = new Set(entry.cats);
     $("save").textContent = "Save changes";
+  } else if(prefill){ // a web clip: never clobber an unsaved draft — join it
+    editing = null;
+    $("title").value = draft ? draft.title || prefill.title : prefill.title;
+    $("body").value = draft ? [(draft.body || "").trim(), prefill.body].filter(Boolean).join("\n\n") : prefill.body;
+    picked = new Set([...(draft?.picked || []), ...prefill.cats]);
+    if(draft) toast("Clip added to your unsaved draft");
+    $("save").textContent = "Add entry";
+    captureDraft(); // a closed tab or stray click can't lose the clip now
   } else {
     editing = null;
     if(draft){
@@ -970,7 +1511,7 @@ function openComposer(entry){
       toast("Draft restored");
     } else {
       $("title").value = ""; $("body").value = "";
-      picked = new Set(query || tagFilter ? [] : [nav]);
+      picked = new Set(query || tagFilter || page ? [] : [nav]);
     }
     $("save").textContent = "Add entry";
   }
@@ -1113,11 +1654,20 @@ async function palIdeaRun(){
 }
 
 function goToCategory(i){
-  nav = i; saveUI();
+  if(nav !== i || page) jogN++;
+  nav = i; page = null; saveUI();
   qraw = query = ""; $("search").value = "";
   tagFilter = null; expanded = null;
   render(); window.scrollTo({top:0});
 }
+function goToPage(p){
+  page = p; saveUI();
+  qraw = query = ""; $("search").value = "";
+  tagFilter = null; expanded = null; addingPrompt = false; pickFor = promptEdit = null;
+  render(); window.scrollTo({top:0});
+}
+// Where "← Back" goes from a tag view.
+const hereName = () => page === "essays" ? "Essays" : page === "trash" ? "Recently deleted" : CATEGORIES[nav];
 function palSnip(e, q){
   const body = e.body || "";
   const i = q ? body.toLowerCase().indexOf(q) : -1;
@@ -1180,9 +1730,9 @@ function palBuild(qr){
 }
 function palGoEntry(e){
   if(!e.cats.includes(nav)) nav = e.cats.length ? e.cats[0] : 0;
-  saveUI(); qraw = query = ""; $("search").value = ""; tagFilter = null;
+  page = null; saveUI(); qraw = query = ""; $("search").value = ""; tagFilter = null;
   expanded = e.id; render();
-  const row = $("view").querySelector(`[data-id="${e.id}"]`);
+  const row = $("view").querySelector(`[data-id="${esc(e.id)}"]`);
   if(row) row.scrollIntoView({block:"center"});
 }
 function palIdeaItems(){
@@ -1272,6 +1822,9 @@ document.addEventListener("keydown", e => {
     if(matchOpen()) return closeMatch();
     if(dumpOpen()) return closeDump();
     if(composerOpen()) return closeComposer();
+    if(page === "essays" && addingPrompt){ addingPrompt = false; return render(); }
+    if(page === "essays" && pickFor){ pickFor = null; return render(); }
+    if(page === "essays" && promptEdit){ promptEdit = null; return render(); }
     if(expanded){ expanded = null; return render(); }
     if(tagFilter){ tagFilter = null; return render(); }
     if(unusedOnly){ unusedOnly = false; saveUI(); return render(); }
@@ -1317,13 +1870,10 @@ $("nav").onclick = e => {
   if(e.target.closest("[data-match]")) return openMatch();
   const tg = e.target.closest("[data-tagnav]");
   if(tg) return setTagFilter(tg.dataset.tagnav);
+  const pg = e.target.closest("[data-page]");
+  if(pg) return goToPage(pg.dataset.page);
   const b = e.target.closest("[data-nav]"); if(!b) return;
-  nav = +b.dataset.nav;
-  saveUI();
-  qraw = query = ""; $("search").value = "";
-  tagFilter = null; expanded = null;
-  render();
-  window.scrollTo({top:0});
+  goToCategory(+b.dataset.nav);
 };
 $("search").oninput = e => {
   qraw = e.target.value;
@@ -1331,22 +1881,28 @@ $("search").oninput = e => {
   tagFilter = null;
   render();
 };
+// Both AI fills re-find their entry by id after the await: a sync may have
+// swapped in a fresh copy of the library meanwhile.
 async function genTitle(en){
-  pending.add(en.id); render();
+  const id = en.id;
+  pending.add(id); render();
   try{
     const r = await api("POST", "/title", { body: en.body });
     // fill in only if the entry still exists and wasn't titled by hand meanwhile
-    if(r.title && !en.title && state.entries.includes(en)){
-      en.title = r.title; en.updatedAt = Date.now(); persist();
+    const cur = byId(id);
+    if(r.title && cur && !cur.title){
+      cur.title = r.title; cur.updatedAt = Date.now(); persist();
     }
   }catch(e){ /* stays Untitled; user can Edit */ }
-  finally{ pending.delete(en.id); render(); }
+  finally{ pending.delete(id); render(); }
 }
-async function genClassify(en){
-  pending.add(en.id); render();
+async function genClassify(orig){
+  const id = orig.id;
+  let en = orig;
+  pending.add(id); render();
   try{
-    const r = await api("POST", "/classify", { body: en.body });
-    if(!state.entries.includes(en)) return;
+    const r = await api("POST", "/classify", { body: orig.body });
+    en = byId(id); if(!en) return;
     if(r.title && !en.title) en.title = r.title;
     if(Array.isArray(r.cats) && !en.cats.length){
       const cats = [...new Set(r.cats.map(Number).filter(c => c >= 0 && c <= 6))]
@@ -1358,20 +1914,26 @@ async function genClassify(en){
     persist();
     const where = en.cats.map(c => CATEGORIES[c]).join(" · ");
     toast(`Filed under ${where}`);
-    if(dumpOpen()) dumpReceipt(`Filed <button data-goto="${en.id}">“${
+    if(dumpOpen()) dumpReceipt(`Filed <button data-goto="${esc(en.id)}">“${
       esc(en.title || "Untitled")}”</button> → ${esc(where)}`);
   }catch(e){
-    if(e.message === "auth" || !state.entries.includes(en)) return;
+    en = byId(id);
+    if(e.message === "auth" || !en) return;
     if(!en.cats.length){ en.cats = [0]; en.updatedAt = Date.now(); persist(); }
     toast("Auto-sort failed — filed under Community/Perspective; Edit to fix");
     if(dumpOpen()) dumpReceipt("Auto-sort failed — filed under Community/Perspective. Edit the entry to fix.");
   }
-  finally{ pending.delete(en.id); render(); }
+  finally{ pending.delete(id); render(); }
 }
 
 // ---- universal quick-dump modal ----
 const dumpOpen = () => $("dump").classList.contains("on");
-function openDump(){ $("dump").classList.add("on"); $("dumpText").focus(); }
+function openDump(){
+  // A nudge from whichever category is thinnest — that's where stories are missing.
+  $("dumpText").placeholder = "Write a memory, detail, or story — anything you might use in an essay.\nNeed a nudge? "
+    + jogger(thinnestCat());
+  $("dump").classList.add("on"); $("dumpText").focus();
+}
 function closeDump(){ $("dump").classList.remove("on"); }
 function dumpReceipt(html){ $("dumpLast").innerHTML = html; }
 $("dump").onclick = e => { if(e.target === $("dump")) closeDump(); }; // text is kept, not lost
@@ -1397,17 +1959,18 @@ $("dumpText").onkeydown = e => {
 $("dumpLast").onclick = e => {
   const b = e.target.closest("[data-goto]"); if(!b) return;
   const en = byId(b.dataset.goto); if(!en) return;
-  nav = en.cats[0] ?? 0; saveUI();
+  nav = en.cats[0] ?? 0; page = null; saveUI();
   qraw = query = ""; $("search").value = ""; tagFilter = null;
   expanded = en.id; closeDump(); render();
-  $("view").querySelector(`[data-id="${en.id}"]`)?.scrollIntoView({block:"center"});
+  $("view").querySelector(`[data-id="${esc(en.id)}"]`)?.scrollIntoView({block:"center"});
 };
 
 // ---- match-a-prompt modal ----
 const matchOpen = () => $("matchModal").classList.contains("on");
 let matchSuggestTag = null; // prefills "mark all used in…" (set by the PIQ guide)
+let matchPromptId = null;   // set when run from an Essays prompt: results get a pick toggle
 function openMatch(){
-  matchSuggestTag = null;
+  matchSuggestTag = null; matchPromptId = null;
   $("matchModal").classList.add("on");
   $("matchQ").focus(); $("matchQ").select();
 }
@@ -1483,12 +2046,17 @@ async function matchRun(){
         + `<div class="matchempty">Nothing in the stacks fits this prompt yet — try a quick dump first.</div>`;
       return;
     }
-    const row = ({en, why}) => `<div class="matchitem" data-id="${en.id}">
+    // Run from an Essays prompt (and the text wasn't swapped for another one):
+    // each result gets a pick toggle for that prompt.
+    const mp = promptById(matchPromptId);
+    if(mp && mp.q.trim() !== prompt) matchPromptId = null;
+    const row = ({en, why}) => `<div class="matchitem" data-id="${esc(en.id)}">
         <div class="matchtop">
           <span class="dots">${en.cats.slice(0, 3).map(c =>
             `<span class="dot" style="background:var(--c${c})"></span>`).join("")}</span>
           <span class="paltitle">${esc(en.title || "Untitled")}</span>
-          <span class="palhint">${wc(en.body)} w</span>
+          <span class="palhint">${wc(en.body)} w</span>${mp && matchPromptId ? `<button class="linkbtn mpick" data-mpick="${esc(en.id)}"
+            title="Add to (or take off) this prompt on the Essays page">${(mp.picks || []).includes(en.id) ? "✓ picked" : "＋ pick"}</button>` : ""}
         </div>
         <span class="palsnip">${esc(en.body.slice(0, 90))}</span>
         ${why ? `<span class="matchwhy">✦ ${esc(why)}</span>` : ""}
@@ -1515,8 +2083,9 @@ async function matchRun(){
           const existing = allTags().find(x => x.toLowerCase() === raw.toLowerCase());
           const val = existing || raw;
           let added = 0;
-          matchPicks.forEach(en => {
-            if(!state.entries.includes(en)) return;
+          matchPicks.forEach(m => {
+            const en = byId(m.id); // by id — a sync may have refreshed the library meanwhile
+            if(!en) return;
             en.tags = en.tags || [];
             if(!en.tags.some(x => x.toLowerCase() === val.toLowerCase())){
               en.tags.push(val); en.updatedAt = Date.now(); added++;
@@ -1537,11 +2106,18 @@ async function matchRun(){
   }
 }
 $("matchList").onclick = e => {
+  const mk = e.target.closest("[data-mpick]");
+  if(mk){
+    const p = promptById(matchPromptId); if(!p) return;
+    togglePick(p, mk.dataset.mpick); persist();
+    mk.textContent = (p.picks || []).includes(mk.dataset.mpick) ? "✓ picked" : "＋ pick";
+    return;
+  }
   const en = byId(e.target.closest("[data-id]")?.dataset.id); if(!en) return;
   if(!en.cats.includes(nav)) nav = en.cats.length ? en.cats[0] : 0;
-  saveUI(); qraw = query = ""; $("search").value = ""; tagFilter = null;
+  page = null; saveUI(); qraw = query = ""; $("search").value = ""; tagFilter = null;
   expanded = en.id; closeMatch(); render();
-  $("view").querySelector(`[data-id="${en.id}"]`)?.scrollIntoView({block:"center"});
+  $("view").querySelector(`[data-id="${esc(en.id)}"]`)?.scrollIntoView({block:"center"});
 };
 
 function qaddGrow(){
@@ -1558,6 +2134,7 @@ $("qadd").onkeydown = e => {
       pinned: false, tags: [], createdAt: Date.now(), updatedAt: Date.now() };
     state.entries.unshift(en);
     $("qadd").value = ""; $("qadd").style.height = "";
+    jogN++; // next question for the next story
     persist(); // qadd is outside re-rendered nodes, so focus survives for the next dump
     toast(`Added to ${CATEGORIES[nav]}`);
     genTitle(en);
@@ -1582,27 +2159,26 @@ $("viewhead").onclick = e => {
     matchRun();
   }
   else if(e.target.closest("[data-piq]")){ piqOpen = !piqOpen; render(); }
-  else if(e.target.closest("[data-mapmatch]")){
-    const a = mapPrompts().find(p => p.id === e.target.closest("[data-mapmatch]").dataset.mapmatch);
-    if(!a) return;
-    openMatch();
-    matchSuggestTag = schTag(a.sch) || null;
-    $("matchQ").value = a.q;
-    matchRun();
+  else if(e.target.closest("[data-page]")) goToPage(e.target.closest("[data-page]").dataset.page);
+  else if(e.target.closest("[data-clip]")){ clipOpen = !clipOpen; render(); }
+  else if(e.target.closest(".bml")){ // it's meant for the bookmarks bar, not for clicking here
+    e.preventDefault();
+    toast("Drag it to your bookmarks bar, then click it on any page");
   }
-  else if(e.target.closest("[data-mapadd]")) showMapAdd(e.target.closest("[data-mapadd]"));
-  else if(e.target.closest("[data-mapdel]")){
-    const id = e.target.closest("[data-mapdel]").dataset.mapdel;
-    const idx = mapPrompts().findIndex(p => p.id === id);
-    if(idx < 0) return;
-    const [removed] = state.prompts.splice(idx, 1);
+  else if(e.target.closest("[data-emptytrash]")){
+    const old = state.trash;
+    if(!old.length) return;
+    old.forEach(purgeMark);
+    state.trash = []; expanded = null;
     persist();
-    toastAction("Removed prompt", "Undo", () => {
-      state.prompts.splice(Math.min(idx, state.prompts.length), 0, removed);
+    toastAction(`Emptied ${old.length} deleted entr${old.length === 1 ? "y" : "ies"}`, "Undo", () => {
+      const have = new Set(state.trash.map(t => t.id));
+      const back = old.filter(t => !have.has(t.id) && !byId(t.id));
+      back.forEach(t => { state.deleted[t.id] = t.deletedAt; });
+      state.trash = [...state.trash, ...back].sort((a, b) => (b.deletedAt || 0) - (a.deletedAt || 0));
       persist();
     });
   }
-  else if(e.target.closest("[data-map]")){ mapOpen = !mapOpen; render(); }
   else if(e.target.closest("[data-tag]")) setTagFilter(e.target.closest("[data-tag]").dataset.tag);
   else if(e.target.closest("[data-renametag]") && tagFilter){
     if($("renameTagInput")) return $("renameTagInput").focus();
@@ -1650,11 +2226,74 @@ $("viewhead").onclick = e => {
   }
 };
 
+// ---- Essays + Recently deleted rows (their ids aren't entries) ----
+function promptClick(t, p){
+  const hit = sel => t.closest(sel);
+  if(hit("[data-act=collapse]")){ expanded = null; return render(); }
+  if(hit("[data-pstatus]")){ p.status = hit("[data-pstatus]").dataset.pstatus; p.updatedAt = Date.now(); return persist(); }
+  if(hit("[data-pickopen]")){ pickFor = p.id; pickQ = ""; render(); return $("pickq")?.focus(); }
+  if(hit("[data-picktoggle]")){ togglePick(p, hit("[data-picktoggle]").dataset.picktoggle); return persist(); }
+  if(hit("[data-unpick]")){ togglePick(p, hit("[data-unpick]").dataset.unpick); return persist(); }
+  if(hit("[data-goentry]")){ const en = byId(hit("[data-goentry]").dataset.goentry); return en && palGoEntry(en); }
+  if(hit("[data-pcopy]")) return copyFlip(promptBrief(p), hit("[data-pcopy]"));
+  if(hit("[data-pfind]")){
+    openMatch();
+    matchSuggestTag = schTag(p.sch) || null; matchPromptId = p.id;
+    $("matchQ").value = p.q;
+    return matchRun();
+  }
+  if(hit("[data-pedit]")){ promptEdit = p.id; render(); return $("peq")?.focus(); }
+  if(hit("[data-pesave]")) return savePromptEdit(p);
+  if(hit("[data-pecancel]")){ promptEdit = null; return render(); }
+  if(hit("[data-pdel]")) return removePrompt(p);
+  if(hit(".ebody") || !window.getSelection().isCollapsed) return;
+  expanded = expanded === p.id ? null : p.id;
+  render();
+}
+function trashClick(t, id){
+  const i = state.trash.findIndex(x => x.id === id);
+  const rec = state.trash[i];
+  if(t.closest("[data-act=collapse]")){ expanded = null; return render(); }
+  if(t.closest("[data-restore]")){
+    if(!rec) return;
+    restoreEntries([rec]); expanded = null;
+    persist();
+    return toastAction(`Restored “${(rec.title || "Untitled").slice(0, 40)}”`, "Show it", () => {
+      const en = byId(id); if(en) palGoEntry(en);
+    });
+  }
+  if(t.closest("[data-purge]")){
+    if(!rec) return;
+    purgeMark(rec);
+    state.trash.splice(i, 1); expanded = null;
+    persist();
+    return toastAction("Deleted for good", "Undo", () => {
+      if(!byId(id) && !state.trash.some(x => x.id === id)){
+        state.deleted[id] = rec.deletedAt;
+        state.trash.splice(Math.min(i, state.trash.length), 0, rec);
+      }
+      persist();
+    });
+  }
+  if(t.closest(".ebody") || !window.getSelection().isCollapsed) return;
+  expanded = expanded === id ? null : id;
+  render();
+}
+
 // ---- list interactions ----
 $("view").onclick = e => {
   const t = e.target;
   if(t.closest("[data-newhere]")) return openComposer();
   if(t.closest("[data-unused]")){ unusedOnly = !unusedOnly; saveUI(); return render(); }
+  const jog = t.closest("[data-jog]");
+  if(jog){ jogN = +jog.dataset.jog; render(); return $("qadd").focus(); } // becomes the box's question
+  if(t.closest("[data-padd]")){ addingPrompt = true; render(); return $("pq")?.focus(); }
+  if(t.closest("[data-paddgo]")) return addPrompt();
+  if(t.closest("[data-paddx]")){ addingPrompt = false; return render(); }
+  const prow = t.closest(".prow");
+  if(prow){ const p = promptById(prow.dataset.id); return p && promptClick(t, p); }
+  const trow = t.closest(".trow");
+  if(trow) return trashClick(t, trow.dataset.id);
   const sugBtn = t.closest(".tagsug");
   if(sugBtn){
     if("create" in sugBtn.dataset) addTag($("view").querySelector(".taginput")?.value);
@@ -1721,15 +2360,11 @@ $("view").onclick = e => {
     if(act === "edit") return openComposer(en);
     if(act === "collapse"){ expanded = null; return render(); }
     if(act === "del"){
-      const idx = state.entries.findIndex(x => x.id === id);
-      if(idx < 0) return;
-      const removed = state.entries[idx];
-      state.entries.splice(idx, 1);
-      selected.delete(id);
-      if(expanded === id) expanded = null;
+      const recs = trashEntries([id]); // to Recently deleted, restorable for 30 days
+      if(!recs.length) return;
       persist();
-      toastAction(`Deleted “${(removed.title || "Untitled").slice(0, 40)}”`, "Undo", () => {
-        state.entries.splice(Math.min(idx, state.entries.length), 0, removed);
+      toastAction(`Deleted “${(recs[0].title || "Untitled").slice(0, 40)}”`, "Undo", () => {
+        restoreEntries(recs);
         persist();
       });
     }
@@ -1739,6 +2374,47 @@ $("view").onclick = e => {
   if(!window.getSelection().isCollapsed) return;
   expanded = expanded === id ? null : id;
   render();
+};
+// Keys, typing and field commits inside the Essays forms and picker.
+$("view").onkeydown = e => {
+  const id = e.target.id;
+  if(e.key === "Escape"){
+    if(id === "pickq"){ e.stopPropagation(); pickFor = null; return render(); }
+    if(["pq", "psch", "pdue", "plim"].includes(id)){ e.stopPropagation(); addingPrompt = false; return render(); }
+    if(["peq", "pesch"].includes(id)){ e.stopPropagation(); promptEdit = null; return render(); }
+    return;
+  }
+  if(e.key !== "Enter" || e.isComposing) return;
+  const cmd = e.metaKey || e.ctrlKey;
+  if(["psch", "pdue", "plim"].includes(id) || (id === "pq" && cmd)){ e.preventDefault(); return addPrompt(); }
+  if(id === "pesch" || (id === "peq" && cmd)){
+    e.preventDefault();
+    const p = promptById(promptEdit); return p && savePromptEdit(p);
+  }
+  if(id === "pickq"){ // Enter picks the top result that isn't picked yet
+    e.preventDefault();
+    $("pickres")?.querySelector(".pickopt:not(.on)")?.click();
+  }
+  if(e.target.dataset.pfield) e.target.blur(); // commits through the change handler
+};
+$("view").oninput = e => {
+  if(e.target.id !== "pickq") return;
+  pickQ = e.target.value;
+  const p = promptById(pickFor);
+  if(p) $("pickres").innerHTML = pickResultsHTML(p); // just the list — the input keeps focus
+};
+$("view").onchange = e => {
+  const f = e.target.dataset.pfield; if(!f) return;
+  const p = promptById(e.target.closest(".prow")?.dataset.id); if(!p) return;
+  const v = e.target.value.trim();
+  if(f === "due") p.due = validDue(v);
+  else { const n = parseInt(v, 10); p.limit = n > 0 ? Math.min(n, 5000) : 0; }
+  p.updatedAt = Date.now();
+  persistSoft(); // no re-render: the field keeps focus; refresh the bits that show it
+  const st = STATUS[p.status] ? p.status : "todo";
+  const meta = $("view").querySelector(".prow.open .meta");
+  if(meta) meta.innerHTML = promptMetaHTML(p, st, p.due ? daysLeft(p.due) : null);
+  $("viewhead").innerHTML = essaysHeadHTML();
 };
 $("copySel").onclick = () => {
   const picks = state.entries.filter(e => selected.has(e.id));
@@ -1771,29 +2447,177 @@ $("tagSel").onclick = () => {
   inp.focus();
 };
 
-// ---- backup ----
-$("export").onclick = () => {
-  const blob = new Blob([JSON.stringify(state.entries, null, 2)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `liboc-${new Date().toISOString().slice(0,10)}.json`;
-  a.click(); URL.revokeObjectURL(a.href);
-  state.backupRev = state.rev;
-  store();
-  render();
+// Merge: the oldest selected entry absorbs the others (texts joined, categories
+// and tags combined); the rest go to Recently deleted, so nothing is lost.
+$("mergeSel").onclick = () => {
+  const picks = state.entries.filter(e => selected.has(e.id)).sort((a, b) => a.createdAt - b.createdAt);
+  if(picks.length < 2) return;
+  const [base, ...rest] = picks;
+  const before = { ...base, cats: [...base.cats], tags: [...(base.tags || [])] };
+  const bodies = [], tags = [];
+  picks.forEach(e => {
+    const b = e.body.trim();
+    if(b && !bodies.includes(b)) bodies.push(b);
+    (e.tags || []).forEach(t => { if(!tags.some(x => x.toLowerCase() === t.toLowerCase())) tags.push(t); });
+  });
+  Object.assign(base, {
+    title: base.title || picks.find(e => e.title)?.title || "",
+    body: bodies.join("\n\n"),
+    cats: [...new Set(picks.flatMap(e => e.cats))].sort((a, b) => a - b),
+    tags, pinned: picks.some(e => e.pinned), updatedAt: Date.now()
+  });
+  polished.delete(base.id);
+  // Prompts that picked a merged-away entry now point at the merged one.
+  const gone = new Set(rest.map(e => e.id)), repicked = [];
+  mapPrompts().forEach(p => {
+    if(!(p.picks || []).some(id => gone.has(id))) return;
+    repicked.push({ p, picks: [...p.picks] });
+    p.picks = [...new Set(p.picks.map(id => gone.has(id) ? base.id : id))];
+    p.updatedAt = Date.now();
+  });
+  const recs = trashEntries([...gone]);
+  selected.clear(); expanded = base.id;
+  persist();
+  toastAction(`Merged ${picks.length} entries into one`, "Undo", () => {
+    const cur = byId(before.id);
+    if(cur) Object.assign(cur, before, { updatedAt: Date.now() });
+    restoreEntries(recs);
+    repicked.forEach(({ p, picks }) => { p.picks = picks; p.updatedAt = Date.now(); });
+    persist();
+  });
 };
+
+// ---- export: backup file, readable document, print ----
+$("export").onclick = () => {
+  const m = $("expMenu");
+  m.hidden = !m.hidden;
+  $("export").setAttribute("aria-expanded", !m.hidden);
+};
+function download(text, name, type){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+$("expMenu").onclick = e => {
+  const b = e.target.closest("[data-exp]"); if(!b) return;
+  $("expMenu").hidden = true; $("export").setAttribute("aria-expanded", false);
+  const day = new Date().toISOString().slice(0, 10);
+  if(b.dataset.exp === "json"){
+    download(JSON.stringify({ app: "liboc", version: 2, exportedAt: new Date().toISOString(),
+      entries: state.entries, prompts: mapPrompts() }, null, 2), `liboc-${day}.json`, "application/json");
+    state.backupRev = state.rev;
+    store();
+    render();
+  } else if(b.dataset.exp === "md") download(readableMarkdown(), `liboc-${day}.md`, "text/markdown");
+  else printLibrary();
+};
+// Readable copies list each entry once, under its first category (other
+// categories are noted), pinned first — the same order as the category pages.
+function readableSections(){
+  const first = e => e.cats.length ? Math.min(...e.cats) : 0;
+  return CATEGORIES.map((name, i) => ({ name, i, items: state.entries.filter(e => first(e) === i)
+      .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.createdAt - a.createdAt) }))
+    .filter(s => s.items.length);
+}
+const entryNote = (e, i) => [
+  e.cats.some(c => c !== i) ? `Also in ${e.cats.filter(c => c !== i).map(c => CATEGORIES[c]).join(", ")}` : "",
+  (e.tags || []).length ? `Used in ${e.tags.join(", ")}` : "",
+  `Added ${fmtDate(e.createdAt)}`
+].filter(Boolean).join(" · ");
+const promptNote = p => [p.due ? `due ${fmtDueLong(p.due)}` : "", p.limit ? `${p.limit} words` : "",
+  STATUS[p.status] || STATUS.todo].filter(Boolean).join(" · ");
+const longDate = () => new Date().toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
+const countLine = () => `${state.entries.length} entr${state.entries.length === 1 ? "y" : "ies"}`;
+function readableMarkdown(){
+  const out = ["# Library of College", `_Exported ${longDate()} · ${countLine()}_`];
+  const ps = sortedPrompts();
+  if(ps.length){
+    out.push("## Essays");
+    ps.forEach(p => {
+      const picks = promptPicks(p);
+      out.push(`### ${p.sch || "Untitled prompt"}`, `_${promptNote(p)}_`, p.q.split("\n").map(l => "> " + l).join("\n"));
+      if(picks.length) out.push(`Stories: ${picks.map(e => e.title || "Untitled").join(" · ")}`);
+    });
+  }
+  readableSections().forEach(s => {
+    out.push(`## ${s.name}`);
+    // A body line starting with # or > would turn into a heading or quote.
+    s.items.forEach(e => out.push(`### ${e.title || "Untitled"}`, `_${entryNote(e, s.i)}_`,
+      e.body.replace(/^([#>])/gm, "\\$1")));
+  });
+  return out.join("\n\n") + "\n";
+}
+function printLibrary(){
+  const h = [`<h1>Library of College</h1><p class="pmeta">Exported ${longDate()} · ${countLine()}</p>`];
+  const ps = sortedPrompts();
+  if(ps.length){
+    h.push("<h2>Essays</h2>");
+    ps.forEach(p => {
+      const picks = promptPicks(p);
+      h.push(`<section><h3>${esc(p.sch || "Untitled prompt")}</h3><p class="pmeta">${esc(promptNote(p))}</p>
+        <blockquote>${esc(p.q)}</blockquote>${picks.length
+          ? `<p class="pmeta">Stories: ${esc(picks.map(e => e.title || "Untitled").join(" · "))}</p>` : ""}</section>`);
+    });
+  }
+  readableSections().forEach(s => {
+    h.push(`<h2>${esc(s.name)}</h2>`);
+    s.items.forEach(e => h.push(`<section><h3>${esc(e.title || "Untitled")}</h3>
+      <p class="pmeta">${esc(entryNote(e, s.i))}</p><div class="pbody">${esc(e.body)}</div></section>`));
+  });
+  $("printout").innerHTML = h.join("");
+  document.body.classList.add("printing");
+  addEventListener("afterprint", () => {
+    document.body.classList.remove("printing");
+    $("printout").innerHTML = "";
+  }, { once: true });
+  print();
+}
 $("importBtn").onclick = () => $("importFile").click();
 $("importFile").onchange = e => {
   const f = e.target.files[0]; if(!f) return;
   const r = new FileReader();
   r.onload = () => {
     try{
-      const incoming = JSON.parse(r.result);
-      if(!Array.isArray(incoming)) throw 0;
-      const have = new Set(state.entries.map(x => x.id));
-      const add = incoming.filter(x => x.id && !have.has(x.id));
-      state.entries = [...add, ...state.entries];
-      toast(`Imported ${add.length} new entries`); persist();
+      // Backups are either the bare entries array (exports before prompts were
+      // included) or {entries, prompts}. Only ids this library lacks are added.
+      const data = JSON.parse(r.result);
+      const inE = Array.isArray(data) ? data : Array.isArray(data?.entries) ? data.entries : null;
+      if(!inE) throw 0;
+      const inP = Array.isArray(data?.prompts) ? data.prompts : [];
+      const now = Date.now();
+      // Importing something deleted here is a deliberate restore: outrank its tombstone.
+      const revive = x => {
+        const t = state.deleted[x.id];
+        if(t){ delete state.deleted[x.id]; x.updatedAt = Math.max(now, t + 1); }
+        return x;
+      };
+      // Ids land in HTML attributes, so a file can only bring the kind newId() makes.
+      const okId = id => typeof id === "string" && /^[\w-]{1,64}$/.test(id);
+      const haveE = new Set(state.entries.map(x => x.id));
+      const addE = inE.filter(x => x && okId(x.id) && typeof x.body === "string" && !haveE.has(x.id))
+        .map(x => {
+          const cats = [...new Set((Array.isArray(x.cats) ? x.cats : []).map(Number)
+            .filter(c => Number.isInteger(c) && c >= 0 && c <= 6))].sort((a, b) => a - b);
+          return revive({ id: x.id, title: String(x.title || ""), body: x.body, cats: cats.length ? cats : [0],
+            pinned: !!x.pinned, tags: Array.isArray(x.tags) ? x.tags.filter(t => typeof t === "string") : [],
+            createdAt: +x.createdAt || now, updatedAt: +x.updatedAt || +x.createdAt || now });
+        });
+      const haveP = new Set(mapPrompts().map(x => x.id));
+      const addP = inP.filter(x => x && okId(x.id) && typeof x.q === "string" && !haveP.has(x.id))
+        .map(x => revive({ id: x.id, q: x.q.slice(0, 2000), sch: String(x.sch || "").slice(0, 120),
+          due: validDue(x.due), limit: +x.limit > 0 ? Math.min(+x.limit, 5000) : 0,
+          status: STATUS[x.status] ? x.status : "todo",
+          picks: Array.isArray(x.picks) ? x.picks.filter(okId) : [],
+          createdAt: +x.createdAt || now, updatedAt: +x.updatedAt || +x.createdAt || now }));
+      const back = new Set(addE.map(x => x.id));
+      state.trash = state.trash.filter(t => !back.has(t.id));
+      state.entries = [...addE, ...state.entries].sort((a, b) => b.createdAt - a.createdAt);
+      state.prompts = [...addP, ...mapPrompts()];
+      persist();
+      toast(`Imported ${addE.length} new entr${addE.length === 1 ? "y" : "ies"}${
+        addP.length ? ` and ${addP.length} prompt${addP.length === 1 ? "" : "s"}` : ""}`);
     }catch(err){ toast("Could not read that file"); }
     e.target.value = "";
   };
@@ -1808,19 +2632,40 @@ function navHTML(){
     <button class="navitem dumpnav" data-match title="Paste an essay prompt — AI finds your best-fitting stories (press m)">
       <span class="cdot dump">⌕</span><span class="navlab">Match a prompt</span><span class="navn"><span class="kbd">m</span></span>
     </button>`
+  + essaysNavHTML()
   + GROUPS.map((g, gi) =>
     (gi ? `<span class="navsep"></span>` : "")
     + `<div class="navgroup">${g.label}</div>`
     + g.cats.map(i => {
         const n = state.entries.filter(e => e.cats.includes(i)).length;
-        return `<button class="navitem ${nav === i && !query && !tagFilter ? "on" : ""}" data-nav="${i}">
+        return `<button class="navitem ${nav === i && !query && !tagFilter && !page ? "on" : ""}" data-nav="${i}">
           <span class="cdot" style="background:var(--c${i})"></span>
           <span class="navlab">${CATEGORIES[i]}</span><span class="navn ${n && n < 3 ? "thin" : ""}"${
             n && n < 3 ? ` title="Only ${n} entr${n === 1 ? "y" : "ies"} — thin for essay season"` : ""}>${n || ""}</span>
         </button>`;
       }).join("")
   ).join("")
-  + tagNavHTML();
+  + tagNavHTML()
+  + trashNavHTML();
+}
+// Essays sits with the top actions; its badge is the nearest open deadline
+// (or the count of open prompts when none has a date).
+function essaysNavHTML(){
+  const d = nextDeadline(), open = mapPrompts().filter(p => p.status !== "done").length;
+  return `<button class="navitem pagenav ${page === "essays" && !query && !tagFilter ? "on" : ""}" data-page="essays"
+      title="${d === null ? "Your essay prompts — deadlines, word limits, picked stories" : `Next deadline: ${daysPhrase(d)}`}">
+      <span class="cdot dump">✎</span><span class="navlab">Essays</span><span class="navn ${d !== null && d <= 7 ? "thin" : ""}">${
+        d !== null ? shortDays(d) : open || ""}</span>
+    </button>`;
+}
+// Only shown while something is in it.
+function trashNavHTML(){
+  const n = (state.trash || []).length;
+  if(!n) return "";
+  return `<span class="navsep"></span><button class="navitem trashnav ${page === "trash" && !query && !tagFilter ? "on" : ""}"
+      data-page="trash" title="Deleted entries — restorable for ${TRASH_DAYS} days">
+      <span class="cdot dump">↺</span><span class="navlab">Recently deleted</span><span class="navn">${n}</span>
+    </button>`;
 }
 
 function tagNavHTML(){
@@ -1893,7 +2738,7 @@ function rowHTML(e, col, showNames){
       </div>
     </div>`;
 
-  return `<article class="entry ${isOpen ? "open" : ""} ${selected.has(e.id) ? "sel" : ""}" data-id="${e.id}">
+  return `<article class="entry ${isOpen ? "open" : ""} ${selected.has(e.id) ? "sel" : ""}" data-id="${esc(e.id)}">
     <div class="ehead">
       <div class="etext">
         <h3>${esc(e.title) || `<span class="untitled">${pending.has(e.id) ? "✦ titling…" : "Untitled"}</span>`}${dots}</h3>
@@ -1913,17 +2758,38 @@ function rowHTML(e, col, showNames){
 
 function render(){
   $("nav").innerHTML = navHTML();
-  $("qadd").style.display = (query || tagFilter) ? "none" : "";
-  $("qadd").placeholder = innerWidth < 760
-    ? `Add to ${CATEGORIES[nav]}…`
-    : `Add to ${CATEGORIES[nav]} — Enter saves · Shift+Enter for a new line`;
-
-  const n = state.entries.length;
+  $("qadd").style.display = (query || tagFilter || page) ? "none" : "";
+  // A memory jogger for this category; it only changes on a quick add or a
+  // category switch, never per render.
+  $("qadd").placeholder = innerWidth < 760 ? jogger(nav) : `${jogger(nav)} — Enter saves`;
+  $("qadd").title = `Add to ${CATEGORIES[nav]} — Enter saves · Shift+Enter for a new line`;
   renderStatus();
 
   $("bulk").classList.toggle("on", selected.size > 0);
   $("bulkCount").textContent = `${selected.size} selected`;
+  $("mergeSel").hidden = selected.size < 2;
   document.body.classList.toggle("selecting", selected.size > 0);
+
+  keepInputs(renderView);
+}
+// Inline editors live inside re-rendered markup — carry their text, focus and
+// caret across a render, so a background update never eats what you're typing.
+function keepInputs(paint){
+  const kept = [...document.querySelectorAll("#viewhead [data-keep], #view [data-keep]")].map(el => ({
+    k: el.dataset.keep, v: el.value, f: el === document.activeElement, s: el.selectionStart, e: el.selectionEnd,
+    mirror: !!el.dataset.pfield }));
+  paint();
+  for(const x of kept){
+    const el = document.querySelector(`[data-keep="${x.k}"]`);
+    // Fields that mirror saved state (deadline, word limit) take the fresh
+    // value unless they're mid-edit; forms and the picker filter are buffers.
+    if(!el || (x.mirror && !x.f)) continue;
+    el.value = x.v;
+    if(x.f){ el.focus(); try{ el.setSelectionRange(x.s, x.e); }catch(_){ /* date/number inputs */ } }
+  }
+}
+function renderView(){
+  const n = state.entries.length;
 
   if(query){
     const hits = state.entries.filter(e =>
@@ -1943,13 +2809,16 @@ function render(){
     viewIds = list.map(e => e.id);
     $("viewhead").innerHTML = `<h2><span class="rtag htag">${esc(tagFilter)}</span></h2>
       <p class="sub2">${list.length} entr${list.length === 1 ? "y" : "ies"} already used here, across every category.
-        ${list.length ? `<span class="nowrap"><button class="linkbtn" data-copyall>Copy all</button> ·</span> ` : ""}<span class="nowrap"><button class="linkbtn" data-renametag>rename</button> ·</span> <span class="nowrap"><button class="linkbtn" data-removetag title="Remove this tag from every entry">remove tag</button> ·</span> <button class="linkbtn" data-cleartag>← Back to ${CATEGORIES[nav]}</button></p>`;
+        ${list.length ? `<span class="nowrap"><button class="linkbtn" data-copyall>Copy all</button> ·</span> ` : ""}<span class="nowrap"><button class="linkbtn" data-renametag>rename</button> ·</span> <span class="nowrap"><button class="linkbtn" data-removetag title="Remove this tag from every entry">remove tag</button> ·</span> <button class="linkbtn" data-cleartag>← Back to ${hereName()}</button></p>`;
     $("view").innerHTML = list.length
       ? list.map(e => rowHTML(e, -1, true)).join("")
       : `<p class="empty">No entries carry this tag anymore.
          <button class="linkbtn" data-cleartag>Back</button>.</p>`;
     return;
   }
+
+  if(page === "essays") return renderEssays();
+  if(page === "trash") return renderTrash();
 
   const i = nav;
   const full = state.entries.filter(e => e.cats.includes(i))
@@ -1959,25 +2828,28 @@ function render(){
   const unusedBtn = unusedOnly
     ? `<button class="linkbtn nowrap" data-unused>showing ${list.length} of ${full.length} unused — show all</button>`
     : (full.some(e => (e.tags || []).length) ? `<button class="linkbtn nowrap" data-unused>unused only</button>` : "");
+  // Why School points at the Essays page (where the prompt map lives now) and
+  // offers the web clipper; the other categories keep their UC PIQ guide.
   $("viewhead").innerHTML = `<h2><span class="hl" style="--hc:var(--c${i})">${CATEGORIES[i]}</span></h2>
     <p class="sub2">${PROMPTS[i]}${list.length > 1 ? ` <button class="linkbtn nowrap" data-copyall>Copy all ${list.length}</button>` : ""}${unusedBtn ? ` ${unusedBtn}` : ""}${
       full.length > 0 && full.length < 3 && !unusedOnly
         ? `<span class="thinnote">Only ${full.length} stor${full.length === 1 ? "y" : "ies"} shelved here — worth a quick dump session.</span>` : ""} ${
-      i === 2 ? `<button class="linkbtn nowrap" data-map>${mapOpen ? "hide prompt map" : "school prompt map"}</button>`
+      i === 2 ? `<button class="linkbtn nowrap" data-page="essays">your essay prompts →</button> <button class="linkbtn nowrap" data-clip>${clipOpen ? "hide clipper" : "clip from websites"}</button>`
               : `<button class="linkbtn nowrap" data-piq>${piqOpen ? "hide PIQ guide" : "UC PIQ guide"}</button>`}</p>${
-      i === 2 ? (mapOpen ? `<div class="piqguide">${mapGuideHTML()}</div>` : "")
+      i === 2 ? (clipOpen ? `<div class="piqguide">${clipGuideHTML()}</div>` : "")
               : (piqOpen ? `<div class="piqguide">${piqGuideHTML(i)}</div>` : "")}`;
   $("view").innerHTML = list.length
     ? list.map(e => rowHTML(e, i, false)).join("")
     : (n === 0
       ? `<div class="empty">The library is empty. Hit <strong>✦ Quick dump</strong> and write any story,
          detail, or moment you might use — AI titles it and files it into the right categories.
-         An entry can live in more than one category, and sorting can always change later.</div>`
+         An entry can live in more than one category, and sorting can always change later.
+         Or answer one of these in the box above:</div>${jogsHTML(i)}`
       : unusedOnly && full.length
         ? `<div class="empty">All ${full.length} entries here are already used somewhere.
            <button class="linkbtn" data-unused>Show all</button>.</div>`
         : `<div class="empty">Nothing filed here yet.
-           <button class="linkbtn" data-newhere>Add the first one</button>.</div>`);
+           <button class="linkbtn" data-newhere>Add the first one</button>, or answer one of these in the box above:</div>${jogsHTML(i)}`);
 }
 render(); // boot() runs from clerkInit once auth is ready
 if("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});

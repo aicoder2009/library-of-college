@@ -11,12 +11,15 @@ Thanks for looking. This is a small personal tool, so the bar is "keep it small.
 
 ## Before opening a PR
 
-There's no test suite yet. CI syntax-checks every inline script; run the same locally:
+CI syntax-checks every inline script and runs the app tests; run the same locally:
 
 ```sh
 awk '/<script>/{f=1;next}/<\/script>/{f=0}f' app.html > /tmp/x.js && node --check /tmp/x.js
 node --check backend/index.mjs
+node tests/app.test.mjs
 ```
+
+`tests/app.test.mjs` runs `app.html`'s real script in Node — several simulated devices against a fake copy of the server's sync rules — so a change to syncing, the Essays page, Recently deleted, import/export or rendering gets checked without a browser. No dependencies.
 
 Then click through the change in a browser (light and dark mode, and a phone-width viewport). For bigger changes, open an issue first so we can agree on the approach.
 

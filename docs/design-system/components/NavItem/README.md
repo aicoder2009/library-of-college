@@ -19,6 +19,10 @@ When a category has too few entries to draft from, its count turns `warn` and go
 
 Items sit under `label`-styled group headings in `faint`: **Supplementals** (categories 0–3), **About me · UC PIQs** (4–6), and **Used in** for tag filters, whose dot is the outlined `.tagdot`.
 
+## Pages
+
+Two items open pages rather than categories, and both use a glyph in place of the dot, like Quick dump and Match a prompt above them. **Essays** sits right under those actions; its count slot shows days to the nearest open deadline (`12d`, `today`, `2d late`) and turns `.thin` within a week — the same recolored number, still no badge. **Recently deleted** is the last item and exists only while something is in it.
+
 ## The consumer provides
 
 The label, the count, the dot color or variant, and the selection handler. Labels come from the fixed category list and from user-authored tags, so the label must be allowed to ellipsis at 256px.
