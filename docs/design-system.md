@@ -178,7 +178,7 @@ Two scrim systems, both `rgba(24,20,14,…)` + 3px backdrop blur, both freezing 
 
 Escape cascade (established order): palette → dump → composer → collapse open entry → tag filter → search.
 
-AI-feature hint copy names the model in a `.hint` line (e.g. "GPT-4.1 nano titles it…", "GPT-5.6 Sol picks your best-fitting stories").
+AI-feature hint copy names the model in a `.hint` line (e.g. "Claude Opus 5.5 titles it…", "Claude Opus 5.5 picks your best-fitting stories").
 
 ## Keyboard & Accessibility
 

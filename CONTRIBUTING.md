@@ -4,10 +4,10 @@ Thanks for looking. This is a small personal tool, so the bar is "keep it small.
 
 ## Ground rules
 
-- **No build step, no framework, no new dependencies.** Each page is one self-contained HTML file; the only external script is ClerkJS.
+- **No build step, no framework, no new dependencies.** Each page is one self-contained HTML file; the only external script is ClerkJS. The backend's single dependency is the official Anthropic SDK.
 - **Keep the design language.** Warm paper palette, serif reading view, sidebar + centered column. Every color needs a dark-mode twin. Tokens live in `docs/design-system/tokens.json` — see `docs/design-system/README.md`.
 - **Don't change the data shape casually.** Each library is one JSON item synced with optimistic concurrency; changes must stay backward-compatible with existing libraries.
-- **Secrets stay server-side.** OpenAI/Clerk secret keys belong in Lambda/Vercel env vars, never in the frontend or the repo.
+- **Secrets stay server-side.** Clerk secret keys belong in Lambda/Vercel env vars, never in the frontend or the repo. Claude needs no key at all: the Lambda signs in with Workload Identity Federation.
 
 ## Before opening a PR
 

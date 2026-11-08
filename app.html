@@ -592,7 +592,7 @@
   <input id="palq" placeholder="Search entries, categories, tags…">
   <div class="paltabs">
     <button class="paltab on" id="palTabText" type="button" title="Literal text search — every word must appear">Verbatim</button>
-    <button class="paltab" id="palTabIdea" type="button" title="GPT-6 Astra finds entries related to an idea, even with different words">✦ Ideas</button>
+    <button class="paltab" id="palTabIdea" type="button" title="Claude Opus 5.5 finds entries related to an idea, even with different words">✦ Ideas</button>
     <span class="hint" id="palModel"></span>
     <span class="hint kbonly palkbd"><span class="kbd">Tab</span> switch</span>
   </div>
@@ -603,7 +603,7 @@
   <textarea id="dumpText" rows="4"
     placeholder="Write a memory, detail, or story — anything you might use in an essay."></textarea>
   <div class="dumprow">
-    <span class="hint">GPT-4.1 nano titles it and sorts it into the right categories</span>
+    <span class="hint">Claude Opus 5.5 titles it and sorts it into the right categories</span>
     <span class="spacer"></span>
     <span class="hint kbonly">Enter files it</span>
     <button class="primary" id="dumpSave">File it</button>
@@ -615,7 +615,7 @@
   <textarea id="matchQ" rows="3"
     placeholder="Paste the essay prompt — e.g. “Describe a community you belong to…”"></textarea>
   <div class="dumprow">
-    <span class="hint" id="matchHint">GPT-6 Astra picks your best-fitting stories</span>
+    <span class="hint" id="matchHint">Claude Opus 5.5 picks your best-fitting stories</span>
     <span class="spacer"></span>
     <button class="switch" id="matchDeep" type="button" role="switch" aria-checked="true">
       <span>✦ Breakdown</span><span class="swtrack"><span class="swknob"></span></span>
@@ -1627,7 +1627,7 @@ function setPalMode(m){
   $("palq").placeholder = m === "idea"
     ? "Describe an idea — a theme, person, place…"
     : "Search entries, categories, tags…";
-  $("palModel").textContent = m === "idea" ? "GPT-6 Astra" : "";
+  $("palModel").textContent = m === "idea" ? "Claude Opus 5.5" : "";
   palRefresh();
   const q = $("palq").value.trim();
   if(m === "idea" && q && q !== palIdeaQ) palIdeaRun();
@@ -1739,7 +1739,7 @@ function palGoEntry(e){
 }
 function palIdeaItems(){
   const q = $("palq").value.trim();
-  if(palIdeaState === "loading") return { items: [], msg: "✦ GPT-6 Astra is searching the stacks…" };
+  if(palIdeaState === "loading") return { items: [], msg: "✦ Claude Opus 5.5 is searching the stacks…" };
   if(palIdeaState === "error") return { items: [], msg: "Search failed — press Enter to retry." };
   if(palIdeaHits.length){
     const label = palIdeaQ.length > 34 ? palIdeaQ.slice(0, 34) + "…" : palIdeaQ;
@@ -1993,8 +1993,8 @@ function matchDeepLabel(){
     : "Off — just matches your notes to the prompt. Click to add the deconstruction, school read, outline, and gap analysis.";
   // The hint doubles as visible state — tooltips don't exist on touch.
   $("matchHint").textContent = matchDeep
-    ? "GPT-6 Astra picks stories + outline, school read & gaps"
-    : "GPT-6 Astra picks your best-fitting stories";
+    ? "Claude Opus 5.5 picks stories + outline, school read & gaps"
+    : "Claude Opus 5.5 picks your best-fitting stories";
 }
 $("matchDeep").onclick = () => { matchDeep = !matchDeep; saveUI(); matchDeepLabel(); };
 matchDeepLabel();
@@ -2028,7 +2028,7 @@ async function matchRun(){
   const prompt = $("matchQ").value.trim();
   if(prompt.length < 4) return toast("Paste a bit more of the prompt");
   $("matchGo").disabled = true;
-  $("matchList").innerHTML = `<div class="matchempty">✦ GPT-6 Astra is searching the stacks${
+  $("matchList").innerHTML = `<div class="matchempty">✦ Claude Opus 5.5 is searching the stacks${
     matchDeep ? " and building an outline" : ""}…</div>`;
   try{
     const r = await api("POST", "/match", { prompt, deep: matchDeep });
@@ -2720,7 +2720,7 @@ function rowHTML(e, col, showNames){
       </div>
       <div class="full">${esc(e.body)}</div>
       ${polished.has(e.id) ? `<div class="polished">
-        <div class="pollab">✦ GPT-4.1 mini polish — your original above is untouched
+        <div class="pollab">✦ Claude Opus 5.5 polish — your original above is untouched
           <span class="spacer"></span>
           <button class="linkbtn" data-act="copypolish">Copy polished</button>
           <button class="linkbtn" data-act="hidepolish">Hide</button>
@@ -2734,7 +2734,7 @@ function rowHTML(e, col, showNames){
       <div class="eacts">
         <button class="primary" data-act="copy" title="Copies your writing verbatim — the AI title is never included">Copy text</button>
         <button data-act="edit">Edit</button>
-        <button class="ghost" data-act="polish" title="GPT-4.1 mini tidies grammar and wordiness in a separate box — never touches your original">${polished.has(e.id) ? "✦ Re-polish" : "✦ Polish"}</button>
+        <button class="ghost" data-act="polish" title="Claude Opus 5.5 tidies grammar and wordiness in a separate box — never touches your original">${polished.has(e.id) ? "✦ Re-polish" : "✦ Polish"}</button>
         <span class="spacer"></span>
         <button class="ghost danger" data-act="del">Delete</button>
         <button class="ghost" data-act="collapse">Collapse</button>
