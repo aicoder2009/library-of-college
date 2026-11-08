@@ -89,7 +89,9 @@ function aiBudgetExceeded(sub){
 // ANTHROPIC_* env vars are identifiers, not secrets. The SDK loads lazily, so a
 // packaging problem can only break the AI routes, never sync.
 const MODEL = "claude-opus-5-5";
-const AI_TIMEOUT = 24000; // one attempt has to fit under the Lambda's 28s timeout
+// The whole AI call, token included, gets one attempt within 24s. The rest of
+// the Lambda's 28s covers auth, the library read and sending the 502.
+const AI_TIMEOUT = 24000;
 let claudeP = null;
 function claude(){
   return claudeP ??= (async () => {
@@ -120,6 +122,10 @@ function claude(){
 // JSON shape and this returns the parsed object; without one, the reply text.
 async function ask(route, { prompt, effort, maxTokens, schema = null, model = MODEL }){
   const t0 = Date.now();
+  // The SDK fetches the Claude token inside create(), before its own `timeout`
+  // starts counting, so a signal started here is what holds the whole call
+  // (SDK load, token exchange, model) to the budget.
+  const signal = AbortSignal.timeout(AI_TIMEOUT);
   const msg = await (await claude()).beta.messages.create({
     model,
     max_tokens: maxTokens, // covers the (always-on) thinking as well as the reply
@@ -131,7 +137,7 @@ async function ask(route, { prompt, effort, maxTokens, schema = null, model = MO
     betas: ["server-side-fallback-2026-07-01"],
     fallbacks: "default",
     messages: [{ role: "user", content: prompt }],
-  }, { timeout: AI_TIMEOUT });
+  }, { signal });
   const u = msg.usage || {};
   console.log(JSON.stringify({ ai: route, model: msg.model, ms: Date.now() - t0,
     in: u.input_tokens, out: u.output_tokens, geo: u.inference_geo, stop: msg.stop_reason }));

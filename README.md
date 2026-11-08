@@ -44,7 +44,7 @@ Deliberately minimal — no framework, no build step, no bundler:
 index.html            the public landing page (waitlist signup), served at /
 app.html              the entire app in one file, served at /app;
                       only external resource is ClerkJS
-backend/index.mjs     one AWS Lambda (Node 20) behind an API Gateway HTTP API
+backend/index.mjs     one AWS Lambda (Node 24) behind an API Gateway HTTP API
 DynamoDB              one table; each account's full library is a single JSON item
                       (waitlist signups in one more)
 ```
