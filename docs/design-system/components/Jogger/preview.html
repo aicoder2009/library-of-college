@@ -1,0 +1,26 @@
+<!-- @dsCard group="Library" height=300 subtitle="Specific questions in empty categories and the dump bar" -->
+<link rel="stylesheet" href="../../tokens.css">
+<style>
+  body{margin:0;padding:24px;background:var(--bg);color:var(--ink);
+    font:15px/1.5 var(--font-sans)}
+  .quickadd{width:100%;box-sizing:border-box;font:inherit;font-size:14px;line-height:1.55;padding:9px 12px;
+    border:1px dashed var(--line);border-radius:9px;background:transparent;
+    color:var(--ink);resize:none;display:block;font-family:inherit}
+  .quickadd::placeholder{color:var(--faint)}
+  .empty{color:var(--muted);font-size:14.5px;line-height:1.65;margin:22px 0 0;max-width:44ch}
+  .linkbtn{border:none;background:none;padding:0;color:var(--ink);text-decoration:underline;
+    text-underline-offset:2px;font:inherit;cursor:pointer}
+  .jogs{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-top:12px}
+  .jog{border:1px dashed var(--line);background:none;color:var(--muted);font-family:var(--font-serif);
+    font-style:italic;font-size:14.5px;text-align:left;border-radius:9px;padding:6px 12px;cursor:pointer}
+  .jog:hover{color:var(--ink);border-color:var(--muted)}
+</style>
+<div id="root">
+  <textarea class="quickadd" rows="1" placeholder="When did you take charge without the title? — Enter saves"></textarea>
+  <div class="empty">Nothing filed here yet. <button class="linkbtn">Add the first one</button>, or answer one of these in the box above:</div>
+  <div class="jogs">
+    <button class="jog">What did you fix that nobody asked you to?</button>
+    <button class="jog">Who did you teach, and what changed for them?</button>
+    <button class="jog">When did you step back so someone else could lead?</button>
+  </div>
+</div>

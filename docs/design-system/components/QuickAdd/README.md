@@ -15,7 +15,7 @@ It auto-grows (`overflow: hidden`, height set from `scrollHeight`) and never scr
 
 ## The consumer provides
 
-The target category, a per-line save handler, and placeholder text naming that category. Lines are saved as separate entries — this is a dump bar, not a composer.
+The target category, a save handler, and a placeholder: a memory jogger for that category (see Jogger), with the category's name in the `title` tooltip. Each Enter files one entry — this is a dump bar, not a composer.
 
 ## The polished card
 

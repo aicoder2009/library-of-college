@@ -1,0 +1,104 @@
+<!-- @dsCard group="Library" height=640 subtitle="Essays page — prompts by deadline, one opened in place" -->
+<link rel="stylesheet" href="../../tokens.css">
+<style>
+  body{margin:0;padding:24px 34px;background:var(--bg);color:var(--ink);
+    font:15px/1.5 var(--font-sans)}
+  .entry{border-bottom:1px solid var(--line);margin:0 -10px}
+  .entry:first-child{border-top:1px solid var(--line)}
+  .ehead{display:flex;gap:12px;align-items:flex-start;padding:14px 10px;cursor:pointer}
+  .etext{min-width:0;flex:1}
+  .entry h3{margin:0;font-size:15px;font-weight:600;line-height:1.4}
+  .entry p.snip{margin:3px 0 0;font-size:13.5px;line-height:1.5;color:var(--muted);
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .ecats{display:flex;gap:12px;flex-wrap:wrap;margin-top:7px;font-size:11.5px;color:var(--muted)}
+  .eside{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px;margin-top:2px}
+  .entry.open{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    margin:8px -18px;box-shadow:var(--lift)}
+  .entry.open .ehead{padding:16px 18px 0}
+  .entry.open h3{font-family:var(--font-serif);font-size:19px;line-height:1.35}
+  .ebody{padding:0 18px 16px}
+  .ebody .meta{color:var(--muted);font-size:12.5px;margin:6px 0 12px}
+  .full{white-space:pre-wrap;font-family:var(--font-serif);font-size:16px;line-height:1.75;margin:0}
+  .pstat{font:700 10.5px/1 var(--font-sans);letter-spacing:.07em;text-transform:uppercase;
+    color:var(--faint);vertical-align:2px;margin-left:6px;white-space:nowrap}
+  .pstat.drafting{color:var(--star)}
+  .pstat.done{color:var(--muted)}
+  .prow.done:not(.open){opacity:.6}
+  .pdays{font-size:11px;color:var(--faint);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .pdays.soon{color:var(--warn);font-weight:600}
+  .chiplab{display:block;font-size:10.5px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--faint)}
+  .pfields{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;margin-top:16px}
+  .pf{display:flex;flex-direction:column;gap:4px}
+  .pinput{font:inherit;font-size:13.5px;padding:6px 9px;border:1px solid var(--line);border-radius:7px;
+    background:var(--bg);color:var(--ink)}
+  .chiprow{display:flex;gap:7px}
+  .chip{border:1px solid var(--line);border-radius:999px;font:inherit;font-size:11.5px;font-weight:600;
+    padding:3px 9px;background:transparent;color:var(--muted)}
+  .chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .picklab{margin:16px 0 0;font-size:10.5px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted);border-top:1px solid var(--line);padding-top:13px}
+  .ppick{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
+  .ppick b{font-weight:600}
+  .ppick .ewc{font-size:11px;color:var(--faint);margin-left:8px}
+  .ppick p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+  .tagx{margin-left:auto;color:var(--muted);opacity:.55}
+  .tagadd{border:1px dashed var(--line);background:none;color:var(--muted);font:inherit;font-size:11.5px;
+    padding:2px 9px;border-radius:999px;margin-top:10px}
+  .eacts{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);
+    margin-top:18px;padding-top:13px}
+  .eacts button{font:inherit;font-size:13.5px;padding:6px 11px;border:1px solid var(--line);
+    background:var(--panel);color:var(--ink);border-radius:8px}
+  .eacts .primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .eacts .ghost{border-color:transparent;background:transparent;color:var(--muted)}
+  .spacer{flex:1}
+</style>
+<div id="root">
+  <div class="entry prow">
+    <div class="ehead">
+      <div class="etext">
+        <h3>Yale<span class="pstat">To do</span></h3>
+        <p class="snip">Reflect on a time you discussed an issue important to you with someone holding an opposing view.</p>
+        <div class="ecats">Due Nov 10 · 400 words · No stories picked</div>
+      </div>
+      <div class="eside"><span class="pdays soon">3d</span></div>
+    </div>
+  </div>
+
+  <div class="entry prow open">
+    <div class="ehead">
+      <div class="etext"><h3>Stanford<span class="pstat drafting">Drafting</span></h3></div>
+      <div class="eside"><span class="pdays">55d</span></div>
+    </div>
+    <div class="ebody">
+      <p class="meta">Due Mon, Jan 4, 2027 · 55 days left · 250-word limit</p>
+      <p class="full">Reflect on an idea or experience that makes you genuinely excited about learning.</p>
+      <div class="pfields">
+        <label class="pf"><span class="chiplab">Deadline</span><input class="pinput" type="date" value="2027-01-04"></label>
+        <label class="pf"><span class="chiplab">Word limit</span><input class="pinput" type="number" value="250" style="width:96px"></label>
+        <div class="pf"><span class="chiplab">Status</span><div class="chiprow"><button class="chip">To do</button><button class="chip on">Drafting</button><button class="chip">Done</button></div></div>
+      </div>
+      <div class="picklab">Stories for this prompt · 2 picked · 431 words of notes</div>
+      <div class="ppick"><div><b>Fixing the greenhouse drip timer</b><span class="ewc">182 words</span>
+        <p>Nobody assigned me the drip timer. I just kept showing up on Thursdays…</p></div><span class="tagx">×</span></div>
+      <div class="ppick"><div><b>Water rights at the town meeting</b><span class="ewc">249 words</span>
+        <p>Forty people in folding chairs, and I was the only one who'd read the report…</p></div><span class="tagx">×</span></div>
+      <button class="tagadd">＋ pick stories</button>
+      <div class="eacts">
+        <button class="primary">Copy brief</button><button>⌕ find evidence</button><button class="ghost">Edit prompt</button>
+        <span class="spacer"></span><button class="ghost">Remove</button><button class="ghost">Collapse</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="entry prow done">
+    <div class="ehead">
+      <div class="etext">
+        <h3>Common App<span class="pstat done">Done</span></h3>
+        <p class="snip">Some students have a background, identity, interest, or talent that is so meaningful they believe their application would be incomplete without it.</p>
+        <div class="ecats">Was due Nov 1 · 650 words · 1 story picked</div>
+      </div>
+      <div class="eside"></div>
+    </div>
+  </div>
+</div>
