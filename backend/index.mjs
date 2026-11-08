@@ -417,8 +417,11 @@ Note:
     if(body.rev <= curRev) return resp(409, { error: "stale", rev: curRev });
     // A sync that would wipe half the library is a bug, not an edit. The 409
     // makes the client merge the server's entries back in and re-push the union.
+    // Entries moved to the client's Recently deleted list still count — they're
+    // recoverable, so a big delete or merge isn't mistaken for a wipe.
     const curN = curState ? (curState.entries || []).length : 0;
-    if(curN >= 10 && body.entries.length < curN / 2)
+    const keptN = body.entries.length + (Array.isArray(body.trash) ? body.trash.length : 0);
+    if(curN >= 10 && keptN < curN / 2)
       return resp(409, { error: "stale", rev: curRev });
     // Once per day, snapshot the pre-change state so app-level corruption is a
     // one-item restore. DynamoDB TTL (attribute "ttl", enabled on the table)
