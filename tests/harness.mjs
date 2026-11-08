@@ -10,7 +10,9 @@ const APP = process.argv[2] || fileURLToPath(new URL("../app.html", import.meta.
 const html = fs.readFileSync(APP, "utf8");
 const code = html.slice(html.indexOf("<script>") + 8, html.lastIndexOf("</script>"));
 
-export function makeServer({ trashAware = true } = {}){
+// backend: "current" mirrors backend/index.mjs; "previous" is the Lambda as it
+// was before tombstone sync (no old-client lockout, wipe guard on entries only).
+export function makeServer({ backend = "current" } = {}){
   let item = null;
   return {
     puts: 0, conflicts: 0,
@@ -26,9 +28,14 @@ export function makeServer({ trashAware = true } = {}){
         if(s.length > 350000) return [413, { error: "Bank too large to sync" }];
         const cur = item ? JSON.parse(item.state) : null, curRev = cur ? cur.rev || 0 : 0;
         if(body.rev <= curRev){ this.conflicts++; return [409, { error: "stale", rev: curRev }]; }
-        const curN = cur ? (cur.entries || []).length : 0;
-        const keptN = body.entries.length + (trashAware && Array.isArray(body.trash) ? body.trash.length : 0);
-        if(curN >= 10 && keptN < curN / 2){ this.conflicts++; return [409, { error: "stale", rev: curRev }]; }
+        const curEntries = cur ? cur.entries || [] : [];
+        let kept = body.entries.length;
+        if(backend === "current"){
+          const tomb = body.deleted && typeof body.deleted === "object" && !Array.isArray(body.deleted) ? body.deleted : null;
+          if(cur && cur.deleted && !tomb){ this.conflicts++; return [409, { error: "stale", rev: curRev }]; }
+          kept += tomb ? curEntries.filter(e => e && tomb[e.id]).length : 0;
+        }
+        if(curEntries.length >= 10 && kept < curEntries.length / 2){ this.conflicts++; return [409, { error: "stale", rev: curRev }]; }
         item = { state: s, rev: body.rev }; this.puts++;
         return [200, { ok: true }];
       }
@@ -112,11 +119,16 @@ export function makeDevice(name, server, { storage } = {}){
     }
     throw new Error(name + ": sync never settled");
   };
-  // Simulates clerkInit's signed-in path, awaiting boot().
+  // Runs the app's real clerkInit (signed-in path) and waits for boot() to finish.
   dev.signIn = async () => {
-    dev.run(`KEY = "liboc-v1:u1"; KEY_UI = "liboc-ui:u1"; KEY_DRAFT = "liboc-draft:u1";
-      state = load(); loadUI(); render(); if(state.entries.length) lockHide();`);
-    await dev.run("boot()");
+    dev.run(`globalThis.__booted = false;
+      { const realBoot = boot; boot = async () => { await realBoot(); globalThis.__booted = true; }; }
+      clerkInit();`);
+    const t0 = Date.now();
+    while(!sandbox.__booted){
+      if(Date.now() - t0 > 3000) throw new Error(name + ": boot never finished");
+      await new Promise(r => setTimeout(r, 5));
+    }
     await dev.settle();
   };
   dev.visible = async () => { for(const fn of handlers.visibilitychange || []) fn(); await dev.settle(); };

@@ -49,7 +49,7 @@ DynamoDB              one table; each account's full library is a single JSON it
                       (waitlist signups in one more)
 ```
 
-- **Sync model**: the client GETs/PUTs the whole state. Every PUT carries a `rev`; the Lambda rejects stale revs (409), the client then re-fetches, merges by entry id (newer `updatedAt` wins, nothing dropped), and retries. Simple, and safe across devices.
+- **Sync model**: the client GETs/PUTs the whole state. Every PUT claims the next `rev` after the one the client last saw; the Lambda rejects stale revs (409), and the client re-fetches, merges by id (newer `updatedAt` wins per entry and prompt; deletions travel as tombstones), and retries. Simple, and safe across devices.
 - **Auth**: [Clerk](https://clerk.com) (waitlist sign-up mode). The frontend mounts Clerk's sign-in; the Lambda verifies the RS256 session JWT against the instance JWKS. Any signed-in user gets their own library; `ALLOWED_USER_ID` marks the owner/admin account(s).
 - **AI**: OpenAI, called only from the Lambda (the key never ships to the browser). Cheap fast models handle titling/classifying/polish; a reasoning model handles prompt matching and semantic search.
 - **localStorage** is only a boot cache — server state always wins.
@@ -63,11 +63,12 @@ There's no one-command installer; it's a personal tool. But the surface area is 
 3. **Clerk**: create an app, put its Frontend API URL in `CLERK_ISSUER`, and restrict sign-ups (waitlist or allowlist) — anyone who can sign in gets a library and can spend your OpenAI budget. Optionally list admin user ids in `ALLOWED_USER_ID`.
 4. **Frontend**: edit the `API` constant and the hostname-gated `CLERK_LIVE` key block near the top of the `<script>` in `app.html` and `login.html` (and `API` in `index.html` if you keep the landing page); swap the `liboc.vercel.app` URLs in the `<head>` meta tags for your own. Host everything anywhere static (`vercel deploy --prod`). The `/__clerk` proxy (`api/clerk-proxy.mjs`) is only needed when, like liboc, you can't point a CNAME at Clerk — then set `CLERK_PROXY_URL` and `CLERK_SECRET_KEY` in the Vercel env. On your own domain, skip it.
 
-Sanity-check the JS before deploying (there's no test suite):
+Sanity-check the JS and run the tests before deploying:
 
 ```sh
 awk '/<script>/{f=1;next}/<\/script>/{f=0}f' index.html > /tmp/x.js && node --check /tmp/x.js
 node --check backend/index.mjs
+node tests/app.test.mjs   # runs app.html in Node against a fake server — no dependencies
 ```
 
 ## Repo layout

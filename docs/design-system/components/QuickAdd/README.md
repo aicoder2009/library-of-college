@@ -1,4 +1,4 @@
-A dashed, transparent textarea that sits at the bottom of every category view and takes one detail per line.
+A dashed, transparent textarea at the top of every category view: type a detail, press Enter, and it is filed as one entry.
 
 ```css
 .quickadd{width:100%;font:inherit;font-size:14px;line-height:1.55;padding:9px 12px;
@@ -15,7 +15,7 @@ It auto-grows (`overflow: hidden`, height set from `scrollHeight`) and never scr
 
 ## The consumer provides
 
-The target category, a save handler, and a placeholder: a memory jogger for that category (see Jogger), with the category's name in the `title` tooltip. Each Enter files one entry — this is a dump bar, not a composer.
+The target category, a save handler, and a placeholder: a memory jogger for that category (see Jogger), with the category's name in the `title` tooltip. Enter (without Shift) files the whole textarea as one entry and clears it; Shift+Enter adds a line — this is a dump bar, not a composer.
 
 ## The polished card
 
@@ -23,4 +23,4 @@ The target category, a save handler, and a placeholder: a memory jogger for that
 
 ## Don't
 
-Don't use a dashed border for anything that already has content, and don't give the quick-add a Save button — Enter files the line, Escape leaves.
+Don't use a dashed border for anything that already has content, and don't give the quick-add a Save button — Enter files it, Escape leaves.

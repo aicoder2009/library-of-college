@@ -17,7 +17,7 @@ The selected count, and handlers for the actions that make sense in bulk: **Copy
 
 ## Order
 
-Count, then the actions, then Clear as a `ghost`. Nothing in the bar is destructive on its own: Merge is undoable and anything it removes waits in Recently deleted.
+Count, then the actions, then Clear as a `ghost`. Nothing in the bar is destructive on its own: the toast's Undo reverses a Merge for six seconds, and after that the merged-away entries wait in Recently deleted — within its limits (30 days, 100 entries, about 80KB), so an enormous merge can push the oldest out.
 
 ## At phone width
 

@@ -350,9 +350,9 @@ section("12. clicks: delete → trash → restore; prompt pick toggles; status")
 }
 
 // ---------------------------------------------------------------------------
-section("13. wipe guard: big merge with/without the trash-aware backend");
-for(const trashAware of [true, false]){
-  const srv = makeServer({ trashAware });
+section("13. wipe guard: a big merge on the current and the previous backend");
+for(const backend of ["current", "previous"]){
+  const srv = makeServer({ backend });
   const A = makeDevice("A", srv); await A.signIn();
   const list = [];
   for(let i = 0; i < 12; i++){ list.push(add(A, "story " + i)); await sleep(1); }
@@ -360,8 +360,8 @@ for(const trashAware of [true, false]){
   A.run(`selected = new Set(${JSON.stringify(list.slice(0, 9))}); document.getElementById("mergeSel").onclick()`);
   await A.settle();
   const landed = srv.state.entries.length === 4;
-  if(trashAware) ok(landed && A.run("syncState") === "synced", "trash-aware backend accepts a 9-way merge");
-  else console.log(`  note: without the backend change a 9-way merge of 12 ${landed ? "landed" : "is refused (stays " + A.run("syncState") + ")"}`);
+  if(backend === "current") ok(landed && A.run("syncState") === "synced", "current backend accepts a 9-way merge (tombstoned = deliberate)");
+  else console.log(`  note: on the previous backend a 9-way merge of 12 ${landed ? "landed" : "is refused (stays " + A.run("syncState") + ")"}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -427,6 +427,69 @@ section("16. match modal pick toggles only for the prompt it was opened from");
   A.els.get("matchQ").value = "A totally different prompt";
   await A.run("matchRun()");
   ok(!/data-mpick/.test(A.html("matchList")), "no toggles once the prompt text is swapped");
+}
+
+section("17. an old app tab (pre-tombstone code) is locked out once a current client has written");
+for(const backend of ["current", "previous"]){
+  const srv = makeServer({ backend });
+  const A = makeDevice("A", srv); await A.signIn();
+  const x = add(A, "keep me"); add(A, "doomed"); await A.settle();
+  A.run(`trashEntries([state.entries.find(e => e.body === "doomed").id]); persist();`); await A.settle();
+  // What the old code PUTs: its boot-time copy, no trash/deleted, a high per-edit rev.
+  const oldBody = { entries: [{ id: "stale", title: "stale", body: "stale", cats: [0], tags: [], createdAt: 1, updatedAt: 1 }],
+    prompts: [], rev: 999, backupRev: 0 };
+  const [status] = await srv.handle("PUT", "/entries", JSON.stringify(oldBody));
+  if(backend === "current"){
+    ok(status === 409, "old-client PUT refused");
+    ok(srv.state.trash.length === 1 && Object.keys(srv.state.deleted).length === 1 && srv.state.entries.some(e => e.id === x),
+      "trash, tombstones and newer entries intact");
+  } else console.log(`  note: on the previous backend an old tab's PUT ${status === 200 ? "overwrites the library (reload old tabs after deploying)" : "is refused"}`);
+}
+
+section("18. Delete forever and Empty now stick across devices");
+{
+  const srv = makeServer();
+  const A = makeDevice("A", srv); await A.signIn();
+  const x = add(A, "purge me"), y = add(A, "purge me too"); await A.settle();
+  A.run(`trashEntries([${JSON.stringify(x)}, ${JSON.stringify(y)}]); persist();`); await A.settle();
+  const B = makeDevice("B", srv); await B.signIn();
+  ok(B.run("state.trash.length") === 2, "B sees both in Recently deleted");
+  await new Promise(r => setTimeout(r, 3));
+  A.ctx.__t = { closest: s => s === ".trow" ? { dataset: { id: x } } : s === "[data-purge]" ? {} : null };
+  A.run(`goToPage("trash"); document.getElementById("view").onclick({ target: __t })`); await A.settle();
+  add(B, "B edit"); await B.settle(); // stale B still holds x in trash → merge must drop it
+  ok(!srv.state.trash.some(t => t.id === x) && srv.state.trash.some(t => t.id === y), "purged copy didn't come back; the other stays");
+  B.ctx.__t = { closest: s => s === "[data-emptytrash]" ? {} : null };
+  B.run(`document.getElementById("viewhead").onclick({ target: __t })`); await B.settle();
+  add(A, "A edit"); await A.settle();
+  ok(srv.state.trash.length === 0, "Empty now sticks too");
+  ok(!srv.state.entries.some(e => e.id === x || e.id === y), "and nothing was resurrected");
+}
+
+section("19. import refuses ids that could break out of an HTML attribute");
+{
+  const srv = makeServer();
+  const A = makeDevice("A", srv); await A.signIn();
+  A.run(`(() => {
+    globalThis.FileReader = function(){ this.readAsText = () => { this.result = ${JSON.stringify(JSON.stringify({
+      entries: [{ id: 'x" onmouseover="alert(1)', body: "evil" }, { id: "ok-1", body: "fine" }],
+      prompts: [{ id: "p ok?", q: "bad id prompt" }, { id: "p2", q: "good", picks: ['y"><img', "ok-1"] }] }))}; this.onload(); }; };
+    document.getElementById("importFile").onchange({ target: { files: [{}], value: "x" } });
+  })()`);
+  ok(A.run(`state.entries.map(e => e.id).join()`) === "ok-1", "only the safe entry id imported");
+  ok(A.run(`state.prompts.map(p => p.id).join()`) === "p2" && A.run(`promptById("p2").picks.join()`) === "ok-1", "unsafe prompt id and pick dropped");
+}
+
+section("20. the composer draft survives sign-in, and a clip joins it");
+{
+  const srv = makeServer();
+  const st = new Map([["liboc-draft:u1", JSON.stringify({ title: "Half-written", body: "about the robot", picked: [1] })]]);
+  const A = makeDevice("A", srv, { storage: st });
+  A.ctx.sessionStorage.setItem("liboc-clip", JSON.stringify({ text: "A clipped line.", src: "https://example.edu/", title: "Example" }));
+  await A.signIn();
+  ok(A.els.get("title").value === "Half-written" && /about the robot\n\nA clipped line\./.test(A.els.get("body").value),
+    "per-account draft loaded at sign-in and the clip joined it");
+  ok(A.run("[...picked].sort().join()") === "1,2", "draft + clip categories");
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

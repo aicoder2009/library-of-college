@@ -806,7 +806,7 @@ function promptRowHTML(p){
     p.limit ? `${p.limit} words` : "",
     picks.length ? `${picks.length} stor${picks.length === 1 ? "y" : "ies"} picked` : "No stories picked"
   ].filter(Boolean).join(" · ");
-  return `<article class="entry prow ${isOpen ? "open" : ""} ${st === "done" ? "done" : ""}" data-id="${p.id}">
+  return `<article class="entry prow ${isOpen ? "open" : ""} ${st === "done" ? "done" : ""}" data-id="${esc(p.id)}">
     <div class="ehead">
       <div class="etext">
         <h3>${esc(p.sch || "Untitled prompt")}<span class="pstat ${st}">${STATUS[st]}</span></h3>
@@ -838,9 +838,9 @@ function promptBodyHTML(p, st, d, picks){
     ${text}
     <div class="pfields">
       <label class="pf"><span class="chiplab">Deadline</span>
-        <input class="pinput" type="date" data-pfield="due" data-keep="due-${p.id}" value="${p.due || ""}"></label>
+        <input class="pinput" type="date" data-pfield="due" data-keep="due-${esc(p.id)}" value="${p.due || ""}"></label>
       <label class="pf"><span class="chiplab">Word limit</span>
-        <input class="pinput" type="number" min="1" max="5000" inputmode="numeric" data-pfield="limit" data-keep="limit-${p.id}" value="${p.limit || ""}" placeholder="—"></label>
+        <input class="pinput" type="number" min="1" max="5000" inputmode="numeric" data-pfield="limit" data-keep="limit-${esc(p.id)}" value="${p.limit || ""}" placeholder="—"></label>
       <div class="pf"><span class="chiplab">Status</span><div class="chiprow">${Object.keys(STATUS).map(s =>
         `<button class="chip mini pstatbtn ${st === s ? "on" : ""}" data-pstatus="${s}" type="button">${STATUS[s]}</button>`).join("")}</div></div>
     </div>
@@ -848,10 +848,10 @@ function promptBodyHTML(p, st, d, picks){
     <div class="ppicks">${picks.map(e => `
       <div class="ppick">
         <div class="ppickmain">
-          <button class="linkbtn ptitle" data-goentry="${e.id}" title="Open this story">${esc(e.title || "Untitled")}</button><span class="ewc">${wc(e.body)} words</span>
+          <button class="linkbtn ptitle" data-goentry="${esc(e.id)}" title="Open this story">${esc(e.title || "Untitled")}</button><span class="ewc">${wc(e.body)} words</span>
           <p class="snip">${esc(e.body.slice(0, 220))}</p>
         </div>
-        <button class="tagx" data-unpick="${e.id}" title="Take it off this prompt">×</button>
+        <button class="tagx" data-unpick="${esc(e.id)}" title="Take it off this prompt">×</button>
       </div>`).join("")}
       ${pickFor === p.id ? pickerHTML(p) : `<button class="tagadd" data-pickopen type="button">＋ pick stories</button>`}
     </div>
@@ -884,7 +884,7 @@ function pickResultsHTML(p){
     }).sort((a, b) => tagged(b) - tagged(a) || b.createdAt - a.createdAt).slice(0, 40);
   if(!list.length) return `<span class="hint pickempty">${state.entries.length
     ? "No stories match — try another word." : "Your library is empty — add some stories first."}</span>`;
-  return list.map(e => `<button class="pickopt ${has.has(e.id) ? "on" : ""}" data-picktoggle="${e.id}" type="button">
+  return list.map(e => `<button class="pickopt ${has.has(e.id) ? "on" : ""}" data-picktoggle="${esc(e.id)}" type="button">
       <span class="pcheck">${has.has(e.id) ? "✓" : "＋"}</span>
       <span class="pickmain"><span class="pickt">${esc(e.title || "Untitled")}</span><span class="picks">${esc(e.body.slice(0, 90))}</span></span>
       ${tagged(e) ? `<span class="rtag mini">${esc(schTag(p.sch))}</span>` : ""}
@@ -904,7 +904,7 @@ function renderEssays(){
 function trashRowHTML(t){
   const isOpen = expanded === t.id;
   const left = Math.max(1, TRASH_DAYS - Math.floor((Date.now() - (t.deletedAt || 0)) / DAY));
-  return `<article class="entry trow ${isOpen ? "open" : ""}" data-id="${t.id}">
+  return `<article class="entry trow ${isOpen ? "open" : ""}" data-id="${esc(t.id)}">
     <div class="ehead">
       <div class="etext">
         <h3>${esc(t.title || "") || `<span class="untitled">Untitled</span>`}</h3>
@@ -950,6 +950,11 @@ function trashEntries(ids){
     out.push(rec);
   }
   return out;
+}
+// "Delete forever": move the tombstone past the trash copy's deletedAt, so
+// every device's copy of it drops out of Recently deleted on the next merge.
+function purgeMark(rec){
+  state.deleted[rec.id] = Math.max(Date.now(), (rec.deletedAt || 0) + 1);
 }
 function restoreEntries(recs){
   for(const { deletedAt, ...en } of recs){
@@ -1136,10 +1141,13 @@ function mergeStates(local, server){
   const prompts = union(local.prompts, server.prompts);
   const live = new Set([...entries, ...prompts].map(x => x.id));
   live.forEach(id => delete deleted[id]); // brought back by a later edit or a restore
+  // A trash copy is dropped once its entry is live again, or once it was
+  // purged ("Delete forever" moves the tombstone past the copy's deletedAt).
   const trash = new Map();
   [...server.trash, ...local.trash].forEach(t => {
+    if(live.has(t.id) || (deleted[t.id] || 0) > (t.deletedAt || 0)) return;
     const o = trash.get(t.id);
-    if(!live.has(t.id) && (!o || (t.deletedAt || 0) >= (o.deletedAt || 0))) trash.set(t.id, t);
+    if(!o || (t.deletedAt || 0) >= (o.deletedAt || 0)) trash.set(t.id, t);
   });
   return prune({ ...server, ...local, entries, prompts, deleted,
     trash: [...trash.values()].sort((a, b) => (b.deletedAt || 0) - (a.deletedAt || 0)),
@@ -1252,6 +1260,7 @@ async function clerkInit(){
     KEY = "liboc-v1:" + window.Clerk.user.id;
     KEY_UI = "liboc-ui:" + window.Clerk.user.id;
     KEY_DRAFT = "liboc-draft:" + window.Clerk.user.id;
+    draft = loadDraft(); // this account's draft — the load-time read used the signed-out key
     state = load(); // this account's own cache (warm start; server still wins)
     loadUI();       // per-account too — nav position shouldn't follow you across accounts
     render();
@@ -1363,12 +1372,13 @@ async function pushState(msg){
   }
 }
 // Back on the tab after a while: pick up edits made on another device. Skipped
-// while anything local is pending, or an overlay or inline editor is open —
-// a pull re-renders the page.
+// while anything local is pending, an overlay is open, or an inline editor that
+// a re-render would drop is open (the tag editors; Essays inputs carry their
+// text through render via data-keep).
 const overlayOpen = () => composerOpen() || dumpOpen() || matchOpen() || palOpen();
 async function pull(){
   if(syncing || dirty || !baseKnown || authBlocked || isLocked() || overlayOpen()
-     || document.querySelector("#view input, #view textarea, #viewhead input")) return;
+     || document.querySelector("#view .taginput, #viewhead input")) return;
   lastPull = Date.now();
   await runSync(async () => {
     try{
@@ -1722,7 +1732,7 @@ function palGoEntry(e){
   if(!e.cats.includes(nav)) nav = e.cats.length ? e.cats[0] : 0;
   page = null; saveUI(); qraw = query = ""; $("search").value = ""; tagFilter = null;
   expanded = e.id; render();
-  const row = $("view").querySelector(`[data-id="${e.id}"]`);
+  const row = $("view").querySelector(`[data-id="${esc(e.id)}"]`);
   if(row) row.scrollIntoView({block:"center"});
 }
 function palIdeaItems(){
@@ -1813,8 +1823,8 @@ document.addEventListener("keydown", e => {
     if(dumpOpen()) return closeDump();
     if(composerOpen()) return closeComposer();
     if(page === "essays" && addingPrompt){ addingPrompt = false; return render(); }
-    if(pickFor){ pickFor = null; return render(); }
-    if(promptEdit){ promptEdit = null; return render(); }
+    if(page === "essays" && pickFor){ pickFor = null; return render(); }
+    if(page === "essays" && promptEdit){ promptEdit = null; return render(); }
     if(expanded){ expanded = null; return render(); }
     if(tagFilter){ tagFilter = null; return render(); }
     if(unusedOnly){ unusedOnly = false; saveUI(); return render(); }
@@ -1904,7 +1914,7 @@ async function genClassify(orig){
     persist();
     const where = en.cats.map(c => CATEGORIES[c]).join(" · ");
     toast(`Filed under ${where}`);
-    if(dumpOpen()) dumpReceipt(`Filed <button data-goto="${en.id}">“${
+    if(dumpOpen()) dumpReceipt(`Filed <button data-goto="${esc(en.id)}">“${
       esc(en.title || "Untitled")}”</button> → ${esc(where)}`);
   }catch(e){
     en = byId(id);
@@ -1952,7 +1962,7 @@ $("dumpLast").onclick = e => {
   nav = en.cats[0] ?? 0; page = null; saveUI();
   qraw = query = ""; $("search").value = ""; tagFilter = null;
   expanded = en.id; closeDump(); render();
-  $("view").querySelector(`[data-id="${en.id}"]`)?.scrollIntoView({block:"center"});
+  $("view").querySelector(`[data-id="${esc(en.id)}"]`)?.scrollIntoView({block:"center"});
 };
 
 // ---- match-a-prompt modal ----
@@ -2040,12 +2050,12 @@ async function matchRun(){
     // each result gets a pick toggle for that prompt.
     const mp = promptById(matchPromptId);
     if(mp && mp.q.trim() !== prompt) matchPromptId = null;
-    const row = ({en, why}) => `<div class="matchitem" data-id="${en.id}">
+    const row = ({en, why}) => `<div class="matchitem" data-id="${esc(en.id)}">
         <div class="matchtop">
           <span class="dots">${en.cats.slice(0, 3).map(c =>
             `<span class="dot" style="background:var(--c${c})"></span>`).join("")}</span>
           <span class="paltitle">${esc(en.title || "Untitled")}</span>
-          <span class="palhint">${wc(en.body)} w</span>${mp && matchPromptId ? `<button class="linkbtn mpick" data-mpick="${en.id}"
+          <span class="palhint">${wc(en.body)} w</span>${mp && matchPromptId ? `<button class="linkbtn mpick" data-mpick="${esc(en.id)}"
             title="Add to (or take off) this prompt on the Essays page">${(mp.picks || []).includes(en.id) ? "✓ picked" : "＋ pick"}</button>` : ""}
         </div>
         <span class="palsnip">${esc(en.body.slice(0, 90))}</span>
@@ -2107,7 +2117,7 @@ $("matchList").onclick = e => {
   if(!en.cats.includes(nav)) nav = en.cats.length ? en.cats[0] : 0;
   page = null; saveUI(); qraw = query = ""; $("search").value = ""; tagFilter = null;
   expanded = en.id; closeMatch(); render();
-  $("view").querySelector(`[data-id="${en.id}"]`)?.scrollIntoView({block:"center"});
+  $("view").querySelector(`[data-id="${esc(en.id)}"]`)?.scrollIntoView({block:"center"});
 };
 
 function qaddGrow(){
@@ -2158,12 +2168,14 @@ $("viewhead").onclick = e => {
   else if(e.target.closest("[data-emptytrash]")){
     const old = state.trash;
     if(!old.length) return;
+    old.forEach(purgeMark);
     state.trash = []; expanded = null;
     persist();
     toastAction(`Emptied ${old.length} deleted entr${old.length === 1 ? "y" : "ies"}`, "Undo", () => {
       const have = new Set(state.trash.map(t => t.id));
-      state.trash = [...state.trash, ...old.filter(t => !have.has(t.id) && !byId(t.id))]
-        .sort((a, b) => (b.deletedAt || 0) - (a.deletedAt || 0));
+      const back = old.filter(t => !have.has(t.id) && !byId(t.id));
+      back.forEach(t => { state.deleted[t.id] = t.deletedAt; });
+      state.trash = [...state.trash, ...back].sort((a, b) => (b.deletedAt || 0) - (a.deletedAt || 0));
       persist();
     });
   }
@@ -2252,11 +2264,14 @@ function trashClick(t, id){
   }
   if(t.closest("[data-purge]")){
     if(!rec) return;
-    state.trash.splice(i, 1); expanded = null; // its tombstone stays, so no device brings it back
+    purgeMark(rec);
+    state.trash.splice(i, 1); expanded = null;
     persist();
     return toastAction("Deleted for good", "Undo", () => {
-      if(!byId(id) && !state.trash.some(x => x.id === id))
+      if(!byId(id) && !state.trash.some(x => x.id === id)){
+        state.deleted[id] = rec.deletedAt;
         state.trash.splice(Math.min(i, state.trash.length), 0, rec);
+      }
       persist();
     });
   }
@@ -2578,8 +2593,10 @@ $("importFile").onchange = e => {
         if(t){ delete state.deleted[x.id]; x.updatedAt = Math.max(now, t + 1); }
         return x;
       };
+      // Ids land in HTML attributes, so a file can only bring the kind newId() makes.
+      const okId = id => typeof id === "string" && /^[\w-]{1,64}$/.test(id);
       const haveE = new Set(state.entries.map(x => x.id));
-      const addE = inE.filter(x => x && typeof x.id === "string" && typeof x.body === "string" && !haveE.has(x.id))
+      const addE = inE.filter(x => x && okId(x.id) && typeof x.body === "string" && !haveE.has(x.id))
         .map(x => {
           const cats = [...new Set((Array.isArray(x.cats) ? x.cats : []).map(Number)
             .filter(c => Number.isInteger(c) && c >= 0 && c <= 6))].sort((a, b) => a - b);
@@ -2588,11 +2605,11 @@ $("importFile").onchange = e => {
             createdAt: +x.createdAt || now, updatedAt: +x.updatedAt || +x.createdAt || now });
         });
       const haveP = new Set(mapPrompts().map(x => x.id));
-      const addP = inP.filter(x => x && typeof x.id === "string" && typeof x.q === "string" && !haveP.has(x.id))
+      const addP = inP.filter(x => x && okId(x.id) && typeof x.q === "string" && !haveP.has(x.id))
         .map(x => revive({ id: x.id, q: x.q.slice(0, 2000), sch: String(x.sch || "").slice(0, 120),
           due: validDue(x.due), limit: +x.limit > 0 ? Math.min(+x.limit, 5000) : 0,
           status: STATUS[x.status] ? x.status : "todo",
-          picks: Array.isArray(x.picks) ? x.picks.filter(id => typeof id === "string") : [],
+          picks: Array.isArray(x.picks) ? x.picks.filter(okId) : [],
           createdAt: +x.createdAt || now, updatedAt: +x.updatedAt || +x.createdAt || now }));
       const back = new Set(addE.map(x => x.id));
       state.trash = state.trash.filter(t => !back.has(t.id));
@@ -2721,7 +2738,7 @@ function rowHTML(e, col, showNames){
       </div>
     </div>`;
 
-  return `<article class="entry ${isOpen ? "open" : ""} ${selected.has(e.id) ? "sel" : ""}" data-id="${e.id}">
+  return `<article class="entry ${isOpen ? "open" : ""} ${selected.has(e.id) ? "sel" : ""}" data-id="${esc(e.id)}">
     <div class="ehead">
       <div class="etext">
         <h3>${esc(e.title) || `<span class="untitled">${pending.has(e.id) ? "✦ titling…" : "Untitled"}</span>`}${dots}</h3>
@@ -2759,11 +2776,14 @@ function render(){
 // caret across a render, so a background update never eats what you're typing.
 function keepInputs(paint){
   const kept = [...document.querySelectorAll("#viewhead [data-keep], #view [data-keep]")].map(el => ({
-    k: el.dataset.keep, v: el.value, f: el === document.activeElement, s: el.selectionStart, e: el.selectionEnd }));
+    k: el.dataset.keep, v: el.value, f: el === document.activeElement, s: el.selectionStart, e: el.selectionEnd,
+    mirror: !!el.dataset.pfield }));
   paint();
   for(const x of kept){
     const el = document.querySelector(`[data-keep="${x.k}"]`);
-    if(!el) continue;
+    // Fields that mirror saved state (deadline, word limit) take the fresh
+    // value unless they're mid-edit; forms and the picker filter are buffers.
+    if(!el || (x.mirror && !x.f)) continue;
     el.value = x.v;
     if(x.f){ el.focus(); try{ el.setSelectionRange(x.s, x.e); }catch(_){ /* date/number inputs */ } }
   }
