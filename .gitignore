@@ -5,7 +5,9 @@ backend/fn.zip
 .DS_Store
 scratch/
 CLAUDE.local.md
-.claude/
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
 
 # graphify knowledge-graph output (local only)
 graphify-out/
