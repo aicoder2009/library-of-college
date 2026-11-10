@@ -462,7 +462,7 @@ export const handler = async (event) => {
           Item: { pk: { S: BACKUP_PREFIX + day }, state: cur.Item.state,
             ttl: { N: String(Math.floor(Date.now() / 1000) + 15 * 86400) } },
           ConditionExpression: "attribute_not_exists(pk)" }));
-      }catch(e){ /* today's snapshot already exists */ }
+      }catch{ /* today's snapshot already exists */ }
     }
     // Atomic guard: the write lands only if this rev is still ahead of the
     // stored one, so two devices racing the check above can't both win.

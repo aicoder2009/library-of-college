@@ -1,7 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont
 import os
 
-import os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GEORGIA = "/System/Library/Fonts/Supplemental/Georgia Bold.ttf"
 GEORGIA_REG = "/System/Library/Fonts/Supplemental/Georgia.ttf"

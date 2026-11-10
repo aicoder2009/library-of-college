@@ -200,7 +200,7 @@ async function handleUninvitedOauth(){
           return true;
         }
         email = res.emailAddress || null;
-      }catch(e){ // …and in waitlist mode it throws, often after echoing the email
+      }catch{ // …and in waitlist mode it throws, often after echoing the email
         email = (window.Clerk.client.signUp && window.Clerk.client.signUp.emailAddress) || null;
       }
     }
@@ -219,7 +219,7 @@ async function handleUninvitedOauth(){
     }
     renderNotInvited(email, joined);
     return true;
-  }catch(e){ return false; } // anything unexpected: fall through to the normal card
+  }catch{ return false; } // anything unexpected: fall through to the normal card
 }
 
 function renderNotInvited(email, joined){

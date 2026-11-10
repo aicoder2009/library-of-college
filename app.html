@@ -1045,7 +1045,7 @@ function clipGuideHTML(){
 // the library is ready. An unsaved draft is never clobbered — the clip joins it.
 function openClip(){
   let c = null;
-  try{ c = JSON.parse(sessionStorage.getItem("liboc-clip")); sessionStorage.removeItem("liboc-clip"); }catch(e){}
+  try{ c = JSON.parse(sessionStorage.getItem("liboc-clip")); sessionStorage.removeItem("liboc-clip"); }catch{}
   if(!c || !(c.text || c.src)) return;
   const src = /^https?:\/\//i.test(c.src || "") ? c.src : "";
   const t = (c.title || "").trim();
@@ -1070,7 +1070,7 @@ let KEY_DRAFT = "liboc-draft";
   try{
     sessionStorage.setItem("liboc-clip", JSON.stringify({ text: (p.get("clip") || "").slice(0, 6000),
       src: (p.get("src") || "").slice(0, 600), title: (p.get("title") || "").slice(0, 200) }));
-  }catch(e){}
+  }catch{}
   history.replaceState(null, "", location.pathname + location.search);
 })();
 
@@ -1088,13 +1088,14 @@ let picked = new Set(), selected = new Set(), editing = null, expanded = null, c
 let pending = new Set(); // entry ids waiting on an AI title/classification
 let polished = new Map(); // entry id -> AI-polished body (session-only, never saved)
 let viewIds = [];
-function loadUI(){ try{ const u = JSON.parse(localStorage.getItem(KEY_UI)); if(u && u.nav >= 0 && u.nav <= 6) nav = +u.nav; if(u && u.page === "essays") page = "essays"; if(u) unusedOnly = !!u.unusedOnly; if(u && "matchDeep" in u) matchDeep = !!u.matchDeep; }catch(e){} }
+function loadUI(){ try{ const u = JSON.parse(localStorage.getItem(KEY_UI)); if(u && u.nav >= 0 && u.nav <= 6) nav = +u.nav; if(u && u.page === "essays") page = "essays"; if(u) unusedOnly = !!u.unusedOnly; if(u && "matchDeep" in u) matchDeep = !!u.matchDeep; }catch{} }
 
 function blankState(){ return { entries: [], prompts: [], trash: [], deleted: {}, rev: 0, backupRev: 0 }; }
 // Any stored or served copy → the current shape. Older copies lack prompts,
 // trash and tombstones; an item without an id would break merge-by-id.
 function normalize(s){
-  const { _dirty, ...rest } = s && typeof s === "object" ? s : {};
+  const rest = s && typeof s === "object" ? { ...s } : {};
+  delete rest._dirty;
   const list = a => Array.isArray(a) ? a.filter(x => x && typeof x === "object" && x.id) : [];
   const d = rest.deleted;
   return { ...rest, entries: list(rest.entries), prompts: list(rest.prompts), trash: list(rest.trash),
@@ -1111,18 +1112,18 @@ function load(){
       baseKnown = "_dirty" in s; dirty = !!s._dirty;
       return normalize(s);
     }
-  }catch(e){}
+  }catch{}
   baseKnown = true; dirty = false;
   return blankState();
 }
 // Quota errors (private browsing, full storage) must not kill render/sync —
 // the server copy is the source of truth, localStorage is only a cache.
-function store(){ try{ localStorage.setItem(KEY, JSON.stringify({ ...state, _dirty: dirty })); }catch(e){} }
+function store(){ try{ localStorage.setItem(KEY, JSON.stringify({ ...state, _dirty: dirty })); }catch{} }
 function persist(){ dirty = true; editSeq++; prune(state); store(); render(); push(); }
 // For edits made inside an input that should keep focus (Essays deadline and
 // word limit): save and sync, refresh the sidebar, leave the column alone.
 function persistSoft(){ dirty = true; editSeq++; prune(state); store(); push(); $("nav").innerHTML = navHTML(); renderStatus(); }
-function saveUI(){ try{ localStorage.setItem(KEY_UI, JSON.stringify({nav, page: page === "essays" ? page : null, unusedOnly, matchDeep})); }catch(e){} }
+function saveUI(){ try{ localStorage.setItem(KEY_UI, JSON.stringify({nav, page: page === "essays" ? page : null, unusedOnly, matchDeep})); }catch{} }
 
 // ---- merging two copies of the library ----
 // Newest edit wins per entry and prompt. Deletions travel as tombstones
@@ -1387,7 +1388,7 @@ async function pull(){
       const s = normalize(await api("GET", "/entries"));
       if(dirty || s.rev <= state.rev) return;
       state = s; store(); setSync("synced"); render();
-    }catch(e){ /* offline — nothing to pick up */ }
+    }catch{ /* offline — nothing to pick up */ }
   });
 }
 document.addEventListener("visibilitychange", () => {
@@ -1470,14 +1471,14 @@ function syncChips(){
 const composerOpen = () => $("composer").classList.contains("on");
 let draft = loadDraft(), draftT;
 function loadDraft(){
-  try{ const d = JSON.parse(localStorage.getItem(KEY_DRAFT)); if(d && (d.title || d.body)) return d; }catch(e){}
+  try{ const d = JSON.parse(localStorage.getItem(KEY_DRAFT)); if(d && (d.title || d.body)) return d; }catch{}
   return null;
 }
 function stashDraft(){
   try{
     if(draft) localStorage.setItem(KEY_DRAFT, JSON.stringify(draft));
     else localStorage.removeItem(KEY_DRAFT);
-  }catch(e){}
+  }catch{}
 }
 function captureDraft(){
   const t = $("title").value.trim(), b = $("body").value.trim();
@@ -1895,7 +1896,7 @@ async function genTitle(en){
     if(r.title && cur && !cur.title){
       cur.title = r.title; cur.updatedAt = Date.now(); persist();
     }
-  }catch(e){ /* stays Untitled; user can Edit */ }
+  }catch{ /* stays Untitled; user can Edit */ }
   finally{ pending.delete(id); render(); }
 }
 async function genClassify(orig){
@@ -2621,7 +2622,7 @@ $("importFile").onchange = e => {
       persist();
       toast(`Imported ${addE.length} new entr${addE.length === 1 ? "y" : "ies"}${
         addP.length ? ` and ${addP.length} prompt${addP.length === 1 ? "" : "s"}` : ""}`);
-    }catch(err){ toast("Could not read that file"); }
+    }catch{ toast("Could not read that file"); }
     e.target.value = "";
   };
   r.readAsText(f);
@@ -2788,7 +2789,7 @@ function keepInputs(paint){
     // value unless they're mid-edit; forms and the picker filter are buffers.
     if(!el || (x.mirror && !x.f)) continue;
     el.value = x.v;
-    if(x.f){ el.focus(); try{ el.setSelectionRange(x.s, x.e); }catch(_){ /* date/number inputs */ } }
+    if(x.f){ el.focus(); try{ el.setSelectionRange(x.s, x.e); }catch{ /* date/number inputs */ } }
   }
 }
 function renderView(){
